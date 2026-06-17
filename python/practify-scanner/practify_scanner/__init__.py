@@ -16,6 +16,7 @@ from practify_scanner.scanner import (
     scan_file,
     scan_directory,
     summarize,
+    register_anchored_function,
     DefensivePattern,
     PatternType,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "scan_file",
     "scan_directory",
     "summarize",
+    "register_anchored_function",
     "DefensivePattern",
     "PatternType",
 ]

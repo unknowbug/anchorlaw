@@ -23,3 +23,5 @@ Thumbs.db
 
 # Practify local data (user-specific, created by `practify init`)
 .pract/
+build/
+*.egg-info/

@@ -62,10 +62,14 @@ class IDontKnowAnchor:
     前者开放战场（"你来检验"），后者关闭战场（"你不许问"）。
 
     第一律唯一允许的防御类型。
+
+    created_at: ISO 8601 timestamp. After 90 days without resolution,
+    this anchor escalates from INFO to WARNING (staleness detection).
     """
     what: str
     source_file: str = ""
     source_line: int = 0
+    created_at: str = ""  # ISO 8601, set at registration time
 
 
 @dataclass
@@ -107,17 +111,40 @@ class FunctionAnchors:
 
         - "healthy": 有测试且全部通过
         - "unverified": 仅有 i_dont_know，待实践检验
+        - "stale_unknown": i_dont_know 超过 90 天未更新（协议 v0.2 5.3）
         - "degrading": 有测试但有失败
         - "skeleton": 无任何锚点（违反第一律）
         """
         if not self.has_practice_anchor:
             return "skeleton"
         if self.is_fully_unknown:
+            if self._any_stale_unknown():
+                return "stale_unknown"
             return "unverified"
         results = [t.run() for t in self.tests]
         if all(r.passed for r in results):
+            if self._any_stale_unknown():
+                return "stale_unknown"
             return "healthy"
         return "degrading"
+
+    def _any_stale_unknown(self) -> bool:
+        """Check if any i_dont_know anchor is older than 90 days."""
+        from datetime import datetime, timezone, timedelta
+        try:
+            now = datetime.now(timezone.utc)
+            threshold = timedelta(days=90)
+            for u in self.unknowns:
+                if u.created_at:
+                    try:
+                        created = datetime.fromisoformat(u.created_at)
+                        if (now - created) > threshold:
+                            return True
+                    except (ValueError, TypeError):
+                        pass
+            return False
+        except Exception:
+            return False
 
 
 class AnchorRegistry:
@@ -138,12 +165,19 @@ class AnchorRegistry:
         fa = self._get_or_create(func)
         anchor = TestAnchor(description=description, test_fn=test_fn)
         fa.tests.append(anchor)
+        # Notify scanner registry (protocol v0.2 Sec 6.2)
+        _notify_scanner(func)
         return anchor
 
     def register_unknown(self, func: Callable, what: str) -> IDontKnowAnchor:
+        from datetime import datetime, timezone
         fa = self._get_or_create(func)
-        anchor = IDontKnowAnchor(what=what)
+        anchor = IDontKnowAnchor(
+            what=what,
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
         fa.unknowns.append(anchor)
+        _notify_scanner(func)
         return anchor
 
     def get(self, func: Callable) -> Optional[FunctionAnchors]:
@@ -245,6 +279,19 @@ class AnchorRegistry:
 # ---------------------------------------------------------------------------
 
 _registry = AnchorRegistry()
+
+
+def _notify_scanner(func: Callable) -> None:
+    """Notify the scanner that `func` has out-of-line anchors.
+
+    Per protocol v0.2 Sec 6.2: functions registered here are excluded
+    from MISSING_ANCHOR warnings when the scanner runs.
+    """
+    try:
+        from practify_scanner.scanner import register_anchored_function
+        register_anchored_function(func.__name__)
+    except ImportError:
+        pass  # Scanner not installed — fine, this is just a notification
 
 
 def _qualname(func: Callable) -> str:

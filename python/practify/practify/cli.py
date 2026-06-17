@@ -273,13 +273,30 @@ def _cmd_curriculum(args):
 
 
 def _cmd_init(args):
-    """Initialize .pract directory."""
+    """Initialize .pract directory and generate pract_stub.py."""
     pract_dir = Path(".pract")
     pract_dir.mkdir(exist_ok=True)
     (pract_dir / "noise_cards.json").touch()
+
+    # Generate pract_stub.py from template
+    stub_path = Path("pract_stub.py")
+    if not stub_path.exists():
+        import shutil
+        template = Path(__file__).parent / "pract_stub_template.py"
+        if template.exists():
+            shutil.copy(template, stub_path)
+            _safe_print(f"{PASS} Generated pract_stub.py")
+            _safe_print("   Import from this file in your source:")
+            _safe_print('   from pract_stub import test as pt, i_dont_know as idk')
+            _safe_print("   To uninstall practify: delete this file + practify/ directory.")
+            _safe_print("   Anchors will auto-degrade to no-ops if practify is not installed.")
+        else:
+            _safe_print(f"{WARN} pract_stub template not found — skipping stub generation")
+    else:
+        _safe_print(f"{INFO} pract_stub.py already exists — skipping")
+
     _safe_print(f"{PASS} Initialized practify at {pract_dir.absolute()}")
     _safe_print("   Noise cards: .pract/noise_cards.json")
-    _safe_print("   Start anchoring with @pract.test and @pract.i_dont_know")
 
 
 # ---------------------------------------------------------------------------

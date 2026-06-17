@@ -34,6 +34,7 @@ from practify_scanner.scanner import (
     scan_file,
     scan_directory,
     summarize,
+    register_anchored_function,
     DefensivePattern,
     PatternType,
 )
@@ -58,7 +59,8 @@ __all__ = [
     "AnchorRegistry", "TestAnchor", "IDontKnowAnchor",
     "FunctionAnchors", "TestResult",
     # scanner (re-exported from practify-scanner)
-    "scan_file", "scan_directory", "summarize", "DefensivePattern", "PatternType",
+    "scan_file", "scan_directory", "summarize", "register_anchored_function",
+    "DefensivePattern", "PatternType",
     # noise
     "NoiseCard", "NoiseStore", "create_noise_card", "list_unresolved",
     "list_all_noise", "resolve_noise", "search_noise", "find_by_function",

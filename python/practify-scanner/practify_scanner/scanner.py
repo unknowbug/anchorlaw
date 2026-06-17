@@ -298,7 +298,59 @@ def _is_inside_docstring(source_lines: List[str], line_idx: int) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Anchor check (requires knowledge of pract-decorated functions)
+# I/O keyword detection (for severity layering, per protocol v0.2 Sec 6.1)
+# ---------------------------------------------------------------------------
+
+# Keywords whose presence in a function body indicates I/O dependency.
+# Functions matching >=2 categories, or >=3 keywords total, are I/O-heavy.
+_IO_KEYWORD_CATEGORIES = {
+    "file": {"open", "read", "write", "path", "file", "chmod", "chown", "rename"},
+    "network": {"requests", "fetch", "http", "curl", "socket", "connect", "urlopen"},
+    "image": {"Image", "PIL", "imread", "imwrite", "decode", "encode", "thumbnail"},
+    "database": {"execute", "query", "cursor", "connect", "collection", "commit"},
+    "subprocess": {"subprocess", "popen", "call", "check_output", "run"},
+    "serialize": {"json.load", "json.dump", "pickle", "yaml", "toml"},
+}
+
+
+def _classify_function(tree: ast.AST, func_node: ast.FunctionDef) -> str:
+    """Classify a function as 'pure', 'io_heavy', 'test', or 'private'.
+
+    Pure: no I/O calls detected → WARNING severity for missing anchor
+    IO-heavy: file/network/image calls detected → INFO severity
+    Test: name starts with 'test_' → SKIP
+    Private: name starts with '_' → SKIP
+    """
+    name = func_node.name
+    if name.startswith("_"):
+        return "private"
+    if name.startswith("test_"):
+        return "test"
+
+    # Walk the function body and count I/O keyword hits
+    io_categories_hit = set()
+    total_hits = 0
+
+    for node in ast.walk(func_node):
+        kw: Optional[str] = None
+        if isinstance(node, ast.Name):
+            kw = node.id.lower()
+        elif isinstance(node, ast.Attribute) and isinstance(node.attr, str):
+            kw = node.attr.lower()
+
+        if kw:
+            for cat, keywords in _IO_KEYWORD_CATEGORIES.items():
+                if kw in keywords:
+                    io_categories_hit.add(cat)
+                    total_hits += 1
+
+    if len(io_categories_hit) >= 2 or total_hits >= 3:
+        return "io_heavy"
+    return "pure"
+
+
+# ---------------------------------------------------------------------------
+# Anchor check (per protocol v0.2: severity layering + registry awareness)
 # ---------------------------------------------------------------------------
 
 def _scan_missing_anchors(
@@ -306,38 +358,113 @@ def _scan_missing_anchors(
     tree: ast.AST,
     source_lines: List[str],
 ) -> List[DefensivePattern]:
-    """Detect module-level public functions without pract decorators."""
+    """Detect module-level public functions without pract decorators.
+
+    Severity layering per protocol v0.2 Sec 6.1:
+    - Pure logic functions → WARNING
+    - I/O-heavy functions → INFO (suggest @i_dont_know)
+    - test_ prefixed → SKIP
+    - Private (_ prefix) → SKIP
+    """
     patterns = []
 
     for node in ast.iter_child_nodes(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
-        if node.name.startswith("_"):
-            continue  # private
+
+        category = _classify_function(tree, node)
+        if category in ("private", "test"):
+            continue
 
         # Check decorators for pract.test or pract.i_dont_know
         has_pract = False
         for decorator in node.decorator_list:
             dec_name = _get_decorator_name(decorator)
-            if dec_name and dec_name in (
-                "pract.test", "pract.i_dont_know",
-                "practify.test", "practify.i_dont_know",
+            if dec_name and (
+                "pract.test" in dec_name or "pract.i_dont_know" in dec_name
+                or dec_name in ("pt", "idk")  # short aliases from pract_stub
             ):
                 has_pract = True
                 break
 
-        if not has_pract:
-            patterns.append(DefensivePattern(
-                pattern_type=PatternType.MISSING_ANCHOR,
-                file_path=file_path,
-                line_number=node.lineno,
-                code_snippet=source_lines[node.lineno - 1].strip()
-                if node.lineno <= len(source_lines) else f"def {node.name}(...):",
-                suggestion=PatternType.MISSING_ANCHOR.message_template,
-                function_name=node.name,
-            ))
+        if has_pract:
+            continue
+
+        # Check anchor registry for out-of-line anchors
+        if _check_registry(node.name):
+            continue
+
+        # Build pattern with appropriate severity
+        severity = "warning" if category == "pure" else "info"
+        suggestion = (
+            PatternType.MISSING_ANCHOR.message_template
+            if category == "pure"
+            else (
+                "This function depends on external resources (I/O). "
+                "Consider adding @pract.i_dont_know to declare cognitive boundaries, "
+                "or @pract.test with mocked resources for critical paths."
+            )
+        )
+
+        patterns.append(DefensivePattern(
+            pattern_type=PatternType.MISSING_ANCHOR,
+            file_path=file_path,
+            line_number=node.lineno,
+            code_snippet=source_lines[node.lineno - 1].strip()
+            if node.lineno <= len(source_lines) else f"def {node.name}(...):",
+            suggestion=suggestion,
+            function_name=node.name,
+        ))
 
     return patterns
+
+
+# ---------------------------------------------------------------------------
+# Anchor registry interop (per protocol v0.2 Sec 6.2)
+# ---------------------------------------------------------------------------
+
+# In-memory registry of functions known to have out-of-line anchors.
+# Populated by practify when anchors are registered, or by scanning
+# pract_anchors.py for _anchor_{name} functions.
+_KNOWN_ANCHORED: set = set()
+
+
+def register_anchored_function(name: str) -> None:
+    """Inform the scanner that `name` has out-of-line anchors."""
+    _KNOWN_ANCHORED.add(name)
+
+
+def _check_registry(function_name: str) -> bool:
+    """Check if a function has out-of-line anchors registered."""
+    if function_name.startswith("_anchor_"):
+        return True
+    return function_name in _KNOWN_ANCHORED
+
+
+def _load_anchors_from_project(scanned_dir: str) -> None:
+    """Scan the project directory for pract_anchors.py and extract registrations.
+
+    Per protocol v0.2 Sec 6.2: out-of-line anchor files are recognized by
+    the scanner when they call register_anchored_function().
+    """
+    anchor_file = os.path.join(scanned_dir, "pract_anchors.py")
+    if not os.path.exists(anchor_file):
+        return
+    try:
+        with open(anchor_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        import re
+        # Pattern 1: direct register_anchored_function("name") calls
+        for match in re.finditer(
+            r"register_anchored_function\s*\(\s*['\"]([^'\"]+)['\"]", content
+        ):
+            _KNOWN_ANCHORED.add(match.group(1))
+        # Pattern 2: _anchor_{name} wrapper functions — their names encode
+        # the anchored function, e.g. _anchor_parse_json_robust → parse_json_robust
+        for match in re.finditer(r"def _anchor_(\w+)\s*\(", content):
+            _KNOWN_ANCHORED.add(match.group(1))
+    except Exception:
+        pass  # Best-effort only
 
 
 def _get_decorator_name(decorator: ast.expr) -> Optional[str]:
@@ -490,6 +617,9 @@ def scan_directory(dir_path: str, recursive: bool = True) -> Dict[str, List[Defe
 
     Returns dict of {file_path: [patterns]}.
     """
+    # Load out-of-line anchor registrations before scanning
+    _load_anchors_from_project(dir_path)
+
     results = {}
     base = Path(dir_path)
 
