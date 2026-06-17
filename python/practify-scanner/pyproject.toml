@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "practify-scanner"
+version = "0.1.0"
+description = "Defensive code pattern scanner — Practify Protocol Level 1"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+authors = [{name = "Practify Community"}]
+keywords = ["static-analysis", "code-quality", "defensive-patterns", "vibe-coding", "practify"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+practify-scanner = "practify_scanner.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["practify_scanner*"]

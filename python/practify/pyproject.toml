@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "practify"
+version = "0.1.0"
+description = "Practify Protocol — code verification for vibe coding (Level 2-4)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = [
+    "practify-scanner>=0.1.0",
+]
+authors = [
+    {name = "Practify Community"},
+]
+keywords = ["testing", "verification", "static-analysis", "vibe-coding", "anchors", "noise-cards"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+practify = "practify.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["practify*"]

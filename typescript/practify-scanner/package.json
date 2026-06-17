@@ -1,0 +1,37 @@
+{
+  "name": "practify-scanner",
+  "version": "0.1.0",
+  "description": "Defensive code pattern scanner for TypeScript/JavaScript — Practify Protocol Level 1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "practify-scanner": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "static-analysis",
+    "code-quality",
+    "defensive-patterns",
+    "vibe-coding",
+    "practify",
+    "typescript",
+    "ast"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "dist/**/*"
+  ]
+}
