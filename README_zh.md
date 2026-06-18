@@ -16,10 +16,14 @@ Practify 是一套**面向 vibe coding 的代码验证协议**——不是测试
 |-----------|--------|-----------|--------|
 | **扫描器** | ✅ [practify-scanner](python/practify-scanner/) | ✅ [practify-scanner](typescript/practify-scanner/) | **已验证** — 在真实项目上测试通过 |
 | **锚点系统** | ✅ [practify](python/practify/) | — | **实验性** — API 稳定，缺乏实践效能数据 |
+| **Source Provenance (v0.3)** | — | — | **猜想** — 字段已定义，0个RE项目产出过带source的anchor |
 | **噪声卡** | ✅ [practify](python/practify/) | — | **未验证** — schema 已定义，无项目积累超过 10 张卡 |
 | **AI 上下文注入** | ✅ [practify](python/practify/) | — | **猜想** — 格式已定义，未做 A/B 对照实验 |
+| **降级验证 (v0.3)** | — | — | **猜想** — 三种模式已定义，无RE项目走过Partial/Degraded路径 |
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
+>
+> **v0.3 更新 (2026-06-18):** 新增 Source Provenance（数据来源标注）、Degraded Verification（三种验证模式）、Verify 重试上限。详见 [协议规范 v0.2](spec/protocol-v0.2.md) Changelog toward v0.3。
 
 ---
 
@@ -55,9 +59,14 @@ pip install practify
 ```python
 import practify as pract
 
-@pract.test("空列表返回空", lambda: process([]) == [])
-@pract.test("保留正数", lambda: process([-1, 0, 3, -5]) == [3])
-@pract.i_dont_know("超大列表（>1M）的行为边界尚未确定")
+@pract.test("空列表返回空",
+    lambda: process([]) == [],
+    source="manual:NDark, 经验值，预期行为")  # v0.3: source 字段记录数据来源
+@pract.test("保留正数",
+    lambda: process([-1, 0, 3, -5]) == [3],
+    source="trace:process#001, input=[-1,0,3,-5] output=[3] observed 2026-06-18")
+@pract.i_dont_know("超大列表（>1M）的行为边界尚未确定",
+    source="static: 未在trace中覆盖大输入")
 def process(data: list[int]) -> list[int]:
     return [x for x in data if x > 0]
 ```
@@ -86,6 +95,20 @@ python -m practify ai-context --functions "divide,process" --limit 10
 ```
 
 输出可直接注入 LLM 系统提示词的结构化文本。
+
+### 降级验证模式（v0.3）
+
+Practify 承认一个工程现实：**不是所有带 anchor 的代码都能独立编译运行。** 逆向工程中 lift 出来的 C++ 代码常常依赖二进制内部符号，脱离原始环境无法编译。
+
+因此协议定义了三种运行模式：
+
+| 模式 | 条件 | practify test | 置信度自动提升 |
+|------|------|:---:|:---:|
+| **全功能** | 代码自包含 + Practify 已安装 | ✅ | ✅ |
+| **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
+| **降级** | Practify 未安装 | ❌ | ❌（人工对照 trace 审查） |
+
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.2.md#9-degraded-verification)。
 
 ---
 

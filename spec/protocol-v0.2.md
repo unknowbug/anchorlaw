@@ -17,6 +17,15 @@
 | **Anchor registry interop** — scanner recognizes out-of-line anchors | photo_screener trial: `pract_anchors.py` invisible to scanner | [6.2 Registry-Aware Scanning](#62-registry-aware-scanning) |
 | **@i_dont_know staleness** — auto-escalate after 90 days | 待补充260607: 噪声即课题; unverified unknowns rot | [5.3 Staleness Detection](#53-staleness-detection) |
 
+## Changelog toward v0.3 (Draft)
+
+| Change | Trigger | Section |
+|--------|---------|---------|
+| **Source provenance** — @pt anchors MUST carry source field | RE Framework integration: anchors without trace provenance are unfalsifiable | [5.1 Test Anchor](#51-test-anchor), [5.5 Source Provenance](#55-source-provenance) |
+| **Degraded verification** — three operating modes for RE (full/partial/degraded) | RE Framework: lifted .cpp often can't compile standalone | [9. Degraded Verification](#9-degraded-verification) |
+| **Uncompilable anchor state** — honest declaration when code can't run | RE Framework: binary-internal deps prevent practify test | [5.4 Anchor Health States](#54-anchor-health-states) |
+| **Verify retry cap** — max 3 Lift→Verify cycles before going back to A-layer | RE Framework: prevent process entropy in unfalsifiable loops | [9. Degraded Verification](#9-degraded-verification) |
+
 ---
 
 ## 1. Protocol Overview
@@ -212,8 +221,9 @@ def process(data):
 | **Purpose** | A verifiable practice test bound to a function declaration |
 | **Semantics** | "I claim this function behaves correctly under condition X, and here is a reproducible test." |
 | **Required fields** | `description` (human-readable), `test_fn` (executable predicate returning boolean) |
+| **Required field (v0.3)** | `source` (provenance string): MUST record where the test vector data came from — trace_id, register/memory snapshot, observation timestamp. See [5.5 Source Provenance](#55-source-provenance). |
 | **Compile-time check** | Every public function MUST have at least one test anchor OR one i_dont_know anchor |
-| **Runtime check** | Test anchors SHOULD be executable via `practify test` |
+| **Runtime check** | Test anchors SHOULD be executable via `practify test`. If code cannot be independently compiled (e.g., RE-lifted code with internal binary dependencies), see [9. Degraded Verification](#9-degraded-verification). |
 
 ### 5.2 I-Don't-Know Anchor
 
@@ -222,6 +232,7 @@ def process(data):
 | **Purpose** | Honest declaration of a cognitive boundary |
 | **Semantics** | "This function has edge cases I haven't verified yet. I am actively inviting practice feedback." |
 | **Required fields** | `what` (specific description of what is unknown) |
+| **Optional field (v0.3)** | `source` (provenance string): for RE use cases, records what static analysis prompted this unknown — F5 output, missing trace coverage, etc. Helps distinguish "I don't know because I haven't looked" from "I looked and genuinely can't determine." |
 | **Difference from TODO** | TODO = "I know what to do but haven't done it." I-don't-know = "I don't yet know what the correct behavior is." |
 
 ### 5.3 Staleness Detection
@@ -241,6 +252,49 @@ Implementations SHOULD record the creation date of each @i_dont_know anchor. The
 | `degrading` | Has tests but some fail | Previously verified behavior is now broken |
 | `stale_unknown` | i_dont_know > 90 days, function modified | Cognitive boundary overdue for resolution |
 | `skeleton` | No anchors at all | Violation of First Law |
+| `uncompilable` (v0.3) | Has anchors but code cannot be independently compiled | Anchors carry source provenance but practify test cannot execute. Verification deferred to runtime trace comparison. Common in RE use cases. |
+
+### 5.5 Source Provenance (v0.3)
+
+> **Each test anchor must answer: "Where did this data come from?"**
+
+Without source provenance, a test anchor is unfalsifiable — it could be derived from the same B1 hypothesis it claims to verify (circular reasoning), or fabricated entirely. Source provenance is the A-layer anchor point that breaks this circle.
+
+**Source string format:**
+
+```
+source="<source_type>:<binary_or_file>!<function>#<id>, offset=<addr>, <key_observations> observed <ISO8601_timestamp>"
+```
+
+**Source types:**
+
+| Type | Meaning | Allowed for @pt | Allowed for @idk |
+|------|---------|:--:|:--:|
+| `trace` | Dynamic debugging: register/memory snapshot from Frida/x64dbg/etc. | ✅ | ✅ |
+| `memory` | Memory dump: extracted constant tables, vtables, string tables | ✅ | ✅ |
+| `static` | Static analysis inference (F5 output, IDA disassembly, Ghidra decompiler) | ❌ | ✅ |
+
+**Rule:** @pt MUST use `trace` or `memory` source. @pt with `static` source or without source → INVALID (rejected at review).
+
+**Rule:** @idk MAY use `static` source — honestly stating "this unknown was inferred from static analysis, not observed in trace."
+
+**Examples:**
+
+```
+# Valid @pt — trace-based source
+@pt("volume=5 → eax=1",
+    lambda: speak(Animal(), 5) == 1,
+    source="trace:foo.dll!speak#002, offset=0x1A, edx=5 eax=1 observed 2026-06-18T10:00:05Z")
+
+# Valid @idk — static-based source, honest about origin
+@idk("volume=100 时是否会溢出？",
+     source="static:foo.dll!speak@0x1400077c0, F5 shows cmp edx,64h but trace never hit edx≥100")
+
+# INVALID — @pt has no source
+@pt("volume=5 → eax=1", lambda: speak(Animal(), 5) == 1)  # ← rejected
+```
+
+**Implementation note:** The `source` parameter is a string. Implementations MAY validate its format but MUST preserve it verbatim. The `pract_stub.py`-based approach passes `source` as an additional keyword argument to the decorator; when practify is not installed, the stub silently discards it (the anchor degrades to no-op but the source string remains in source code for audit).
 
 ---
 
@@ -309,13 +363,75 @@ This enables **out-of-line anchor files** (`pract_anchors.py`) — anchors regis
 |-----------|--------|-----------|----------|----------------|
 | Scanner | ✅ | ✅ | **Verified** | photo_screener: 38 findings, 0 FP |
 | Anchors | ✅ | — | **Experimental** | photo_screener: 18/18 tests passed, 0 bugs found, 0 regressions |
+| Source Provenance (v0.3) | — | — | **Conjecture** | Field defined in protocol. 0 RE projects have produced sourced anchors. |
 | Noise Cards | ✅ | — | **Unverified** | 0 cards accumulated |
 | AI Context | ✅ | — | **Conjecture** | 0 injection cycles run |
 | Stub Uninstall | ✅ | — | **Verified** | Tested: delete stub + practify, code still runs via no-op fallback |
+| Degraded Verification (v0.3) | — | — | **Conjecture** | Modes defined. No RE project has exercised Partial/Degraded paths. |
 
 ---
 
-## 9. Versioning
+## 9. Degraded Verification (v0.3 Draft)
+
+> **Not all anchored code can be independently compiled and run.** This is not a failure of the protocol — it is an honest recognition that A-layer verification has material prerequisites. When those prerequisites are absent, the protocol MUST degrade gracefully rather than pretend.
+
+### 9.1 Three Operating Modes
+
+| Mode | Condition | practify test | Confidence auto-promotion | Anchor source requirement |
+|------|----------|:---:|:---:|:---:|
+| **Full** | Practify installed AND code self-contained (no unresolved external deps) | ✅ Runs | ✅ draft→candidate | @pt MUST have trace/memory source |
+| **Partial** | Practify installed BUT code has unresolved dependencies (common in RE: lifted code depends on internal binary symbols) | ❌ Cannot run | ❌ Manual only | @pt MUST still carry source — the anchor serves as documented hypothesis until runtime verification becomes possible |
+| **Degraded** | Practify not installed | ❌ N/A | ❌ Manual only | Source provenance still required in _anchors.py for audit trail |
+
+### 9.2 Self-Containment Classification
+
+Before `practify test` is invoked, the function MUST be classified:
+
+**Self-contained:** No calls to external functions, no global variable references, no custom types from outside the translation unit.
+→ Eligible for Full mode.
+
+**Has-deps:** Calls other functions OR references global state OR uses custom types.
+→ Check dependency resolution:
+  - All dependencies are themselves self-contained AND lifted → merge and compile → Full mode
+  - Any dependency is unresolved → Partial mode → record in `uncompilable_functions.yaml`
+
+### 9.3 Uncompilable Functions Manifesto
+
+```yaml
+# uncompilable_functions.yaml
+- function: speak
+  source_location: "foo.dll:0x1400077c0"
+  uncompilable_reason: "depends on AudioDevice::write (0x140008000) and Animal::vftable"
+  unresolved_deps:
+    - type: function
+      name: AudioDevice::write
+      address: "foo.dll:0x140008000"
+      lift_status: not_started
+    - type: vtable
+      name: Animal::vftable
+      address: "foo.dll:0x140007000"
+  suggested_path: "Lift AudioDevice::write first, then retry speak compilation"
+  anchor_count: 4
+  anchor_sources_valid: true  # all @pt have trace/memory source
+```
+
+### 9.4 Retry Cap (Anti-Entropy)
+
+When Partial or Degraded mode is active, the Lift→Verify cycle has a **hard cap of 3 attempts** per function before the methodology forces a return to A-layer data collection (Scout phase / dynamic tracing).
+
+Rationale: repeatedly tweaking B1 hypotheses (Lift code) without new A-layer data (traces) is the definition of process entropy (实践偏离:过程熵增). The cap breaks this cycle by refusing to let B1 iterate in isolation.
+
+### 9.5 Degraded Mode Honesty Statement
+
+When operating in Partial or Degraded mode, tools and exports MUST prefix their output with:
+
+> "以下验证结果基于降级模式（[部分/降级]）。置信度未自动提升。所有 test anchor 均记录了数据来源，但尚未通过可公共观测的实践检验。confirmed 状态需要人工对照 trace 证据后手动授予。"
+
+This is not defensive — it is an honest declaration of the current verification ceiling. The protocol remains useful: anchors document hypotheses with provenance, noise cards accumulate known failures, and the structure preserves everything needed for full verification when A-layer conditions permit.
+
+---
+
+## 10. Versioning
 
 - Protocol versions are `v{major}.{minor}`.
 - Minor version changes MUST be backward-compatible (old noise cards remain readable).
@@ -323,6 +439,6 @@ This enables **out-of-line anchor files** (`pract_anchors.py`) — anchors regis
 
 ---
 
-> "This specification is a working hypothesis. Its truth will be determined not by argument, but by whether it produces more reliable code in practice."
+> "This specification is a working hypothesis. Its truth will be determined not by argument, but by whether it produces more reliable code in practice. The source provenance requirement (v0.3) is a wager: that requiring test data to carry its A-layer origin will break the circular reasoning that makes AI-generated code verification unfalsifiable. The wager will be settled not in this document, but in real RE projects."
 >
 > — First Law, Applied Reflexively
