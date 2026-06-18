@@ -1,4 +1,4 @@
-# Practify Protocol v0.2
+# Practify Protocol v0.3
 
 > **语言无关的代码验证协议规范**
 >
@@ -17,7 +17,7 @@
 | **Anchor registry interop** — scanner recognizes out-of-line anchors | photo_screener trial: `pract_anchors.py` invisible to scanner | [6.2 Registry-Aware Scanning](#62-registry-aware-scanning) |
 | **@i_dont_know staleness** — auto-escalate after 90 days | 待补充260607: 噪声即课题; unverified unknowns rot | [5.3 Staleness Detection](#53-staleness-detection) |
 
-## Changelog toward v0.3 (Draft)
+## Changelog from v0.2
 
 | Change | Trigger | Section |
 |--------|---------|---------|
@@ -435,7 +435,7 @@ This is not defensive — it is an honest declaration of the current verificatio
 
 - Protocol versions are `v{major}.{minor}`.
 - Minor version changes MUST be backward-compatible (old noise cards remain readable).
-- Current version: **v0.2** — pre-stable. All components subject to change based on practice feedback.
+- Current version: **v0.3** — pre-stable. All components subject to change based on practice feedback.
 
 ---
 

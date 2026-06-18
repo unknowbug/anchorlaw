@@ -23,7 +23,7 @@ Practify 是一套**面向 vibe coding 的代码验证协议**——不是测试
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
 >
-> **v0.3 更新 (2026-06-18):** 新增 Source Provenance（数据来源标注）、Degraded Verification（三种验证模式）、Verify 重试上限。详见 [协议规范 v0.2](spec/protocol-v0.2.md) Changelog toward v0.3。
+> **v0.3 更新 (2026-06-18):** 新增 Source Provenance（数据来源标注）、Degraded Verification（三种验证模式）、Verify 重试上限。详见 [协议规范 v0.3](spec/protocol-v0.3.md)。
 
 ---
 
@@ -108,7 +108,7 @@ Practify 承认一个工程现实：**不是所有带 anchor 的代码都能独�
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Practify 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.2.md#9-degraded-verification)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.3.md#9-degraded-verification)。
 
 ---
 
