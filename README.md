@@ -16,10 +16,14 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 |-----------|--------|-----------|----------|
 | **Scanner** | ✅ [practify-scanner](python/practify-scanner/) | ✅ [practify-scanner](typescript/practify-scanner/) | **VERIFIED** — tested on real projects |
 | **Anchors** | ✅ [practify](python/practify/) | — | **EXPERIMENTAL** — API stable, no efficacy data |
+| **Source Provenance (v0.3)** | — | — | **CONJECTURE** — field defined, 0 RE projects have produced sourced anchors |
 | **Noise Cards** | ✅ [practify](python/practify/) | — | **UNVERIFIED** — schema defined, no accumulated data |
 | **AI Context** | ✅ [practify](python/practify/) | — | **CONJECTURE** — format defined, no A/B test |
+| **Degraded Verification (v0.3)** | — | — | **CONJECTURE** — modes defined, no RE project has exercised Partial/Degraded paths |
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
+>
+> **v0.3 update (2026-06-18):** Source Provenance, Degraded Verification modes, and Verify retry cap. See [Protocol Spec v0.3](spec/protocol-v0.3.md).
 
 ---
 
@@ -54,9 +58,14 @@ pip install practify
 ```python
 import practify as pract
 
-@pract.test("empty list returns empty", lambda: process([]) == [])
-@pract.test("keep positives", lambda: process([-1, 0, 3, -5]) == [3])
-@pract.i_dont_know("behavior with massive lists (>1M items) not verified")
+@pract.test("empty list returns empty",
+    lambda: process([]) == [],
+    source="manual: expected behavior")  # v0.3: source field records data origin
+@pract.test("keep positives",
+    lambda: process([-1, 0, 3, -5]) == [3],
+    source="trace:process#001, output=[3] observed 2026-06-18")
+@pract.i_dont_know("behavior with massive lists (>1M items) not verified",
+    source="static: not covered in traces")
 def process(data: list[int]) -> list[int]:
     return [x for x in data if x > 0]
 ```
@@ -87,7 +96,7 @@ The single allowed defense is `@pract.i_dont_know` — an honest declaration tha
 practify/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.1.md        # Language-agnostic protocol spec
+│   └── protocol-v0.3.md        # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── practify-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── practify/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -112,7 +121,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.1](spec/protocol-v0.1.md)
+- [Protocol Specification v0.3](spec/protocol-v0.3.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.3.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/practify/practify/wiki) — the philosophical foundation
 
 ---
