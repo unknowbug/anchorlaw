@@ -20,8 +20,8 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install -e python/practify-scanner
-          pip install -e python/practify
+          pip install -e python/anchorlaw-scanner
+          pip install -e python/anchorlaw
           pip install pytest
 
       - name: Run unit tests
@@ -38,13 +38,13 @@ jobs:
           python-version: "3.12"
 
       - name: Install scanner
-        run: pip install -e python/practify-scanner
+        run: pip install -e python/anchorlaw-scanner
 
       # The protocol's own code must pass through its own scanner without
-      # crashing — scanner scanning scanner is Second Law applied to itself.
+      # crashing - scanner scanning scanner is Second Law applied to itself.
       # Findings are expected at current maturity; the hard requirement is
       # that the scanner parses its own code and produces a report.
-      - name: Scan practify's own source
+      - name: Scan anchorlaw's own source
         run: |
-          python -m practify_scanner check python || \
+          python -m anchorlaw_scanner check python || \
             echo "Self-scan produced findings (expected); scanner parsed its own code without crashing."
