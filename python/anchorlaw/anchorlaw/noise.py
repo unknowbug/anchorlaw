@@ -6,7 +6,7 @@
 
 这与传统测试框架的根本区别：
 - 传统：测试失败 → 修 bug → 忘了
-- practify：测试失败 → 创建噪声卡 → 积累为结构化知识 → 注入 AI 上下文
+- anchorlaw：测试失败 → 创建噪声卡 → 积累为结构化知识 → 注入 AI 上下文
 
 噪声卡不是 bug tracker。它是**认知边界的可操作记录**。
 每张卡描述的不是"什么错了"，而是"我们在什么条件下发现了我们不知道什么"。
@@ -242,7 +242,7 @@ def create_noise_card(
     """创建一张新的噪声卡并持久化。
 
     使用方法（在 except 块或测试失败处理中）：
-        import practify as pract
+        import anchorlaw as pract
         try:
             result = my_function(bad_input)
         except Exception as e:

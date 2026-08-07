@@ -1,4 +1,4 @@
-# Practify Protocol v0.1
+# Anchorlaw Protocol v0.1
 
 > **语言无关的代码验证协议规范**
 >
@@ -10,7 +10,7 @@
 
 ## 1. Protocol Overview
 
-Practify is a **three-layer code verification protocol** for vibe coding workflows:
+Anchorlaw is a **three-layer code verification protocol** for vibe coding workflows:
 
 | Layer | What it does | When it runs | Maturity |
 |-------|-------------|-------------|----------|
@@ -28,7 +28,7 @@ In code: every public function must have either a `test` anchor or an `i_dont_kn
 
 The protocol does not prohibit. It demands proof.
 - Traditional: "You cannot divide by zero." (defensive)
-- Practify: "Prove the divisor is non-zero, or handle the zero case." (offensive)
+- Anchorlaw: "Prove the divisor is non-zero, or handle the zero case." (offensive)
 
 The single allowed defense is `i_dont_know` — an honest declaration of ignorance that opens the battlefield rather than closing it.
 
@@ -36,14 +36,14 @@ The single allowed defense is `i_dont_know` — an honest declaration of ignoran
 
 ## 2. Noise Card JSON Schema
 
-Noise cards are the **cross-language runtime layer**. Any language implementation of practify MUST produce noise cards conforming to this schema.
+Noise cards are the **cross-language runtime layer**. Any language implementation of anchorlaw MUST produce noise cards conforming to this schema.
 
 ### 2.1 Schema
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://practify.dev/noise-card-v0.1.json",
+  "$id": "https://anchorlaw.dev/noise-card-v0.1.json",
   "type": "object",
   "required": ["noise_id", "timestamp", "trigger", "function_name", "observed", "expected"],
   "properties": {
@@ -138,7 +138,7 @@ Noise cards are stored as a JSON array in `.pract/noise_cards.json`:
 
 ## 3. AI Context Format
 
-The AI context is the **primary vibe-coding interface** of practify. It is what gets injected into LLM system prompts.
+The AI context is the **primary vibe-coding interface** of anchorlaw. It is what gets injected into LLM system prompts.
 
 ### 3.1 Format Specification
 
@@ -168,7 +168,7 @@ Where `{STATUS}` is `[RESOLVED]` or `[UNRESOLVED]`.
 ### 3.2 Injection Strategy
 
 For vibe coding:
-1. When AI is about to generate/modify code in a project with practify noise cards, inject the AI context for functions being touched.
+1. When AI is about to generate/modify code in a project with anchorlaw noise cards, inject the AI context for functions being touched.
 2. If no specific functions are known, inject the most recent 10 unresolved cards.
 3. Also inject the curriculum from resolved cards as a "coding patterns" section.
 
@@ -195,7 +195,7 @@ Anchors are **language-specific in implementation** but share common semantics a
 | **Semantics** | "I claim this function behaves correctly under condition X, and here is a reproducible test that proves it." |
 | **Required fields** | `description` (human-readable), `test_fn` (executable predicate returning boolean) |
 | **Compile-time check** | Every public function MUST have at least one test anchor OR one i_dont_know anchor |
-| **Runtime check** | Test anchors SHOULD be executable via `practify test` |
+| **Runtime check** | Test anchors SHOULD be executable via `anchorlaw test` |
 
 ### 4.2 I-Don't-Know Anchor
 

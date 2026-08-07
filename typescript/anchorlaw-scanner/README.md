@@ -1,8 +1,8 @@
-# practify-scanner (TypeScript)
+# anchorlaw-scanner (TypeScript)
 
-> Defensive code pattern detection for TypeScript/JavaScript — Practify Protocol Level 1
+> Defensive code pattern detection for TypeScript/JavaScript — Anchorlaw Protocol Level 1
 
-**Maturity: IN DEVELOPMENT** — cross-language port of the [verified Python scanner](https://github.com/practify/practify/tree/main/python/practify-scanner). Pattern detection accuracy validated on test files; not yet tested on large production codebases.
+**Maturity: IN DEVELOPMENT** — cross-language port of the [verified Python scanner](https://github.com/unknowbug/anchorlaw/tree/main/python/anchorlaw-scanner). Pattern detection accuracy validated on test files; not yet tested on large production codebases.
 
 ## What it does
 
@@ -20,26 +20,26 @@ Scans TypeScript/JavaScript source code for **defensive patterns** — code cons
 ## Install
 
 ```bash
-npm install practify-scanner
+npm install anchorlaw-scanner
 ```
 
 ## Usage
 
 ```bash
 # Scan a file
-npx practify-scanner check src/app.ts
+npx anchorlaw-scanner check src/app.ts
 
 # Scan a directory
-npx practify-scanner check src/
+npx anchorlaw-scanner check src/
 
 # Generate a health report
-npx practify-scanner report .
+npx anchorlaw-scanner report .
 ```
 
 ### Programmatic API
 
 ```typescript
-import { scanFile, scanDirectory, summarize } from "practify-scanner";
+import { scanFile, scanDirectory, summarize } from "anchorlaw-scanner";
 
 // Scan a single file
 const patterns = scanFile("src/index.ts");
@@ -59,7 +59,7 @@ console.log(summary); // { total, byType, bySeverity }
 
 ## The Principle
 
-practify-scanner is based on a simple insight:
+anchorlaw-scanner is based on a simple insight:
 
 > Defensive code patterns expose the author's cognitive state — "I'm not sure about this, but I don't want to say I don't know."
 
@@ -71,7 +71,7 @@ The scanner doesn't judge. It surfaces the patterns so you can decide:
 
 ### Using JSDoc Annotations
 
-The scanner checks for practify annotations in JSDoc comments:
+The scanner checks for anchorlaw annotations in JSDoc comments:
 
 ```typescript
 /**
@@ -102,14 +102,14 @@ The TypeScript port uses JSDoc annotations instead of decorators because:
 2. JSDoc annotations work in both `.ts` and `.js` files
 3. No runtime dependency required — annotations are pure documentation until the anchor system is ported
 
-## Part of the Practify Protocol
+## Part of the Anchorlaw Protocol
 
-This is Level 1 of the [Practify Protocol](https://github.com/practify/practify) — a code verification protocol for vibe coding.
+This is Level 1 of the [Anchorlaw Protocol](https://github.com/unknowbug/anchorlaw) — a code verification protocol for vibe coding.
 
 - **Level 1 (this package)**: Scanner — detect defensive patterns
 - **Level 2+**: Anchors + Noise Cards — full verification protocol
 
-For the Python full protocol including `@pract.test` decorators, noise card tracking, and AI context injection, see the [Python practify package](https://github.com/practify/practify/tree/main/python/practify).
+For the Python full protocol including `@pract.test` decorators, noise card tracking, and AI context injection, see the [Python anchorlaw package](https://github.com/unknowbug/anchorlaw/tree/main/python/anchorlaw).
 
 ## Contributing
 

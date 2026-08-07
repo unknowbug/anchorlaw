@@ -1,10 +1,10 @@
 """
-practify-scanner — Defensive code pattern detection via AST analysis.
+anchorlaw-scanner — Defensive code pattern detection via AST analysis.
 
 "Any claim must have a verifiable practice anchor."
-    — Practify Protocol, First Law
+    — Anchorlaw Protocol, First Law
 
-This is the SCANNER component of the Practify Protocol.
+This is the SCANNER component of the Anchorlaw Protocol.
 It detects defensive code patterns that signal cognitive gaps.
 
 Maturity: VERIFIED — tested on real projects, 0 false positives in initial runs.
@@ -12,7 +12,7 @@ Maturity: VERIFIED — tested on real projects, 0 false positives in initial run
 
 __version__ = "0.1.0"
 
-from practify_scanner.scanner import (
+from anchorlaw_scanner.scanner import (
     scan_file,
     scan_directory,
     summarize,

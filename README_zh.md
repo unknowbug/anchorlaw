@@ -1,10 +1,10 @@
-# Practify 协议
+# Anchorlaw 协议
 
 > **"任何声称都必须有可验证的实践锚点。"**
 >
 > —— 唯物实践论 第一律（实践锚定剃刀）
 
-Practify 是一套**面向 vibe coding 的代码验证协议**——不是测试框架，不是 lint 工具。
+Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测试框架，不是 lint 工具。
 
 它检测暴露认知盲区的**防御性代码模式**，并为 AI 辅助开发提供**结构化的反馈闭环**。
 
@@ -14,11 +14,11 @@ Practify 是一套**面向 vibe coding 的代码验证协议**——不是测试
 
 | 组件 | Python | TypeScript | 成熟度 |
 |-----------|--------|-----------|--------|
-| **扫描器** | ✅ [practify-scanner](python/practify-scanner/) | ✅ [practify-scanner](typescript/practify-scanner/) | **已验证** — 在真实项目上测试通过 |
-| **锚点系统** | ✅ [practify](python/practify/) | — | **实验性** — API 稳定，缺乏实践效能数据 |
+| **扫描器** | ✅ [anchorlaw-scanner](python/anchorlaw-scanner/) | ✅ [anchorlaw-scanner](typescript/anchorlaw-scanner/) | **已验证** — 在真实项目上测试通过 |
+| **锚点系统** | ✅ [anchorlaw](python/anchorlaw/) | — | **实验性** — API 稳定，缺乏实践效能数据 |
 | **Source Provenance (v0.3)** | — | — | **猜想** — 字段已定义，0个RE项目产出过带source的anchor |
-| **噪声卡** | ✅ [practify](python/practify/) | — | **未验证** — schema 已定义，无项目积累超过 10 张卡 |
-| **AI 上下文注入** | ✅ [practify](python/practify/) | — | **猜想** — 格式已定义，未做 A/B 对照实验 |
+| **噪声卡** | ✅ [anchorlaw](python/anchorlaw/) | — | **未验证** — schema 已定义，无项目积累超过 10 张卡 |
+| **AI 上下文注入** | ✅ [anchorlaw](python/anchorlaw/) | — | **猜想** — 格式已定义，未做 A/B 对照实验 |
 | **降级验证 (v0.3)** | — | — | **猜想** — 三种模式已定义，无RE项目走过Partial/Degraded路径 |
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
@@ -33,12 +33,12 @@ Practify 是一套**面向 vibe coding 的代码验证协议**——不是测试
 
 ```bash
 # Python
-pip install practify-scanner
-practify-scanner check src/
+pip install anchorlaw-scanner
+anchorlaw-scanner check src/
 
 # TypeScript
-npm install practify-scanner
-npx practify-scanner check src/
+npm install anchorlaw-scanner
+npx anchorlaw-scanner check src/
 ```
 
 扫描器检测以下防御性模式：
@@ -53,11 +53,11 @@ npx practify-scanner check src/
 ### 完整协议（实验性）
 
 ```bash
-pip install practify
+pip install anchorlaw
 ```
 
 ```python
-import practify as pract
+import anchorlaw as pract
 
 @pract.test("空列表返回空",
     lambda: process([]) == [],
@@ -91,22 +91,22 @@ except Exception as e:
 ### AI 上下文导出
 
 ```bash
-python -m practify ai-context --functions "divide,process" --limit 10
+python -m anchorlaw ai-context --functions "divide,process" --limit 10
 ```
 
 输出可直接注入 LLM 系统提示词的结构化文本。
 
 ### 降级验证模式（v0.3）
 
-Practify 承认一个工程现实：**不是所有带 anchor 的代码都能独立编译运行。** 逆向工程中 lift 出来的 C++ 代码常常依赖二进制内部符号，脱离原始环境无法编译。
+Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独立编译运行。** 逆向工程中 lift 出来的 C++ 代码常常依赖二进制内部符号，脱离原始环境无法编译。
 
 因此协议定义了三种运行模式：
 
-| 模式 | 条件 | practify test | 置信度自动提升 |
+| 模式 | 条件 | anchorlaw test | 置信度自动提升 |
 |------|------|:---:|:---:|
-| **全功能** | 代码自包含 + Practify 已安装 | ✅ | ✅ |
+| **全功能** | 代码自包含 + Anchorlaw 已安装 | ✅ | ✅ |
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
-| **降级** | Practify 未安装 | ❌ | ❌（人工对照 trace 审查） |
+| **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
 这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.3.md#9-degraded-verification)。
 
@@ -116,7 +116,7 @@ Practify 承认一个工程现实：**不是所有带 anchor 的代码都能独�
 
 传统开发把"写代码"和"写测试"分开。Vibe coding 让这种分离变得昂贵——AI 快速生成代码，但验证发生在事后、靠人工，并且反馈在迭代中丢失。
 
-Practify 反转了这个关系：**测试是声明的一部分，不是附属品。** 一个函数没有 `@pract.test` 也没有 `@pract.i_dont_know`，会在静态扫描时被标记——不是因为它是 buggy 的，而是因为它没有可验证的正确性证据。
+Anchorlaw 反转了这个关系：**测试是声明的一部分，不是附属品。** 一个函数没有 `@pract.test` 也没有 `@pract.i_dont_know`，会在静态扫描时被标记——不是因为它是 buggy 的，而是因为它没有可验证的正确性证据。
 
 当测试在运行时失败，失败被捕获为**噪声卡**——结构化的知识，随时间积累，并可以注入回 AI 的上下文中，影响未来的代码生成。
 
@@ -125,7 +125,7 @@ Practify 反转了这个关系：**测试是声明的一部分，不是附属品
 这个协议不禁止，它要求证明：
 
 - 传统方式："你不能除以零。"（防御）
-- Practify："证明你的除数不为零，或处理为零的情况。"（进攻）
+- Anchorlaw："证明你的除数不为零，或处理为零的情况。"（进攻）
 
 唯一允许的"防御"是 `@pract.i_dont_know`——一种打开战场、邀请实践检验的诚实声明。
 
@@ -134,16 +134,16 @@ Practify 反转了这个关系：**测试是声明的一部分，不是附属品
 ## 项目结构
 
 ```
-practify/
+anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
 │   └── protocol-v0.1.md        # 语言无关的协议规范
 ├── python/
-│   ├── practify-scanner/       # 独立扫描器（Level 1, 已验证）
-│   └── practify/               # 完整协议（Level 2-4, 实验性）
+│   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
+│   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
 └── typescript/
-    └── practify-scanner/       # TS/JS 扫描器（Level 1, 开发中）
+    └── anchorlaw-scanner/       # TS/JS 扫描器（Level 1, 开发中）
 ```
 
 ---

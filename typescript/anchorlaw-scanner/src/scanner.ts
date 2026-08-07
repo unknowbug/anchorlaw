@@ -1,7 +1,7 @@
 /**
  * Defensive pattern scanner for TypeScript/JavaScript.
  *
- * Based on the Practify Protocol v0.1 — scanner pattern catalog.
+ * Based on the Anchorlaw Protocol v0.1 — scanner pattern catalog.
  * Maturity: IN DEVELOPMENT — cross-language port of the verified Python scanner.
  */
 
@@ -59,7 +59,7 @@ const PATTERN_MESSAGES: Record<PatternType, string> = {
     "You don't know what you're catching — this is a defensive programming signal. " +
     "Specify the exact error type.",
   [PatternType.MISSING_ANCHOR]:
-    "Public function has no practify anchor " +
+    "Public function has no anchorlaw anchor " +
     "(@pract.test or @pract.i_dont_know). " +
     "On what basis does it claim correctness?",
   [PatternType.DEFENSIVE_NULL_CHAIN]:

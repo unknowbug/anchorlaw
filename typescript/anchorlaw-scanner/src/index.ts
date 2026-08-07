@@ -1,7 +1,7 @@
 /**
- * practify-scanner — Defensive code pattern scanner for TypeScript/JavaScript.
+ * anchorlaw-scanner — Defensive code pattern scanner for TypeScript/JavaScript.
  *
- * Practify Protocol Level 1.
+ * Anchorlaw Protocol Level 1.
  * Maturity: IN DEVELOPMENT — cross-language port of the verified Python scanner.
  */
 

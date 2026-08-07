@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * practify-scanner CLI
+ * anchorlaw-scanner CLI
  *
  * Usage:
- *   practify-scanner check <path>
- *   practify-scanner report <path>
+ *   anchorlaw-scanner check <path>
+ *   anchorlaw-scanner report <path>
  */
 
 import { scanFile, scanDirectory, summarize, PATTERN_SEVERITY } from "./scanner";
@@ -16,11 +16,11 @@ const command = args[0];
 const target = args[1];
 
 if (!command || !target) {
-  console.log("practify-scanner — Defensive code pattern scanner");
+  console.log("anchorlaw-scanner — Defensive code pattern scanner");
   console.log("");
   console.log("Usage:");
-  console.log("  practify-scanner check <path>     Scan for defensive patterns");
-  console.log("  practify-scanner report <path>    Generate health report");
+  console.log("  anchorlaw-scanner check <path>     Scan for defensive patterns");
+  console.log("  anchorlaw-scanner report <path>    Generate health report");
   process.exit(0);
 }
 

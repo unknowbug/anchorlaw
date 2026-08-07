@@ -21,7 +21,7 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Practify local data (user-specific, created by `practify init`)
+# Anchorlaw local data (user-specific, created by `anchorlaw init`)
 .pract/
 build/
 *.egg-info/

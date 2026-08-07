@@ -1,15 +1,15 @@
 """
-practify CLI — 唯物实践论代码验证的命令行入口。
+anchorlaw CLI — 唯物实践论代码验证的命令行入口。
 
 用法：
-    python -m practify check <path>       扫描防御性模式
-    python -m practify test [module]      运行锚定测试
-    python -m practify noise list         列出未解决的噪声卡
-    python -m practify noise resolve <id> 解决噪声卡
-    python -m practify noise search <kw>  搜索噪声卡
-    python -m practify report <path>      生成综合报告
-    python -m practify ai-context         导出 AI 上下文注入文本
-    python -m practify curriculum         导出从噪声中提炼的课程
+    python -m anchorlaw check <path>       扫描防御性模式
+    python -m anchorlaw test [module]      运行锚定测试
+    python -m anchorlaw noise list         列出未解决的噪声卡
+    python -m anchorlaw noise resolve <id> 解决噪声卡
+    python -m anchorlaw noise search <kw>  搜索噪声卡
+    python -m anchorlaw report <path>      生成综合报告
+    python -m anchorlaw ai-context         导出 AI 上下文注入文本
+    python -m anchorlaw curriculum         导出从噪声中提炼的课程
 """
 
 import argparse
@@ -46,7 +46,7 @@ ERROR = "[ERROR]"
 
 def _cmd_check(args):
     """Scan files/directories for defensive patterns."""
-    from practify_scanner.scanner import scan_file, scan_directory, summarize
+    from anchorlaw_scanner.scanner import scan_file, scan_directory, summarize
 
     path = Path(args.path)
     if path.is_file():
@@ -102,7 +102,7 @@ def _cmd_test(args):
                 _safe_print(f"ERROR: cannot load module — {args.module}")
                 sys.exit(1)
 
-    from practify.anchors import run_tests
+    from anchorlaw.anchors import run_tests
 
     results = run_tests()
     if not results:
@@ -127,7 +127,7 @@ def _cmd_test(args):
     _safe_print(f"Results: {passed} passed, {failed} failed, {len(results)} total")
 
     if module:
-        from practify.anchors import check_module
+        from anchorlaw.anchors import check_module
         missing = check_module(module)
         if missing:
             _safe_print(f"\n{WARN} Public functions missing practice anchors:")
@@ -140,7 +140,7 @@ def _cmd_test(args):
 
 def _cmd_noise_list(args):
     """List noise cards."""
-    from practify.noise import list_unresolved, list_all as list_all_noise
+    from anchorlaw.noise import list_unresolved, list_all as list_all_noise
 
     cards = list_all_noise() if args.all else list_unresolved()
     if not cards:
@@ -165,7 +165,7 @@ def _cmd_noise_list(args):
 
 def _cmd_noise_resolve(args):
     """Resolve a noise card."""
-    from practify.noise import resolve_noise
+    from anchorlaw.noise import resolve_noise
     ok = resolve_noise(args.noise_id, args.converted_test or "")
     if ok:
         _safe_print(f"{PASS} Noise {args.noise_id} marked as resolved.")
@@ -176,7 +176,7 @@ def _cmd_noise_resolve(args):
 
 def _cmd_noise_search(args):
     """Search noise cards."""
-    from practify.noise import search_noise
+    from anchorlaw.noise import search_noise
     cards = search_noise(args.keyword)
     if not cards:
         _safe_print(f"No noise cards matching '{args.keyword}'.")
@@ -188,7 +188,7 @@ def _cmd_noise_search(args):
 
 def _cmd_report(args):
     """Generate comprehensive health report."""
-    from practify_scanner.scanner import scan_file, scan_directory, summarize
+    from anchorlaw_scanner.scanner import scan_file, scan_directory, summarize
 
     path = Path(args.path)
     if path.is_file():
@@ -200,7 +200,7 @@ def _cmd_report(args):
         _safe_print(f"ERROR: path not found — {args.path}")
         sys.exit(1)
 
-    from practify.noise import export_summary
+    from anchorlaw.noise import export_summary
 
     noise_summary = export_summary()
     all_patterns = []
@@ -209,7 +209,7 @@ def _cmd_report(args):
     scan_summary = summarize(all_patterns)
 
     _safe_print("=" * 60)
-    _safe_print("  practify Code Health Report")
+    _safe_print("  anchorlaw Code Health Report")
     _safe_print("=" * 60)
 
     # Scanner
@@ -250,7 +250,7 @@ def _cmd_report(args):
 
 def _cmd_ai_context(args):
     """Export AI context injection text."""
-    from practify.noise import export_for_ai, export_curriculum
+    from anchorlaw.noise import export_for_ai, export_curriculum
 
     function_names = args.functions.split(",") if args.functions else None
     noise_context = export_for_ai(
@@ -268,7 +268,7 @@ def _cmd_ai_context(args):
 
 def _cmd_curriculum(args):
     """Export curriculum extracted from noise."""
-    from practify.noise import export_curriculum
+    from anchorlaw.noise import export_curriculum
     _safe_print(export_curriculum())
 
 
@@ -288,14 +288,14 @@ def _cmd_init(args):
             _safe_print(f"{PASS} Generated pract_stub.py")
             _safe_print("   Import from this file in your source:")
             _safe_print('   from pract_stub import test as pt, i_dont_know as idk')
-            _safe_print("   To uninstall practify: delete this file + practify/ directory.")
-            _safe_print("   Anchors will auto-degrade to no-ops if practify is not installed.")
+            _safe_print("   To uninstall anchorlaw: delete this file + anchorlaw/ directory.")
+            _safe_print("   Anchors will auto-degrade to no-ops if anchorlaw is not installed.")
         else:
             _safe_print(f"{WARN} pract_stub template not found — skipping stub generation")
     else:
         _safe_print(f"{INFO} pract_stub.py already exists — skipping")
 
-    _safe_print(f"{PASS} Initialized practify at {pract_dir.absolute()}")
+    _safe_print(f"{PASS} Initialized anchorlaw at {pract_dir.absolute()}")
     _safe_print("   Noise cards: .pract/noise_cards.json")
 
 
@@ -305,7 +305,7 @@ def _cmd_init(args):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="practify",
+        prog="anchorlaw",
         description="Materialist Practice code verification protocol",
     )
     sub = parser.add_subparsers(dest="command", help="subcommand")

@@ -9,7 +9,7 @@
 第一律在此体现为：每个 @pract.test 都是一个"可在有限步骤内完成并可观测结果
 的实践检验方案"。没有锚点的函数产生警告（可编译但不可消除）。
 
-同一律则的反身性：practify 自身的公开函数也需要注册锚点或被标记为 i_dont_know。
+同一律则的反身性：anchorlaw 自身的公开函数也需要注册锚点或被标记为 i_dont_know。
 """
 
 import inspect
@@ -34,9 +34,17 @@ class TestAnchor:
     test_fn: Callable[[], bool]
     source_file: str = ""
     source_line: int = 0
+    # Execution tracking (v0.4, P1): how many times this anchor actually ran.
+    # run_count == 0 means "registered but never executed" — a degraded
+    # anchor signal: the claim exists but no practice has tested it.
+    run_count: int = 0
+    last_run_at: str = ""
 
     def run(self) -> "TestResult":
         """执行检验，返回结构化结果。"""
+        from datetime import datetime, timezone
+        self.run_count += 1
+        self.last_run_at = datetime.now(timezone.utc).isoformat()
         try:
             passed = self.test_fn()
             return TestResult(
@@ -244,11 +252,17 @@ class AnchorRegistry:
         }
         for key, fa in self._anchors.items():
             h = fa.health
+            never_ran = [t.description for t in fa.tests if t.run_count == 0]
             entry = {
                 "function": key,
                 "health": h,
                 "tests": len(fa.tests),
                 "unknowns": len(fa.unknowns),
+                "anchor_execution": {
+                    "total_anchors": len(fa.tests),
+                    "executed": sum(1 for t in fa.tests if t.run_count > 0),
+                    "never_ran": never_ran,
+                },
             }
             report["anchored"].append(entry)
         return report
@@ -288,7 +302,7 @@ def _notify_scanner(func: Callable) -> None:
     from MISSING_ANCHOR warnings when the scanner runs.
     """
     try:
-        from practify_scanner.scanner import register_anchored_function
+        from anchorlaw_scanner.scanner import register_anchored_function
         register_anchored_function(func.__name__)
     except ImportError:
         pass  # Scanner not installed — fine, this is just a notification

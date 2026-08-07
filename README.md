@@ -1,10 +1,10 @@
-# Practify Protocol
+# Anchorlaw Protocol
 
 > **"Any claim must have a verifiable practice anchor."**
 >
 > — First Law, Materialist Practice Theory
 
-Practify is a **code verification protocol for vibe coding** — not a test framework, not a linter.
+Anchorlaw is a **code verification protocol for vibe coding** — not a test framework, not a linter.
 
 It detects **defensive code patterns** that signal cognitive gaps and provides a **structured feedback loop** for AI-assisted development.
 
@@ -14,11 +14,11 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 
 | Component | Python | TypeScript | Maturity |
 |-----------|--------|-----------|----------|
-| **Scanner** | ✅ [practify-scanner](python/practify-scanner/) | ✅ [practify-scanner](typescript/practify-scanner/) | **VERIFIED** — tested on real projects |
-| **Anchors** | ✅ [practify](python/practify/) | — | **EXPERIMENTAL** — API stable, no efficacy data |
+| **Scanner** | ✅ [anchorlaw-scanner](python/anchorlaw-scanner/) | ✅ [anchorlaw-scanner](typescript/anchorlaw-scanner/) | **VERIFIED** — tested on real projects |
+| **Anchors** | ✅ [anchorlaw](python/anchorlaw/) | — | **EXPERIMENTAL** — API stable, no efficacy data |
 | **Source Provenance (v0.3)** | — | — | **CONJECTURE** — field defined, 0 RE projects have produced sourced anchors |
-| **Noise Cards** | ✅ [practify](python/practify/) | — | **UNVERIFIED** — schema defined, no accumulated data |
-| **AI Context** | ✅ [practify](python/practify/) | — | **CONJECTURE** — format defined, no A/B test |
+| **Noise Cards** | ✅ [anchorlaw](python/anchorlaw/) | — | **UNVERIFIED** — schema defined, no accumulated data |
+| **AI Context** | ✅ [anchorlaw](python/anchorlaw/) | — | **CONJECTURE** — format defined, no A/B test |
 | **Degraded Verification (v0.3)** | — | — | **CONJECTURE** — modes defined, no RE project has exercised Partial/Degraded paths |
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
@@ -33,12 +33,12 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 
 ```bash
 # Python
-pip install practify-scanner
-practify-scanner check src/
+pip install anchorlaw-scanner
+anchorlaw-scanner check src/
 
 # TypeScript
-npm install practify-scanner
-npx practify-scanner check src/
+npm install anchorlaw-scanner
+npx anchorlaw-scanner check src/
 ```
 
 The scanner finds:
@@ -52,11 +52,11 @@ The scanner finds:
 ### Full Protocol (Experimental)
 
 ```bash
-pip install practify
+pip install anchorlaw
 ```
 
 ```python
-import practify as pract
+import anchorlaw as pract
 
 @pract.test("empty list returns empty",
     lambda: process([]) == [],
@@ -76,7 +76,7 @@ def process(data: list[int]) -> list[int]:
 
 Traditional development separates "writing code" from "writing tests." Vibe coding makes this separation costly — AI generates code fast, but verification happens later, manually, and feedback is lost between iterations.
 
-Practify inverts this: **tests are part of the declaration, not an add-on.** A function without a test anchor or an `i_dont_know` declaration is flagged at scan time — not because it's buggy, but because it has no evidence of correctness.
+Anchorlaw inverts this: **tests are part of the declaration, not an add-on.** A function without a test anchor or an `i_dont_know` declaration is flagged at scan time — not because it's buggy, but because it has no evidence of correctness.
 
 When tests fail at runtime, failures are captured as **noise cards** — structured knowledge that accumulates over time and can be injected back into AI context for future code generation.
 
@@ -84,7 +84,7 @@ When tests fail at runtime, failures are captured as **noise cards** — structu
 
 The protocol does not prohibit — it demands proof:
 - Traditional: "You cannot divide by zero." (defensive)
-- Practify: "Prove the divisor is non-zero, or handle the zero case." (offensive)
+- Anchorlaw: "Prove the divisor is non-zero, or handle the zero case." (offensive)
 
 The single allowed defense is `@pract.i_dont_know` — an honest declaration that opens the battlefield for practice feedback.
 
@@ -93,15 +93,15 @@ The single allowed defense is `@pract.i_dont_know` — an honest declaration tha
 ## Project Structure
 
 ```
-practify/
+anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
 │   └── protocol-v0.3.md        # Language-agnostic protocol spec (current)
 ├── python/
-│   ├── practify-scanner/       # Standalone scanner (Level 1, VERIFIED)
-│   └── practify/               # Full protocol (Level 2-4, EXPERIMENTAL)
+│   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
+│   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
 └── typescript/
-    └── practify-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
+    └── anchorlaw-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
 ```
 
 ---
@@ -123,7 +123,7 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 - [Protocol Specification v0.3](spec/protocol-v0.3.md)
 - Degraded Verification: [§9 of the spec](spec/protocol-v0.3.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
-- [Materialist Practice Theory](https://github.com/practify/practify/wiki) — the philosophical foundation
+- [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---
 

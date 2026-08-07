@@ -3,24 +3,18 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "practify"
+name = "anchorlaw-scanner"
 version = "0.1.0"
-description = "Practify Protocol — code verification for vibe coding (Level 2-4)"
+description = "Defensive code pattern scanner — Anchorlaw Protocol Level 1"
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.9"
-dependencies = [
-    "practify-scanner>=0.1.0",
-]
-authors = [
-    {name = "Practify Community"},
-]
-keywords = ["testing", "verification", "static-analysis", "vibe-coding", "anchors", "noise-cards"]
+authors = [{name = "Anchorlaw Community"}]
+keywords = ["static-analysis", "code-quality", "defensive-patterns", "vibe-coding", "anchorlaw"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Quality Assurance",
-    "Topic :: Software Development :: Testing",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -29,7 +23,7 @@ classifiers = [
 ]
 
 [project.scripts]
-practify = "practify.cli:main"
+anchorlaw-scanner = "anchorlaw_scanner.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["practify*"]
+include = ["anchorlaw_scanner*"]

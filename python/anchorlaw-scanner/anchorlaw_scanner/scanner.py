@@ -1,5 +1,5 @@
 """
-Defensive pattern scanner — AST-level code health check for the Practify Protocol.
+Defensive pattern scanner — AST-level code health check for the Anchorlaw Protocol.
 
 Based on the principle of defensive clause detection:
 Defensive code patterns expose the author's cognitive state —
@@ -8,7 +8,7 @@ Defensive code patterns expose the author's cognitive state —
 Patterns detected:
 - SWALLOWED_EXCEPTION: Empty or trivial catch block
 - BARE_EXCEPT: Overly broad exception handler
-- MISSING_ANCHOR: Public function without a practify anchor
+- MISSING_ANCHOR: Public function without a anchorlaw anchor
 - VAGUE_TODO: TODO/FIXME without issue tracker reference
 - DEFENSIVE_NULL_CHAIN: Chained null-check-and-return-null
 - TRIVIAL_TEST: Self-referential or tautological test assertion
@@ -68,7 +68,7 @@ class PatternType(Enum):
                 "You don't know what you're catching — this is a defensive programming signal. "
                 "Specify the exact exception type.",
             PatternType.MISSING_ANCHOR:
-                "Public function has no practify anchor (@pract.test or @pract.i_dont_know). "
+                "Public function has no anchorlaw anchor (@pract.test or @pract.i_dont_know). "
                 "On what basis does it claim correctness?",
             PatternType.VAGUE_TODO:
                 "TODO without issue tracker reference. "
@@ -92,10 +92,16 @@ class DefensivePattern:
     code_snippet: str
     suggestion: str
     function_name: str = ""
+    severity: str = ""  # instance-level severity override (protocol 6.1);
+                        # empty = fall back to pattern_type.severity
+
+    @property
+    def effective_severity(self) -> str:
+        return self.severity or self.pattern_type.severity
 
     @property
     def formatted(self) -> str:
-        header = f"[{self.pattern_type.severity.upper()}] {self.pattern_type.label}"
+        header = f"[{self.effective_severity.upper()}] {self.pattern_type.label}"
         if self.function_name:
             header += f" (in {self.function_name})"
         return (
@@ -344,7 +350,10 @@ def _classify_function(tree: ast.AST, func_node: ast.FunctionDef) -> str:
                     io_categories_hit.add(cat)
                     total_hits += 1
 
-    if len(io_categories_hit) >= 2 or total_hits >= 3:
+    # Protocol v0.3 Sec 6.1: functions matching >=2 I/O keywords are I/O-heavy.
+    # (Fix: implementation previously required >=3 hits or >=2 categories,
+    #  which contradicted the spec — e.g. open()+read() stayed 'pure'.)
+    if total_hits >= 2:
         return "io_heavy"
     return "pure"
 
@@ -414,6 +423,7 @@ def _scan_missing_anchors(
             if node.lineno <= len(source_lines) else f"def {node.name}(...):",
             suggestion=suggestion,
             function_name=node.name,
+            severity=severity,  # "warning" pure / "info" io-heavy (protocol 6.1)
         ))
 
     return patterns
@@ -424,7 +434,7 @@ def _scan_missing_anchors(
 # ---------------------------------------------------------------------------
 
 # In-memory registry of functions known to have out-of-line anchors.
-# Populated by practify when anchors are registered, or by scanning
+# Populated by anchorlaw when anchors are registered, or by scanning
 # pract_anchors.py for _anchor_{name} functions.
 _KNOWN_ANCHORED: set = set()
 

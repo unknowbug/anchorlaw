@@ -1,11 +1,11 @@
 {
-  "name": "practify-scanner",
+  "name": "anchorlaw-scanner",
   "version": "0.1.0",
-  "description": "Defensive code pattern scanner for TypeScript/JavaScript — Practify Protocol Level 1",
+  "description": "Defensive code pattern scanner for TypeScript/JavaScript — Anchorlaw Protocol Level 1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "practify-scanner": "./dist/cli.js"
+    "anchorlaw-scanner": "./dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
@@ -17,7 +17,7 @@
     "code-quality",
     "defensive-patterns",
     "vibe-coding",
-    "practify",
+    "anchorlaw",
     "typescript",
     "ast"
   ],

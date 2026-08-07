@@ -1,9 +1,9 @@
 """
-practify-scanner CLI — scan Python code for defensive patterns.
+anchorlaw-scanner CLI — scan Python code for defensive patterns.
 
 Usage:
-    python -m practify_scanner check <path>
-    python -m practify_scanner report <path>
+    python -m anchorlaw_scanner check <path>
+    python -m anchorlaw_scanner report <path>
 """
 
 import argparse
@@ -14,7 +14,7 @@ from typing import Optional
 
 def _cmd_check(args):
     """Scan files/directories for defensive patterns."""
-    from practify_scanner.scanner import scan_file, scan_directory, summarize
+    from anchorlaw_scanner.scanner import scan_file, scan_directory, summarize
 
     path = Path(args.path)
     if path.is_file():
@@ -53,7 +53,7 @@ def _cmd_check(args):
 
 def _cmd_report(args):
     """Generate comprehensive health report."""
-    from practify_scanner.scanner import scan_file, scan_directory, summarize
+    from anchorlaw_scanner.scanner import scan_file, scan_directory, summarize
 
     path = Path(args.path)
     if path.is_file():
@@ -71,7 +71,7 @@ def _cmd_report(args):
     scan_summary = summarize(all_patterns)
 
     print("=" * 60)
-    print("  practify-scanner Code Health Report")
+    print("  anchorlaw-scanner Code Health Report")
     print("=" * 60)
 
     print(f"\n[Scanner] {scan_summary['total']} findings")
@@ -95,13 +95,13 @@ def _cmd_report(args):
         print(f"   [WARN] Excessive defensive patterns — significant dishonest-defense signals.")
     else:
         print(f"   [INFO] Some defensive patterns found. Review and add @pract.test or @pract.i_dont_know anchors.")
-        print(f"   Learn more: https://github.com/practify/practify")
+        print(f"   Learn more: https://github.com/unknowbug/anchorlaw")
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="practify-scanner",
-        description="Defensive code pattern scanner for Python — Practify Protocol Level 1",
+        prog="anchorlaw-scanner",
+        description="Defensive code pattern scanner for Python — Anchorlaw Protocol Level 1",
     )
     sub = parser.add_subparsers(dest="command", help="subcommand")
 
