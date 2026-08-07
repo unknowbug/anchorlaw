@@ -44,7 +44,7 @@ npx anchorlaw-scanner check src/
 The scanner finds:
 - **Swallowed exceptions** — `except: pass` / `catch {}`
 - **Bare exception handlers** — catching `Exception` / `any`
-- **Missing anchors** — functions with no `@pract.test` or `@pract.i_dont_know`
+- **Missing anchors** — functions with no `@pt` or `@idk`
 - **Defensive null chains** — 3+ chained `if x is None: return None`
 - **Trivial tests** — `assert f(x) == f(x)`
 - **Vague TODOs** — `// TODO: fix` without ticket reference
@@ -58,13 +58,13 @@ pip install anchorlaw
 ```python
 import anchorlaw as pract
 
-@pract.test("empty list returns empty",
+@pt("empty list returns empty",
     lambda: process([]) == [],
     source="manual: expected behavior")  # v0.3: source field records data origin
-@pract.test("keep positives",
+@pt("keep positives",
     lambda: process([-1, 0, 3, -5]) == [3],
     source="trace:process#001, output=[3] observed 2026-06-18")
-@pract.i_dont_know("behavior with massive lists (>1M items) not verified",
+@idk("behavior with massive lists (>1M items) not verified",
     source="static: not covered in traces")
 def process(data: list[int]) -> list[int]:
     return [x for x in data if x > 0]
@@ -86,7 +86,7 @@ The protocol does not prohibit — it demands proof:
 - Traditional: "You cannot divide by zero." (defensive)
 - Anchorlaw: "Prove the divisor is non-zero, or handle the zero case." (offensive)
 
-The single allowed defense is `@pract.i_dont_know` — an honest declaration that opens the battlefield for practice feedback.
+The single allowed defense is `@idk` — an honest declaration that opens the battlefield for practice feedback.
 
 ---
 

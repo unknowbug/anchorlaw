@@ -45,7 +45,7 @@ npx anchorlaw-scanner check src/
 
 - **吞噬异常** — `except: pass` / `catch {}`
 - **宽泛捕获** — `except Exception:` / `catch (e: any)`
-- **缺少实践锚点** — 公开函数既无 `@pract.test` 也无 `@pract.i_dont_know`
+- **缺少实践锚点** — 公开函数既无 `@pt` 也无 `@idk`
 - **防御性空值传导** — 连续 3 处以上 `if x is None: return None`
 - **无意义测试** — `assert f(x) == f(x)`
 - **模糊 TODO** — `// TODO: fix` 无问题追踪编号
@@ -59,13 +59,13 @@ pip install anchorlaw
 ```python
 import anchorlaw as pract
 
-@pract.test("空列表返回空",
+@pt("空列表返回空",
     lambda: process([]) == [],
     source="manual:NDark, 经验值，预期行为")  # v0.3: source 字段记录数据来源
-@pract.test("保留正数",
+@pt("保留正数",
     lambda: process([-1, 0, 3, -5]) == [3],
     source="trace:process#001, input=[-1,0,3,-5] output=[3] observed 2026-06-18")
-@pract.i_dont_know("超大列表（>1M）的行为边界尚未确定",
+@idk("超大列表（>1M）的行为边界尚未确定",
     source="static: 未在trace中覆盖大输入")
 def process(data: list[int]) -> list[int]:
     return [x for x in data if x > 0]
@@ -116,7 +116,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 
 传统开发把"写代码"和"写测试"分开。Vibe coding 让这种分离变得昂贵——AI 快速生成代码，但验证发生在事后、靠人工，并且反馈在迭代中丢失。
 
-Anchorlaw 反转了这个关系：**测试是声明的一部分，不是附属品。** 一个函数没有 `@pract.test` 也没有 `@pract.i_dont_know`，会在静态扫描时被标记——不是因为它是 buggy 的，而是因为它没有可验证的正确性证据。
+Anchorlaw 反转了这个关系：**测试是声明的一部分，不是附属品。** 一个函数没有 `@pt` 也没有 `@idk`，会在静态扫描时被标记——不是因为它是 buggy 的，而是因为它没有可验证的正确性证据。
 
 当测试在运行时失败，失败被捕获为**噪声卡**——结构化的知识，随时间积累，并可以注入回 AI 的上下文中，影响未来的代码生成。
 
@@ -127,7 +127,7 @@ Anchorlaw 反转了这个关系：**测试是声明的一部分，不是附属�
 - 传统方式："你不能除以零。"（防御）
 - Anchorlaw："证明你的除数不为零，或处理为零的情况。"（进攻）
 
-唯一允许的"防御"是 `@pract.i_dont_know`——一种打开战场、邀请实践检验的诚实声明。
+唯一允许的"防御"是 `@idk`——一种打开战场、邀请实践检验的诚实声明。
 
 ---
 
