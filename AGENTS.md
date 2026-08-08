@@ -1,12 +1,12 @@
 # Anchorlaw 项目 AGENTS.md（项目级常驻指令）
 
-> Reasonix 在本仓库工作时自动加载本文件。本文件是**索引**——协议知识按需加载（协议 v0.5 §14 Anchor Skill Manifest），铁律正文在对应 skill 里，不在本文件常驻。
+> Reasonix 在本仓库工作时自动加载本文件。本文件是**索引**——协议知识按需加载（协议 v0.6 §14 Anchor Skill Manifest + §15 Execution Topology），铁律正文在对应 skill 里，不在本文件常驻。
 
 ## 〇、开始工作前（每个 session 必做）
 
 1. `git status` 确认工作区状态（远程 = `github.com/unknowbug/anchorlaw`）
 2. 跑测试确认基线全绿：`python -m pytest --rootdir=python python/tests -q`（命令行被沙箱拦截时用包装脚本调 `pytest.main()`）
-3. 若改动涉及协议文档：同步核对 [§8 Maturity](spec/protocol-v0.5.md#8-maturity) 与 [§11 全称声称审计表](spec/protocol-v0.5.md#11-universal-claim-audit-v04)，证据必须跟着走
+3. 若改动涉及协议文档：同步核对 [§8 Maturity](spec/protocol-v0.6.md#8-maturity) 与 [§11 全称声称审计表](spec/protocol-v0.6.md#11-universal-claim-audit-v04)，证据必须跟着走
 
 ## 一、项目定位（一句话）
 
@@ -15,20 +15,22 @@
 - **第二律（可证伪）**：`@anchor.idk` 诚实声明边界 + staleness（90 天自动升级）
 - **第三律（可挑战）**：协议 §12 规则挑战流程——FP 证据强制规则降级/删除
 
-## 二、Skill 触发索引（协议 v0.5 §14，参考实现 `.reasonix/skills/`）
+## 二、Skill 触发索引（协议 v0.6 §14-§16，参考实现 `.reasonix/skills/`）
 
 > 协议知识不常驻上下文——按场景调用对应 skill，正文按需加载：
 
-| 场景 | 调用 skill | 层 |
-|------|-----------|-----|
-| 写/审 anchor 前需要语义速查 | `anchor.concepts` | L0 |
-| 改完代码待提交前（静态审查） | `anchor.scan` | L1 |
-| scanner 疑似误报（挑战规则） | `anchor.challenge` | L1 |
-| 实现/重构公开函数后（写标注） | `anchor.write` | L2 |
-| 添加 anchor 后 / CI 失败（验证） | `anchor.test` | L2 |
-| 运行时失败 / 噪声卡积压 | `anchor.noise` | L3 |
-| RE 代码无法独立编译（降级） | `anchor.degrade` | L2 |
-| **修改协议/实现本身（本仓库）** | `anchor.maintain` | L4 |
+| 场景 | 调用 skill | 层 | 执行 |
+|------|-----------|-----|------|
+| 写/审 anchor 前需要语义速查 | `anchor.concepts` | L0 | inline |
+| 改完代码待提交前（静态审查） | `anchor.scan` | L1 | subprocess |
+| scanner 疑似误报（挑战规则） | `anchor.challenge` | L1 | inline |
+| 实现/重构公开函数后（写标注） | `anchor.write` | L2 | subprocess |
+| 添加 anchor 后 / CI 失败（验证） | `anchor.test` | L2 | subprocess |
+| 运行时失败 / 噪声卡积压 | `anchor.noise` | L3 | inline |
+| RE 代码无法独立编译（降级） | `anchor.degrade` | L2 | subprocess |
+| **修改协议/实现本身（本仓库）** | `anchor.maintain` | L4 | inline |
+
+`subprocess` = 派隔离子进程执行（§15.3 skill-execution coupling），主会话只收最终答案 + 产物引用；`inline` = 主会话内执行。执行型 profiles 见 `.reasonix/skills/anchor.scout|worker|judge/`。
 
 铁律正文在 `anchor.maintain`（测试全绿、自指、文档纪律、§11 审计、提交纪律、禁止改 `E:\PYTHON\MC`）；C++/source 细节在 `anchor.write`/`anchor.concepts`。
 
@@ -36,7 +38,7 @@
 
 | 路径 | 内容 |
 |------|------|
-| `spec/protocol-v0.5.md` | **协议当前版**（v0.1/v0.3/v0.4 留档历史，不改） |
+| `spec/protocol-v0.6.md` | **协议当前版**（v0.1/v0.3/v0.4/v0.5 留档历史，不改） |
 | `python/anchorlaw/` | Python 实现（anchors/noise/cli） |
 | `python/anchorlaw-scanner/` | 静态扫描器（P1-P6 + severity layering + cpp.py） |
 | `python/tests/` | pytest（anchors/scanner/noise/cpp/skills） |

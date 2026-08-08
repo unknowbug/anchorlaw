@@ -23,6 +23,8 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
 >
+> **v0.6 update (2026-08-08):** Agent Execution Topology (§15) + Host Integration Contract (§16) — the four-layer interface surface is complete: claim (§13), knowledge (§14), execution isolation (§15), host integration (§16). Subprocess skills keep the main session clean.
+>
 > **v0.5 update (2026-08-08):** Agent Skill Manifest (§14) — layered, single-responsibility skills move protocol knowledge to on-demand playbooks, fixing agent-side attention dilution. Reference implementation ships in `.reasonix/skills/`.
 >
 > **v0.3 update (2026-06-18):** Source Provenance, Degraded Verification modes, and Verify retry cap. See [Protocol Spec v0.3](spec/protocol-v0.3.md).
@@ -98,7 +100,7 @@ The single allowed defense is `@idk` — an honest declaration that opens the ba
 anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.5.md        # Language-agnostic protocol spec (current)
+│   └── protocol-v0.6.md        # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -123,8 +125,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.5](spec/protocol-v0.5.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.5.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
+- [Protocol Specification v0.6](spec/protocol-v0.6.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.6.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

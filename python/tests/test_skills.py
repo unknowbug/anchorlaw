@@ -1,9 +1,10 @@
-"""Anchor Skill Manifest conformance tests (protocol v0.5 §14).
+"""Anchor Skill Manifest conformance tests (protocol v0.6 §14/§15).
 
 Verifies the Reasonix reference implementation (`.reasonix/skills/`) against
 the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
 
-1. manifest skill set == implementation file set
+1. manifest skill set == implementation file set (action skills only;
+   execution roles scout/worker/judge are §15 reference, not manifest entries)
 2. frontmatter valid (name present, matches directory name, description present)
 3. index description line within 120-char budget
 4. Protocol reference line present (single source of truth, §14.1)
@@ -11,20 +12,22 @@ the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
    sole sanctioned in-code hook (create_noise_card in anchor.noise)
 6. layer dependency direction (§14.2): no upward references, except L0
    `anchor.concepts` (semantic index MAY point onward to any layer)
+7. execution mode (§14.1 v0.6): body `> Execution:` matches manifest column
 """
 import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.5.md"
+PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.6.md"
 SKILLS_DIR = REPO_ROOT / ".reasonix" / "skills"
 
-# §14.6 catalog rows: | `anchor.concepts` | L0 | ...
-_MANIFEST_RE = re.compile(r"^\| `(anchor\.[a-z]+)` \| (L\d) \|", re.MULTILINE)
+# §14.6 catalog rows: | `anchor.concepts` | L0 | inline | ...
+_MANIFEST_RE = re.compile(r"^\| `(anchor\.[a-z]+)` \| (L\d) \| (inline|subprocess) \|", re.MULTILINE)
 _NAME_RE = re.compile(r"^name:\s*(\S+)\s*$", re.MULTILINE)
 _DESC_RE = re.compile(r"^description:\s*(.+?)\s*$", re.MULTILINE)
 _PROTOCOL_REF_RE = re.compile(r"^\s*>\s*Protocol:", re.MULTILINE)
 _ANCHOR_REF_RE = re.compile(r"`(anchor\.[a-z]+)`")
+_EXEC_RE = re.compile(r"^\s*>\s*Execution:\s*(inline|subprocess)\b", re.MULTILINE)
 
 LAYER_RANK = {"L0": 0, "L1": 1, "L2": 2, "L3": 3, "L4": 4}
 
@@ -34,21 +37,17 @@ def _manifest() -> dict[str, str]:
     text = PROTOCOL.read_text(encoding="utf-8")
     section = text[text.index("### 14.6"):]
     manifest = {}
-    for name, layer in _MANIFEST_RE.findall(section):
+    for name, layer, _exec in _MANIFEST_RE.findall(section):
         assert name not in manifest, f"duplicate skill in manifest: {name}"
         manifest[name] = layer
     return manifest
 
 
-def _implementations() -> dict[str, Path]:
-    """Scan .reasonix/skills/<name>/SKILL.md -> {name: path}."""
-    if not SKILLS_DIR.is_dir():
-        return {}
-    return {
-        d.name: d / "SKILL.md"
-        for d in sorted(SKILLS_DIR.iterdir())
-        if d.is_dir() and (d / "SKILL.md").is_file()
-    }
+def _manifest_execution() -> dict[str, str]:
+    """Parse §14.6 execution-mode column into {name: inline|subprocess}."""
+    text = PROTOCOL.read_text(encoding="utf-8")
+    section = text[text.index("### 14.6"):]
+    return {name: exec_mode for name, _layer, exec_mode in _MANIFEST_RE.findall(section)}
 
 
 def _frontmatter(text: str) -> dict[str, str]:
@@ -62,6 +61,36 @@ def _frontmatter(text: str) -> dict[str, str]:
             key, _, val = line.partition(":")
             fm[key.strip()] = val.strip()
     raise AssertionError("frontmatter never closed")
+
+
+def _implementations() -> dict[str, Path]:
+    """Scan action skills (non-role) -> {name: path}."""
+    if not SKILLS_DIR.is_dir():
+        return {}
+    impl = {}
+    for d in sorted(SKILLS_DIR.iterdir()):
+        f = d / "SKILL.md"
+        if not (d.is_dir() and f.is_file()):
+            continue
+        fm = _frontmatter(f.read_text(encoding="utf-8"))
+        if fm.get("kind") != "role":
+            impl[d.name] = f
+    return impl
+
+
+def _roles() -> dict[str, Path]:
+    """Scan execution-role profiles (kind: role) -> {name: path}."""
+    if not SKILLS_DIR.is_dir():
+        return {}
+    roles = {}
+    for d in sorted(SKILLS_DIR.iterdir()):
+        f = d / "SKILL.md"
+        if not (d.is_dir() and f.is_file()):
+            continue
+        fm = _frontmatter(f.read_text(encoding="utf-8"))
+        if fm.get("kind") == "role":
+            roles[d.name] = f
+    return roles
 
 
 def test_manifest_matches_implementations():
@@ -142,3 +171,31 @@ def test_layer_dependency_direction():
                 f"{name}: upward reference to {ref} "
                 f"({manifest[name]} -> {manifest[ref]})"
             )
+
+
+def test_execution_mode_matches_manifest():
+    # §14.1 v0.6: body `> Execution:` line must match the manifest column.
+    exec_modes = _manifest_execution()
+    for name, path in _implementations().items():
+        text = path.read_text(encoding="utf-8")
+        m = _EXEC_RE.search(text)
+        assert m, f"{name}: missing '> Execution:' declaration"
+        assert m.group(1) == exec_modes[name], (
+            f"{name}: body Execution {m.group(1)} != manifest {exec_modes[name]}"
+        )
+
+
+def test_roles_present_and_outside_manifest():
+    # §15 execution roles are reference-implementation profiles, NOT §14.6
+    # manifest action skills.
+    manifest = _manifest()
+    roles = _roles()
+    assert set(roles) == {"anchor.scout", "anchor.worker", "anchor.judge"}, (
+        f"execution role profiles: {sorted(roles)}"
+    )
+    for name, path in roles.items():
+        assert name not in manifest, (
+            f"{name}: execution role must not be a §14.6 manifest skill"
+        )
+        fm = _frontmatter(path.read_text(encoding="utf-8"))
+        assert fm.get("runAs") == "subagent", f"{name}: role must declare runAs: subagent"
