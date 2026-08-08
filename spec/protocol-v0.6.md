@@ -30,6 +30,14 @@
 | **Anchor registry interop** — scanner recognizes out-of-line anchors | photo_screener trial: `pract_anchors.py` invisible to scanner | [6.2 Registry-Aware Scanning](#62-registry-aware-scanning) |
 | **@i_dont_know staleness** — auto-escalate after 90 days | 待补充260607: 噪声即课题; unverified unknowns rot | [5.3 Staleness Detection](#53-staleness-detection) |
 
+## Changelog from v0.6 (post-release fixes)
+
+| Change | Trigger | Section |
+|--------|---------|---------|
+| **Source provenance implemented** — `@anchor.test`/`@anchor.idk` accept `source`; test anchors with missing/static source are INVALID (queryable, not crashing) | third-party engineering assessment: §5.5 was paper-only — README example crashed (`TypeError: test() got an unexpected keyword argument 'source'`) | [§5.5](#55-source-provenance-v03) |
+| **Stub generation fixed + naming unified** — `init` generates `anchorlaw_stub.py` from `anchorlaw_stub_template.py`; default store `.anchorlaw/`; scanner recognizes `anchorlaw_anchors.py`; docs/examples updated to `@anchor.*` | assessment: `init` silently failed (looked for `pract_stub_template.py`, Practify-rename residue); `pract_*` naming split across CLI/scanner/docs | [§2](#2-uninstall-guarantee), [§6.2](#62-registry-aware-scanning) |
+| **Summarize severity fix** — `by_severity` uses `effective_severity` | assessment: I/O missing-anchor displayed INFO but was summed as WARNING | [§6.1](#61-severity-layering) |
+
 ## Changelog from v0.5
 
 | Change | Trigger | Section |
@@ -126,19 +134,19 @@ Each anchorlaw-instrumented project contains a single stub file at the project r
 # Keep this file without anchorlaw installed: decorators degrade to no-ops.
 
 try:
-    from anchorlaw import test as _pract_test, i_dont_know as _pract_idk
+    from anchorlaw import test as _anchor_test, i_dont_know as _anchor_idk
 except ImportError:
     # anchorlaw not installed — anchors silently become no-ops.
     # Code continues to run without modification.
-    def _pract_test(description, test_fn):
+    def _anchor_test(description, test_fn, source=""):
         return lambda f: f
 
-    def _pract_idk(what):
+    def _anchor_idk(what, source=""):
         return lambda f: f
 
 # Public names
-test = _pract_test
-i_dont_know = _pract_idk
+test = _anchor_test
+i_dont_know = _anchor_idk
 ```
 
 Source files import from the stub:
@@ -387,7 +395,7 @@ When `anchorlaw test` is run, all decorated functions register their anchors. Th
 - Function found in registry with only `i_dont_know` → **do not report** (it's in honest exploration state)
 - Function found in registry with no anchors → **report MISSING_ANCHOR**
 
-This enables **out-of-line anchor files** (`pract_anchors.py`) — anchors registered on wrapper functions whose names follow the convention `_anchor_{function_name}` are associated with the target function.
+This enables **out-of-line anchor files** (`anchorlaw_anchors.py`) — anchors registered on wrapper functions whose names follow the convention `_anchor_{function_name}` are associated with the target function.
 
 ### 6.3 Pattern Definitions
 
@@ -422,7 +430,7 @@ This enables **out-of-line anchor files** (`pract_anchors.py`) — anchors regis
 |-----------|--------|-----------|-----------|----------|----------------|
 | Scanner | ✅ | ✅ | annotation-extraction | **Verified** | photo_screener: 38 findings 0 FP; 55 unit tests (v0.4); severity layering verified by tests |
 | Anchors | ✅ | — | **Experimental** | photo_screener: 18/18 tests passed, 0 bugs found, 0 regressions |
-| Source Provenance (v0.3) | — | — | **Conjecture** | Field defined in protocol. 0 RE projects have produced sourced anchors. |
+| Source Provenance (v0.3) | — | — | **Conjecture** | Implemented in Python (v0.6 post-release): `source` param accepted, INVALID when missing/static for `@anchor.test`. 0 RE projects have produced sourced anchors yet. |
 | Noise Cards | ✅ | — | **Unverified** | 0 cards accumulated |
 | AI Context | ✅ | — | **Conjecture** | 0 injection cycles run |
 | Stub Uninstall | ✅ | ✅ (comment-form) | ✅ (comment-form) | **Verified** | Tested: delete stub + anchorlaw, code still runs via no-op fallback; comment-form inert by construction |

@@ -115,10 +115,10 @@ class NoiseCard:
 class NoiseStore:
     """噪声卡持久化存储。
 
-    默认路径：.pract/noise_cards.json
+    默认路径：.anchorlaw/noise_cards.json
     """
 
-    def __init__(self, store_path: str = ".pract/noise_cards.json"):
+    def __init__(self, store_path: str = ".anchorlaw/noise_cards.json"):
         self._path = Path(store_path)
         self._cards: Dict[str, NoiseCard] = {}
         self._load()
@@ -242,11 +242,11 @@ def create_noise_card(
     """创建一张新的噪声卡并持久化。
 
     使用方法（在 except 块或测试失败处理中）：
-        import anchorlaw as pract
+        import anchorlaw
         try:
             result = my_function(bad_input)
         except Exception as e:
-            pract.create_noise_card(
+            anchorlaw.create_noise_card(
                 trigger=f"my_function({bad_input!r})",
                 function_name="my_function",
                 observed=f"抛出 {type(e).__name__}: {e}",

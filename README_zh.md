@@ -61,11 +61,11 @@ pip install anchorlaw
 ```
 
 ```python
-import anchorlaw as pract
+from anchorlaw import test as pt, i_dont_know as idk
 
 @pt("空列表返回空",
     lambda: process([]) == [],
-    source="manual:NDark, 经验值，预期行为")  # v0.3: source 字段记录数据来源
+    source="trace:process#000, input=[] output=[] observed 2026-06-18")  # v0.3: source 字段记录数据来源
 @pt("保留正数",
     lambda: process([-1, 0, 3, -5]) == [3],
     source="trace:process#001, input=[-1,0,3,-5] output=[3] observed 2026-06-18")
@@ -78,10 +78,12 @@ def process(data: list[int]) -> list[int]:
 ### 噪声卡（运行时失败积累）
 
 ```python
+import anchorlaw
+
 try:
     result = divide(6, 0)
 except Exception as e:
-    pract.create_noise_card(
+    anchorlaw.create_noise_card(
         trigger="divide(6, 0)",
         function_name="divide",
         observed=f"抛出 {type(e).__name__}",

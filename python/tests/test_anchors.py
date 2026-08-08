@@ -224,3 +224,56 @@ class TestRegistryIsolation:
         assert len(_registry.get_all()) >= 1
         _registry.clear()
         assert len(_registry.get_all()) == 0
+
+
+class TestSourceProvenance:
+    """protocol v0.3 §5.5: @anchor.test MUST carry trace/memory source."""
+
+    def test_source_accepted_and_stored(self):
+        _registry.clear()
+
+        @pract_test(
+            "double of 2 is 4",
+            lambda: anchor_src(2) == 4,
+            source="trace:src#001, offset=0x10, eax=4 observed 2026-08-08T00:00:00Z",
+        )
+        def anchor_src(x):
+            return x * 2
+
+        fa = _registry.get(anchor_src)
+        assert fa.tests[0].source.startswith("trace:")
+        assert fa.tests[0].has_valid_source
+
+    def test_missing_source_is_invalid(self):
+        _registry.clear()
+
+        @pract_test("no source", lambda: anchor_nosrc() == 1)
+        def anchor_nosrc():
+            return 1
+
+        fa = _registry.get(anchor_nosrc)
+        assert fa.tests[0].source == ""
+        assert not fa.tests[0].has_valid_source  # §5.5: missing source -> INVALID
+
+    def test_static_source_rejected_for_test(self):
+        _registry.clear()
+
+        @pract_test(
+            "static guess", lambda: anchor_static() == 1,
+            source="static:bin!fn, F5 推断",
+        )
+        def anchor_static():
+            return 1
+
+        fa = _registry.get(anchor_static)
+        assert not fa.tests[0].has_valid_source  # §5.5: static NOT allowed for @test
+
+    def test_idk_source_allowed_static(self):
+        _registry.clear()
+
+        @pract_idk("large input behavior", source="static:bin!fn@0x1400000, F5 未见边界")
+        def anchor_idk_src():
+            return 1
+
+        fa = _registry.get(anchor_idk_src)
+        assert fa.unknowns[0].source.startswith("static:")

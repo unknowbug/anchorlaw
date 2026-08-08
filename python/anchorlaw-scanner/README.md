@@ -12,7 +12,7 @@ Scans Python source code for **defensive patterns** — code constructs that sig
 |---------|----------|----------------|
 | `swallowed-exception` | ERROR | `except: pass` — exception silently discarded |
 | `bare-except` | ERROR | Blanket `except:` — catching unknown errors |
-| `missing-anchor` | WARNING | Public function without `@pract.test` or `@pract.i_dont_know` |
+| `missing-anchor` | WARNING | Public function without `@anchor.test` or `@anchor.i_dont_know` |
 | `defensive-null-chain` | WARNING | 3+ chained `if x is None: return None` |
 | `trivial-test` | WARNING | Tautological assertions like `assert f(x) == f(x)` |
 | `vague-todo` | INFO | `# TODO` without issue tracker reference |
@@ -44,7 +44,7 @@ anchorlaw-scanner is based on a simple insight:
 
 The scanner doesn't judge. It surfaces the patterns so you can decide:
 - "Yes, I know this is safe" → document why
-- "No, I'm not sure" → add a `@pract.i_dont_know` anchor
+- "No, I'm not sure" → add a `@anchor.i_dont_know` anchor
 - "Actually, this is a real problem" → fix it
 
 ## Part of the Anchorlaw Protocol
@@ -54,7 +54,7 @@ This is Level 1 of the [Anchorlaw Protocol](https://github.com/unknowbug/anchorl
 - **Level 1 (this package)**: Scanner — detect defensive patterns
 - **Level 2+**: Anchors + Noise Cards — full verification protocol
 
-For the full protocol including `@pract.test` anchors, noise card tracking, and AI context injection, install the `anchorlaw` package.
+For the full protocol including `@anchor.test` anchors, noise card tracking, and AI context injection, install the `anchorlaw` package.
 
 ## License
 

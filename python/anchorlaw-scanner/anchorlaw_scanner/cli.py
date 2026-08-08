@@ -94,7 +94,7 @@ def _cmd_report(args):
     elif errors >= 5:
         print(f"   [WARN] Excessive defensive patterns — significant dishonest-defense signals.")
     else:
-        print(f"   [INFO] Some defensive patterns found. Review and add @pract.test or @pract.i_dont_know anchors.")
+        print(f"   [INFO] Some defensive patterns found. Review and add @anchor.test or @anchor.i_dont_know anchors.")
         print(f"   Learn more: https://github.com/unknowbug/anchorlaw")
 
 

@@ -106,7 +106,7 @@ def _cmd_test(args):
 
     results = run_tests()
     if not results:
-        _safe_print(f"{INFO} No registered anchor tests. Use @pract.test to anchor functions.")
+        _safe_print(f"{INFO} No registered anchor tests. Use @anchor.test to anchor functions.")
         return
 
     passed = 0
@@ -273,30 +273,39 @@ def _cmd_curriculum(args):
 
 
 def _cmd_init(args):
-    """Initialize .pract directory and generate pract_stub.py."""
-    pract_dir = Path(".pract")
-    pract_dir.mkdir(exist_ok=True)
-    (pract_dir / "noise_cards.json").touch()
+    """Initialize .anchorlaw directory and generate anchorlaw_stub.py."""
+    anchor_dir = Path(".anchorlaw")
+    anchor_dir.mkdir(exist_ok=True)
+    (anchor_dir / "noise_cards.json").touch()
 
-    # Generate pract_stub.py from template
-    stub_path = Path("pract_stub.py")
+    # Detect legacy Practify-era files (pract_stub.py / .pract/) so existing
+    # projects are not silently left behind after the naming unification.
+    legacy_stub = Path("pract_stub.py")
+    legacy_dir = Path(".pract")
+    if legacy_stub.exists() or legacy_dir.exists():
+        _safe_print(f"{WARN} Legacy Practify files detected (pract_stub.py / .pract/).")
+        _safe_print("   anchorlaw now uses anchorlaw_stub.py and .anchorlaw/.")
+        _safe_print("   Remove the old files and migrate noise cards manually.")
+
+    # Generate anchorlaw_stub.py from template
+    stub_path = Path("anchorlaw_stub.py")
     if not stub_path.exists():
         import shutil
-        template = Path(__file__).parent / "pract_stub_template.py"
+        template = Path(__file__).parent / "anchorlaw_stub_template.py"
         if template.exists():
             shutil.copy(template, stub_path)
-            _safe_print(f"{PASS} Generated pract_stub.py")
+            _safe_print(f"{PASS} Generated anchorlaw_stub.py")
             _safe_print("   Import from this file in your source:")
-            _safe_print('   from pract_stub import test as pt, i_dont_know as idk')
+            _safe_print('   from anchorlaw_stub import test as pt, i_dont_know as idk')
             _safe_print("   To uninstall anchorlaw: delete this file + anchorlaw/ directory.")
             _safe_print("   Anchors will auto-degrade to no-ops if anchorlaw is not installed.")
         else:
-            _safe_print(f"{WARN} pract_stub template not found — skipping stub generation")
+            _safe_print(f"{WARN} anchorlaw_stub template not found — skipping stub generation")
     else:
-        _safe_print(f"{INFO} pract_stub.py already exists — skipping")
+        _safe_print(f"{INFO} anchorlaw_stub.py already exists — skipping")
 
-    _safe_print(f"{PASS} Initialized anchorlaw at {pract_dir.absolute()}")
-    _safe_print("   Noise cards: .pract/noise_cards.json")
+    _safe_print(f"{PASS} Initialized anchorlaw at {anchor_dir.absolute()}")
+    _safe_print("   Noise cards: .anchorlaw/noise_cards.json")
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +351,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_ai.add_argument("--all", action="store_true", help="Include resolved cards")
 
     sub.add_parser("curriculum", help="Export curriculum from noise")
-    sub.add_parser("init", help="Initialize .pract working directory")
+    sub.add_parser("init", help="Initialize .anchorlaw working directory")
 
     return parser
 

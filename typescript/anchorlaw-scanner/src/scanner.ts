@@ -53,14 +53,14 @@ const PATTERN_MESSAGES: Record<PatternType, string> = {
   [PatternType.SWALLOWED_EXCEPTION]:
     "Exception swallowed without handling. " +
     "Is this known to be safe (document why)? " +
-    "Or do you not know how to handle it (use @pract.i_dont_know)?",
+    "Or do you not know how to handle it (use @anchor.i_dont_know)?",
   [PatternType.BARE_EXCEPT]:
     "Broad catch clause catches unknown errors. " +
     "You don't know what you're catching — this is a defensive programming signal. " +
     "Specify the exact error type.",
   [PatternType.MISSING_ANCHOR]:
     "Public function has no anchorlaw anchor " +
-    "(@pract.test or @pract.i_dont_know). " +
+    "(@anchor.test or @anchor.i_dont_know). " +
     "On what basis does it claim correctness?",
   [PatternType.DEFENSIVE_NULL_CHAIN]:
     "Chained null checks returning null — you are propagating the problem " +
@@ -327,7 +327,7 @@ class Scanner {
           ) ?? false;
         if (isPrivate) return;
 
-        // Check for @pract.test or @pract.i_dont_know in JSDoc
+        // Check for @anchor.test or @anchor.i_dont_know in JSDoc
         const jsDoc = (node as any).jsDoc as
           | ts.JSDoc[]
           | undefined;
@@ -336,8 +336,8 @@ class Scanner {
           for (const doc of jsDoc) {
             if (doc.comment && typeof doc.comment === "string") {
               if (
-                doc.comment.includes("@pract.test") ||
-                doc.comment.includes("@pract.i_dont_know")
+                doc.comment.includes("@anchor.test") ||
+                doc.comment.includes("@anchor.i_dont_know")
               ) {
                 hasAnchor = true;
                 break;

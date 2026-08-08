@@ -68,12 +68,12 @@ class PatternType(Enum):
                 "You don't know what you're catching — this is a defensive programming signal. "
                 "Specify the exact exception type.",
             PatternType.MISSING_ANCHOR:
-                "Public function has no anchorlaw anchor (@pract.test or @pract.i_dont_know). "
+                "Public function has no anchorlaw anchor (@anchor.test or @anchor.i_dont_know). "
                 "On what basis does it claim correctness?",
             PatternType.VAGUE_TODO:
                 "TODO without issue tracker reference. "
                 "This is a 'I know there's a problem but won't commit to fixing it' defensive signal. "
-                "If the issue is known, reference a ticket. If uncertain, use @pract.i_dont_know.",
+                "If the issue is known, reference a ticket. If uncertain, use @anchor.i_dont_know.",
             PatternType.DEFENSIVE_NULL_CHAIN:
                 "Multiple chained null checks returning null — you are propagating the problem "
                 "rather than solving it. Should this value ever be null? "
@@ -367,7 +367,7 @@ def _scan_missing_anchors(
     tree: ast.AST,
     source_lines: List[str],
 ) -> List[DefensivePattern]:
-    """Detect module-level public functions without pract decorators.
+    """Detect module-level public functions without anchor decorators.
 
     Severity layering per protocol v0.2 Sec 6.1:
     - Pure logic functions → WARNING
@@ -385,18 +385,22 @@ def _scan_missing_anchors(
         if category in ("private", "test"):
             continue
 
-        # Check decorators for pract.test or pract.i_dont_know
-        has_pract = False
+        # Check decorators for anchorlaw.test / anchor.test or short aliases.
+        # Legacy @pract.* (Practify-era) is still recognized so already-anchored
+        # code is not mis-flagged after upgrade; the names are deprecated.
+        has_anchor = False
         for decorator in node.decorator_list:
             dec_name = _get_decorator_name(decorator)
             if dec_name and (
-                "pract.test" in dec_name or "pract.i_dont_know" in dec_name
-                or dec_name in ("pt", "idk")  # short aliases from pract_stub
+                dec_name in ("pt", "idk")  # short aliases from anchorlaw_stub
+                or "anchorlaw.test" in dec_name or "anchorlaw.i_dont_know" in dec_name
+                or "anchor.test" in dec_name or "anchor.i_dont_know" in dec_name
+                or "pract.test" in dec_name or "pract.i_dont_know" in dec_name  # legacy
             ):
-                has_pract = True
+                has_anchor = True
                 break
 
-        if has_pract:
+        if has_anchor:
             continue
 
         # Check anchor registry for out-of-line anchors
@@ -410,8 +414,8 @@ def _scan_missing_anchors(
             if category == "pure"
             else (
                 "This function depends on external resources (I/O). "
-                "Consider adding @pract.i_dont_know to declare cognitive boundaries, "
-                "or @pract.test with mocked resources for critical paths."
+                "Consider adding @anchor.i_dont_know to declare cognitive boundaries, "
+                "or @anchor.test with mocked resources for critical paths."
             )
         )
 
@@ -435,7 +439,7 @@ def _scan_missing_anchors(
 
 # In-memory registry of functions known to have out-of-line anchors.
 # Populated by anchorlaw when anchors are registered, or by scanning
-# pract_anchors.py for _anchor_{name} functions.
+# anchorlaw_anchors.py for _anchor_{name} functions.
 _KNOWN_ANCHORED: set = set()
 
 
@@ -452,12 +456,12 @@ def _check_registry(function_name: str) -> bool:
 
 
 def _load_anchors_from_project(scanned_dir: str) -> None:
-    """Scan the project directory for pract_anchors.py and extract registrations.
+    """Scan the project directory for anchorlaw_anchors.py and extract registrations.
 
     Per protocol v0.2 Sec 6.2: out-of-line anchor files are recognized by
     the scanner when they call register_anchored_function().
     """
-    anchor_file = os.path.join(scanned_dir, "pract_anchors.py")
+    anchor_file = os.path.join(scanned_dir, "anchorlaw_anchors.py")
     if not os.path.exists(anchor_file):
         return
     try:
@@ -671,5 +675,7 @@ def summarize(patterns: List[DefensivePattern]) -> Dict:
     for p in patterns:
         type_label = p.pattern_type.label
         summary["by_type"][type_label] = summary["by_type"].get(type_label, 0) + 1
-        summary["by_severity"][p.pattern_type.severity] += 1
+        # Use effective_severity (protocol 6.1): I/O missing-anchor downgrades
+        # to INFO; the summary must match the per-item display.
+        summary["by_severity"][p.effective_severity] += 1
     return summary

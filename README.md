@@ -60,11 +60,11 @@ pip install anchorlaw
 ```
 
 ```python
-import anchorlaw as pract
+from anchorlaw import test as pt, i_dont_know as idk
 
 @pt("empty list returns empty",
     lambda: process([]) == [],
-    source="manual: expected behavior")  # v0.3: source field records data origin
+    source="trace:process#000, input=[] output=[] observed 2026-06-18")  # v0.3: source field records data origin
 @pt("keep positives",
     lambda: process([-1, 0, 3, -5]) == [3],
     source="trace:process#001, output=[3] observed 2026-06-18")

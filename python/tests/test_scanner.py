@@ -97,6 +97,19 @@ class TestMissingAnchor:
         assert anchor
         assert anchor[0].effective_severity == "info"
 
+    def test_summarize_uses_effective_severity(self, tmp_path):
+        # Regression: summarize must count I/O missing-anchor as INFO, not
+        # fall back to the pattern type's WARNING (v0.6 post-release fix).
+        f = _write(tmp_path, "a.py", """
+            def load_file(path):
+                with open(path) as fp:
+                    return fp.read()
+        """)
+        patterns = scan_file(f)
+        s = summarize(patterns)
+        assert s["by_severity"]["info"] >= 1
+        assert s["by_severity"]["warning"] == 0  # no false WARNING inflation
+
     def test_test_prefixed_skipped(self, tmp_path):
         f = _write(tmp_path, "a.py", """
             def test_something():
@@ -113,11 +126,23 @@ class TestMissingAnchor:
 
     def test_anchored_function_not_flagged(self, tmp_path):
         f = _write(tmp_path, "a.py", """
-            from pract_stub import test as pt
+            from anchorlaw_stub import test as pt
 
             @pt("double of 2 is 4", lambda: compute(2) == 4)
             def compute(x):
                 return x * 2
+        """)
+        assert not _missing(scan_file(f))
+
+    def test_legacy_pract_anchor_still_recognized(self, tmp_path):
+        # Legacy @pract.* (Practify-era) must not be mis-flagged after the
+        # naming unification — already-anchored code keeps working.
+        f = _write(tmp_path, "a.py", """
+            import pract
+
+            @pract.test("legacy anchored", lambda: old_fn() == 1)
+            def old_fn():
+                return 1
         """)
         assert not _missing(scan_file(f))
 

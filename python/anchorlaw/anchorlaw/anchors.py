@@ -6,7 +6,7 @@
 - IDontKnowAnchor: 诚实型防御——"这个边界我尚未明确"
 - AnchorRegistry: 全局注册表，追踪所有锚定
 
-第一律在此体现为：每个 @pract.test 都是一个"可在有限步骤内完成并可观测结果
+第一律在此体现为：每个 @anchor.test 都是一个"可在有限步骤内完成并可观测结果
 的实践检验方案"。没有锚点的函数产生警告（可编译但不可消除）。
 
 同一律则的反身性：anchorlaw 自身的公开函数也需要注册锚点或被标记为 i_dont_know。
@@ -32,6 +32,9 @@ class TestAnchor:
     """
     description: str
     test_fn: Callable[[], bool]
+    # Source provenance (protocol v0.3 §5.5): where the test vector data came
+    # from — trace/memory snapshot, observation timestamp. Empty = INVALID.
+    source: str = ""
     source_file: str = ""
     source_line: int = 0
     # Execution tracking (v0.4, P1): how many times this anchor actually ran.
@@ -60,6 +63,11 @@ class TestAnchor:
                 traceback_text=traceback.format_exc(),
             )
 
+    @property
+    def has_valid_source(self) -> bool:
+        """§5.5: @anchor.test source MUST be non-empty and of type trace/memory."""
+        return self.source.startswith("trace:") or self.source.startswith("memory:")
+
 
 @dataclass
 class IDontKnowAnchor:
@@ -75,6 +83,9 @@ class IDontKnowAnchor:
     this anchor escalates from INFO to WARNING (staleness detection).
     """
     what: str
+    # Source provenance (protocol v0.3 §5.5): optional for @anchor.idk;
+    # static-analysis origin is allowed here (unlike @anchor.test).
+    source: str = ""
     source_file: str = ""
     source_line: int = 0
     created_at: str = ""  # ISO 8601, set at registration time
@@ -169,19 +180,21 @@ class AnchorRegistry:
         func: Callable,
         description: str,
         test_fn: Callable[[], bool],
+        source: str = "",
     ) -> TestAnchor:
         fa = self._get_or_create(func)
-        anchor = TestAnchor(description=description, test_fn=test_fn)
+        anchor = TestAnchor(description=description, test_fn=test_fn, source=source)
         fa.tests.append(anchor)
         # Notify scanner registry (protocol v0.2 Sec 6.2)
         _notify_scanner(func)
         return anchor
 
-    def register_unknown(self, func: Callable, what: str) -> IDontKnowAnchor:
+    def register_unknown(self, func: Callable, what: str, source: str = "") -> IDontKnowAnchor:
         from datetime import datetime, timezone
         fa = self._get_or_create(func)
         anchor = IDontKnowAnchor(
             what=what,
+            source=source,
             created_at=datetime.now(timezone.utc).isoformat(),
         )
         fa.unknowns.append(anchor)
@@ -320,43 +333,53 @@ def _qualname(func: Callable) -> str:
 # Public decorators
 # ---------------------------------------------------------------------------
 
-def test(description: str, test_fn: Callable[[], bool]):
+def test(description: str, test_fn: Callable[[], bool], source: str = ""):
     """装饰器：为函数附加实践锚定测试。
 
     用法：
-        @pract.test("正数除法", lambda: divide(6, 2) == 3)
-        @pract.test("分母为零", lambda: divide(6, 0) == Err("DivByZero"))
+        @anchor.test("正数除法", lambda: divide(6, 2) == 3,
+                    source="trace:div#001, offset=0x10, eax=3 observed 2026-08-08")
+        @anchor.test("分母为零", lambda: divide(6, 0) == Err("DivByZero"),
+                    source="memory:const_table!div#002")
         def divide(a, b):
             ...
+
+    source (protocol v0.3 §5.5): provenance string, MUST be non-empty and of
+    type trace/memory for @anchor.test. Missing or static source = INVALID
+    (rejected at review).
 
     测试是被锚定函数声明的一部分，不是外部附属品。
     装饰器本身不修改函数行为——仅注册锚点元数据。
 
     也支持独立测试函数（不锚定到特定函数）：
-        @pract.test("某集成场景", lambda: ...)
+        @anchor.test("某集成场景", lambda: ...)
         def integration_check():
             ...
     """
     def decorator(fn):
-        _registry.register_test(fn, description, test_fn)
+        _registry.register_test(fn, description, test_fn, source=source)
         return fn
     return decorator
 
 
-def i_dont_know(what: str):
+def i_dont_know(what: str, source: str = ""):
     """装饰器：诚实声明"我不知道"。
 
     用法：
-        @pract.i_dont_know("大文件（>1GB）场景的行为边界尚未确定")
+        @anchor.i_dont_know("大文件（>1GB）场景的行为边界尚未确定",
+                            source="static:bin!func@0x1400077c0, F5 未见边界处理")
         def process_file(path):
             ...
+
+    source (protocol v0.3 §5.5): optional; static-analysis origin is allowed
+    here (unlike @anchor.test).
 
     唯物实践论唯一允许的"防御"。不是关闭战场——
     "这个问题我不讨论"——而是开放战场：
     "这个边界尚未经过实践检验，标记为待验证。"
     """
     def decorator(fn):
-        _registry.register_unknown(fn, what)
+        _registry.register_unknown(fn, what, source=source)
         return fn
     return decorator
 

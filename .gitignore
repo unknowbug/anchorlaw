@@ -21,7 +21,7 @@ dist/
 Thumbs.db
 
 # Anchorlaw local data (user-specific, created by `anchorlaw init`)
-.pract/
+.anchorlaw/
 build/
 
 # Execution-topology artifact stores (protocol v0.6 §15.2 default layout)

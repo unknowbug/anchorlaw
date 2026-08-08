@@ -12,7 +12,7 @@ Scans TypeScript/JavaScript source code for **defensive patterns** — code cons
 |---------|----------|----------------|
 | `swallowed-exception` | ERROR | `catch {}` — exception silently discarded, or `catch (e) { console.log(e) }` |
 | `bare-except` | ERROR | `catch (e: any)` / bare `catch` — catching unknown errors |
-| `missing-anchor` | WARNING | Exported function without `@pract.test` or `@pract.i_dont_know` JSDoc annotation |
+| `missing-anchor` | WARNING | Exported function without `@anchor.test` or `@anchor.i_dont_know` JSDoc annotation |
 | `defensive-null-chain` | WARNING | 3+ chained `if (x === null) return null` patterns |
 | `trivial-test` | WARNING | Tautological assertions like `expect(result).toBe(result)` |
 | `vague-todo` | INFO | `// TODO` without issue tracker reference |
@@ -66,7 +66,7 @@ anchorlaw-scanner is based on a simple insight:
 The scanner doesn't judge. It surfaces the patterns so you can decide:
 
 - "Yes, I know this is safe" → document why
-- "No, I'm not sure" → add a `@pract.i_dont_know` JSDoc annotation
+- "No, I'm not sure" → add a `@anchor.i_dont_know` JSDoc annotation
 - "Actually, this is a real problem" → fix it
 
 ### Using JSDoc Annotations
@@ -77,9 +77,9 @@ The scanner checks for anchorlaw annotations in JSDoc comments:
 /**
  * Process a list of items, keeping only positive values.
  *
- * @pract.test "empty list returns empty" — process([]) === []
- * @pract.test "keep positives" — process([-1, 0, 3, -5]) === [3]
- * @pract.i_dont_know "behavior with massive lists (>1M) not verified"
+ * @anchor.test "empty list returns empty" — process([]) === []
+ * @anchor.test "keep positives" — process([-1, 0, 3, -5]) === [3]
+ * @anchor.i_dont_know "behavior with massive lists (>1M) not verified"
  */
 export function process(data: number[]): number[] {
   return data.filter((x) => x > 0);
@@ -93,7 +93,7 @@ Without these annotations, `process` would trigger a `missing-anchor` warning �
 | Aspect | Python | TypeScript |
 |--------|--------|-----------|
 | AST parser | `ast` (stdlib) | TypeScript Compiler API |
-| Anchor detection | Decorators (`@pract.test`) | JSDoc annotations (`@pract.test`) |
+| Anchor detection | Decorators (`@anchor.test`) | JSDoc annotations (`@anchor.test`) |
 | File types | `.py` | `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs` |
 | Maturity | **Verified** | **In Development** |
 
@@ -109,7 +109,7 @@ This is Level 1 of the [Anchorlaw Protocol](https://github.com/unknowbug/anchorl
 - **Level 1 (this package)**: Scanner — detect defensive patterns
 - **Level 2+**: Anchors + Noise Cards — full verification protocol
 
-For the Python full protocol including `@pract.test` decorators, noise card tracking, and AI context injection, see the [Python anchorlaw package](https://github.com/unknowbug/anchorlaw/tree/main/python/anchorlaw).
+For the Python full protocol including `@anchor.test` decorators, noise card tracking, and AI context injection, see the [Python anchorlaw package](https://github.com/unknowbug/anchorlaw/tree/main/python/anchorlaw).
 
 ## Contributing
 
