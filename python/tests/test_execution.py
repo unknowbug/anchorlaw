@@ -1,4 +1,4 @@
-"""Execution Topology conformance tests (protocol v0.8 §15/§16).
+"""Execution Topology conformance tests (protocol v0.9 §15/§16).
 
 Verifies the execution layer of the reference implementation:
 
@@ -11,6 +11,8 @@ Verifies the execution layer of the reference implementation:
 4. role profiles: only the review gate (judge) is sanctioned — kind: role,
    runAs: subagent (v0.8 convergence-gate model); scout/worker must not
    reappear as reference roles
+5. judge institutionalization (v0.9): trigger points are normative and
+   mirrored across protocol §15.4 / AGENTS.md force chain / judge SKILL
 """
 import re
 from pathlib import Path
@@ -106,3 +108,120 @@ def test_no_unapproved_subagent_roles():
         assert not skill_file.exists(), (
             f"{name} must not exist: v0.8 removed non-judge subagent roles"
         )
+
+
+def test_judge_trigger_points_normative_in_protocol():
+    # v0.9 §15.4: the review gate is a mandatory checkpoint at specific
+    # decision points, not only a closing gate.
+    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
+    for marker in (
+        "**Judge trigger points (v0.9)**",
+        "**Self-review ≠ review gate (v0.9)**",
+        "**Plan-time judge placement (v0.9)**",
+    ):
+        assert marker in proto, f"protocol §15.4 missing marker: {marker}"
+    # confirmed gating MUST be normative (not advisory)
+    assert "MUST precede any human grant of `confirmed`" in proto
+    # producer self-check MUST NOT be presented as the review gate
+    assert "self-check MUST NOT be presented as the §15.4 review gate" in proto
+    # plan-time placement MUST be normative
+    assert "MUST pre-place judge steps at the trigger points" in proto
+
+
+def test_agents_force_chain_lists_judge_triggers():
+    # v0.9 AGENTS.md: index-only discipline — AGENTS must point at §15.4 /
+    # anchor.judge rather than mirroring protocol text (mirror drift is the
+    # root cause of review loops; §15.4 D-tier guard).
+    agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    # index pointer exists
+    assert "协议 §15.4" in agents and "只索引不复制" in agents
+    # force-chain skeleton retained (原创工作流，非镜像)
+    for marker in ("验证", "审查", "提交"):
+        assert marker in agents, f"AGENTS.md force chain missing: {marker}"
+    # must NOT copy the protocol's normative bullet text (mirror drift guard)
+    for banned in ("MUST 有 judge 审查意见", "重大转向 MUST judge", "自评 ≠ judge"):
+        assert banned not in agents, (
+            f"AGENTS.md must not mirror §15.4 normative text: {banned}"
+        )
+
+
+def test_judge_skill_documents_trigger_points():
+    # v0.9 judge reference profile: trigger-point section aligned with §15.4.
+    skill = (SKILLS_DIR / "anchor.judge" / "SKILL.md").read_text(encoding="utf-8")
+    assert "## 强制触发点（v0.9 §15.4）" in skill
+    assert "`confirmed` 授予前" in skill
+    for marker in ("结案重开", "根因定论", "范围决策"):
+        assert marker in skill, f"judge SKILL trigger list missing: {marker}"
+    assert "自评 ≠ 审查" in skill
+
+
+def test_section11_audits_v09_claims():
+    # v0.9 self-reference (protocol §11): every new universal claim MUST be
+    # audited in the §11 table; the audit rows must be present so a §15.4
+    # change cannot silently desync the claim audit.
+    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
+    audit_rows = (
+        '`confirmed` MUST be granted only after a judge review opinion exists',
+        "Major redirections (case reopening, root-cause determination, significant scope",
+        "Producer self-review does NOT constitute the review gate",
+        "Workflow plans MUST pre-place judge steps at trigger points",
+        "Auto-promoted `candidate` (Full mode) MUST note the absence",
+    )
+    audit_lines = [
+        line
+        for line in proto.splitlines()
+        if any(row in line for row in audit_rows)
+    ]
+    assert len(audit_lines) == len(audit_rows), (
+        f"§11 audit table must carry all v0.9 claims (found {len(audit_lines)})"
+    )
+    for line in audit_lines:
+        assert "scoped (unverified)" in line, (
+            "v0.9 audit rows must stay honest (unverified): " + line[:80]
+        )
+
+
+def test_verification_termination_gates_in_protocol():
+    # v0.9 §15.4 termination gates: the convergence gate MUST terminate on
+    # mechanical criteria — external test set, three-tier opinions, round cap.
+    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
+    assert "**Verification termination gates (v0.9)**" in proto
+    # A: termination on the external test set; no in-place test additions
+    assert "The external test set passes" in proto
+    assert "MUST NOT add tests during the verification phase" in proto
+    # B: three tiers, only blocking blocks
+    assert "exactly three tiers" in proto
+    assert "(i) test failure" in proto and "(ii) build/compile failure" in proto
+    assert "MUST NOT require more than one verification" in proto
+    # C: round cap counted in the plan, escalate on round 4
+    assert "counted explicitly in the workflow plan" in proto
+    assert "escalate to the human" in proto
+    # E: evidence conflicts go through §12 or recorded exclusion, never the loop
+    assert "never by\n  entering the verification loop" in proto or "never by\n  entering" in proto
+
+
+def test_verification_termination_gates_in_agents():
+    # v0.9 AGENTS.md: the termination gates must be executable from the
+    # force chain — review changes MUST re-run the external test set
+    # (approved plan + existing suite, NOT producer-added tests).
+    agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    assert "验证终止门禁" in agents
+    # index-only: points at the protocol, does not re-copy the gate list
+    assert "只索引不复制" in agents
+    assert "协议 §15.4" in agents
+    # the gate list itself lives in §15.4 / anchor.judge, not in AGENTS
+    for banned in ("A 外部测试集", "B 意见分级", "C 轮次上限", "E 证据冲突"):
+        assert banned not in agents, (
+            f"AGENTS.md must not mirror the §15.4 gate list: {banned}"
+        )
+
+
+def test_judge_skill_documents_opinion_tiers():
+    # v0.9 judge reference profile: three-tier opinion grading aligned with
+    # §15.4 termination gates (only blocking blocks).
+    skill = (SKILLS_DIR / "anchor.judge" / "SKILL.md").read_text(encoding="utf-8")
+    assert "## 意见分级" in skill
+    assert "blocking" in skill and "should-fix" in skill and "info" in skill
+    assert "测试失败" in skill and "编译失败" in skill and "协议声称与实现" in skill
+    assert "不得归入 blocking" in skill
+    assert "排除误报的验证不得超过 1 轮" in skill

@@ -23,6 +23,8 @@ Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测�
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
 >
+> **v0.9 更新 (2026-08-08):** judge 制度化——审查门是决策点的强制检查点，不只是收尾门：`confirmed` 授予前必须有 judge 审查意见；重大转向（结案重开/根因定论/范围决策）必须过 judge；自评不构成审查门；计划阶段预置 judge 步骤（§15.4）。验证终止门禁：收敛以机械判据终止（外部测试集、三层意见分级——blocking 仅限测试/编译/声称矛盾、3 轮上限）——不再有无尽 review 循环（§15.4）。
+>
 > **v0.8 更新 (2026-08-08):** 收敛门模型——编程是线性收敛：主 Agent 全程持有上下文并亲自写；唯一受认可的 subagent 角色是审查门（judge）。`anchor.write`/`anchor.test` 改为 `inline`。
 >
 > **v0.7 更新 (2026-08-08):** 首个宿主实践反馈（CoreSwap 8576-24blocks）并入——source 落盘证据 + `probe` source 类型（§5.5）、retry cap 范围澄清（§9.4）、验证执行者分离（§9.6）、order-dependent 语义等价（§13）、judge 三源交叉核对（§15.4）。
@@ -118,7 +120,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.8.md#9-degraded-verification)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.9.md#9-degraded-verification)。
 
 ---
 
@@ -148,7 +150,7 @@ anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
-│   └── protocol-v0.8.md        # 语言无关的协议规范（当前版）
+│   └── protocol-v0.9.md        # 语言无关的协议规范（当前版）
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
@@ -174,7 +176,7 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.8](spec/protocol-v0.8.md)
+- [协议规范 v0.9](spec/protocol-v0.9.md)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

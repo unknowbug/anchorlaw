@@ -23,6 +23,8 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
 >
+> **v0.9 update (2026-08-08):** Judge institutionalization — the review gate is a mandatory checkpoint at decision points, not only a closing gate: `confirmed` requires a prior judge opinion; major redirections (case reopening, root-cause determination, scope decisions) require judge review; self-review does not constitute the review gate; plans pre-place judge steps (§15.4). Verification termination gates: convergence terminates on mechanical criteria (external test set, three-tier review opinions with blocking limited to test/compile/claim contradictions, 3-round cap) — no more endless review loops (§15.4).
+>
 > **v0.8 update (2026-08-08):** Convergence-gate model — programming is linear convergence; the main agent writes with full context; the only sanctioned subagent role is the review gate (judge). `anchor.write`/`anchor.test` are `inline`.
 >
 > **v0.7 update (2026-08-08):** First-host practice feedback (CoreSwap 8576-24blocks) absorbed — source artifact requirement + `probe` source type (§5.5), retry-cap scope (§9.4), verification executor separation (§9.6), order-dependent semantic equivalence (§13), judge three-source baseline (§15.4).
@@ -104,7 +106,7 @@ The single allowed defense is `@idk` — an honest declaration that opens the ba
 anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.8.md        # Language-agnostic protocol spec (current)
+│   └── protocol-v0.9.md        # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -129,8 +131,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.8](spec/protocol-v0.8.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.8.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
+- [Protocol Specification v0.9](spec/protocol-v0.9.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.9.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

@@ -5,7 +5,7 @@ description: 运行验证——执行 anchorlaw test 按 §5.4 健康状态解�
 
 # anchor.test — 运行验证
 
-> Protocol: spec/protocol-v0.8.md §5.4 (Anchor Health States), §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.9.md §5.4 (Anchor Health States), §9 (Degraded Verification)
 > Layer: L2 (Anchors)
 > Execution: inline
 

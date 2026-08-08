@@ -5,7 +5,7 @@ description: 静态审查——跑 scanner 找 P1-P6 防御性模式，按 ERR/W
 
 # anchor.scan — 静态审查
 
-> Protocol: spec/protocol-v0.8.md §6 (Scanner Pattern Catalog), §7 Level 1
+> Protocol: spec/protocol-v0.9.md §6 (Scanner Pattern Catalog), §7 Level 1
 > Layer: L1 (Scanner)
 > Execution: subprocess
 

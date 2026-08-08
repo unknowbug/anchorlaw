@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.judge — 审查角色（subprocess）
 
-> Protocol: spec/protocol-v0.8.md §15.4 (Consistency Contract), §16 (Host Integration)
+> Protocol: spec/protocol-v0.9.md §15.4 (Consistency Contract), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -16,6 +16,28 @@ runAs: subagent
 - 本角色在**隔离子进程**中运行：工作上下文绝不进入主会话。
 - **只出审查意见，绝不直接修改产物 status。** 状态提升由主会话/宿主人类裁决。
 - `confirmed` 只能由宿主侧人类授予——审查意见只能建议 `candidate`。
+
+## 强制触发点（v0.9 §15.4）
+
+judge 不是只在任务收尾跑——以下决策点 MUST 触发审查（工作流计划在规划阶段就 MUST 预置这些 judge 步骤）：
+
+1. **`confirmed` 授予前** — 人类授予 `confirmed` 前 MUST 已有本角色的审查意见；无审查意见时 `candidate` 是最高可达状态。
+2. **重大转向前** — 结案重开（推翻已确认结论）/ 根因定论（如「无 bug」断言）/ 范围决策（增减验证范围），行动前 MUST 先审查被推翻/被断言的结论。
+3. **阶段结论授予 `candidate`** — SHOULD 触发审查；未审查即授予时，缺失审查意见 MUST 在产物中标注。
+
+**自评 ≠ 审查**：主 Agent/执行者的自检与验证是证据，不是本角色的审查——审查 MUST 由独立执行者完成（本角色即独立 subprocess）。
+
+**计划预置（§15.4 Plan-time placement）**：工作流计划（todo 列表）MUST 在规划阶段预置本角色的触发步骤；到达触发点而无预置审查步骤时，MUST 停下补加审查再继续，不得事后补跑当作合规。
+
+## 意见分级（v0.9 §15.4 Verification termination gates）
+
+审查意见分恰好三层——**只有第 1 层阻塞提交**，其余层不阻塞（记录去向即可）：
+
+1. **blocking** — 仅限三类机械判据：① 测试失败；② 编译失败；③ 协议声称与实现相矛盾。除此之外任何意见不得归入 blocking。
+2. **should-fix** — 建议性修改：记录处置去向（采纳 / 记为 debt），不阻塞提交。
+3. **info** — 记录/观察：可忽略。与本地可验证证据冲突的意见（如编码误报）归入 info 并记录排除理由；**排除误报的验证不得超过 1 轮**。
+
+对应义务（对主 Agent，§15.4）：任何采纳意见导致的改动 → MUST 重新跑外部测试集（批准计划 + 仓库既有测试集，不含验证阶段自加测试），测试绿即验证完成；同一问题验证 3 轮未收敛 → MUST 停止并升级人类；意见与证据冲突 → 走 §12 或记录排除，不进验证循环重检。
 
 ## 审查清单（对主 Agent 或执行者的交付）
 

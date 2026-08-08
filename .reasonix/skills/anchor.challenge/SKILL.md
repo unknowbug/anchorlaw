@@ -5,7 +5,7 @@ description: 规则挑战——scanner 疑似误报时按 §12 四步流程上�
 
 # anchor.challenge — 规则挑战流程
 
-> Protocol: spec/protocol-v0.8.md §12 (Rule Challenge Process)
+> Protocol: spec/protocol-v0.9.md §12 (Rule Challenge Process)
 > Layer: L1 (Scanner)
 > Execution: inline
 
