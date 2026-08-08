@@ -576,7 +576,7 @@ A skill MUST be defined by exactly these properties:
 
 ### 14.2 Layer Model
 
-Skill layers map directly onto the [Implementation Compliance Levels (§7)](#7-implementation-compliance-levels), reusing the protocol's existing layering instead of inventing a parallel one:
+Skill layers map onto the [Implementation Compliance Levels (§7)](#7-implementation-compliance-levels) for L0–L3, with an additional maintain layer for the protocol's own repository:
 
 | Layer | Maps to | Skills |
 |-------|---------|--------|

@@ -27,7 +27,7 @@
 | 实现/重构公开函数后（写标注） | `anchor.write` | L2 |
 | 添加 anchor 后 / CI 失败（验证） | `anchor.test` | L2 |
 | 运行时失败 / 噪声卡积压 | `anchor.noise` | L3 |
-| RE 代码无法独立编译（降级） | `anchor.degrade` | L4 |
+| RE 代码无法独立编译（降级） | `anchor.degrade` | L2 |
 | **修改协议/实现本身（本仓库）** | `anchor.maintain` | L4 |
 
 铁律正文在 `anchor.maintain`（测试全绿、自指、文档纪律、§11 审计、提交纪律、禁止改 `E:\PYTHON\MC`）；C++/source 细节在 `anchor.write`/`anchor.concepts`。

@@ -102,7 +102,7 @@ def test_protocol_reference_present():
 def test_cli_binding_contract():
     # §14.4: no library-import guidance (any import form), except the sole
     # sanctioned in-code hook: create_noise_card inside anchor.noise.
-    import_re = re.compile(r"^\s*(?:import\s+anchorlaw|from\s+anchorlaw\b)", re.MULTILINE)
+    import_re = re.compile(r"^\s*(?:import\s+anchorlaw\b|from\s+anchorlaw\b)", re.MULTILINE)
     for name, path in _implementations().items():
         text = path.read_text(encoding="utf-8")
         for m in import_re.finditer(text):
@@ -111,6 +111,20 @@ def test_cli_binding_contract():
                 f"({m.group(0)!r}) only sanctioned for the create_noise_card "
                 "hook in anchor.noise"
             )
+
+
+def test_layer_matches_manifest():
+    # SKILL.md body declares `> Layer: Lx`; guard against drift between the
+    # protocol manifest and the reference implementation (both directions).
+    layer_re = re.compile(r"^\s*>\s*Layer:\s*(L\d)\b", re.MULTILINE)
+    manifest = _manifest()
+    for name, path in _implementations().items():
+        text = path.read_text(encoding="utf-8")
+        m = layer_re.search(text)
+        assert m, f"{name}: missing '> Layer:' declaration"
+        assert m.group(1) == manifest[name], (
+            f"{name}: body Layer {m.group(1)} != manifest Layer {manifest[name]}"
+        )
 
 
 def test_layer_dependency_direction():
