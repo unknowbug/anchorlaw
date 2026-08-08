@@ -5,9 +5,9 @@ description: 写 anchor 标注——@anchor.test/@anchor.idk 加合法 source（
 
 # anchor.write — 写 Anchor 标注
 
-> Protocol: spec/protocol-v0.7.md §5.1/§5.2/§5.5, §13
+> Protocol: spec/protocol-v0.8.md §5.1/§5.2/§5.5, §13
 > Layer: L2 (Anchors)
-> Execution: subprocess
+> Execution: inline
 
 ## 触发场景
 

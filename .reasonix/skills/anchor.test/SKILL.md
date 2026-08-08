@@ -5,9 +5,9 @@ description: 运行验证——执行 anchorlaw test 按 §5.4 健康状态解�
 
 # anchor.test — 运行验证
 
-> Protocol: spec/protocol-v0.7.md §5.4 (Anchor Health States), §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.8.md §5.4 (Anchor Health States), §9 (Degraded Verification)
 > Layer: L2 (Anchors)
-> Execution: subprocess
+> Execution: inline
 
 ## 触发场景
 
@@ -22,7 +22,7 @@ description: 运行验证——执行 anchorlaw test 按 §5.4 健康状态解�
    - `unverified` → 只有 idk：探索区，正常
    - `stale_unknown` → idk 超 90 天且函数改过（§5.3）→ 升级处理
    - `uncompilable` → 代码无法独立编译 → 按 §9 降级验证分类（Full/Partial/Degraded）处理，不硬跑
-3. 无法独立编译的代码（RE 场景）先按 §9 分类模式，再决定能否运行。
+3. 无法独立编译的代码先按 §9 分类模式，再决定能否运行。
 
 ## 输出
 

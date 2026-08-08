@@ -1,4 +1,4 @@
-"""Execution Topology conformance tests (protocol v0.6 §15/§16).
+"""Execution Topology conformance tests (protocol v0.8 §15/§16).
 
 Verifies the execution layer of the reference implementation:
 
@@ -8,10 +8,9 @@ Verifies the execution layer of the reference implementation:
 2. confidence state machine: one-way draft -> candidate -> confirmed,
    `confirmed` reserved for the host's human (§15.4)
 3. review gate: judge output is opinion-only, never a status change (§15.4)
-4. role profiles: scout/worker/judge exist, kind: role, runAs: subagent
-5. worker-skill coupling: anchor.worker's operating manual references
-   subprocess-mode action skills (§15.3) — the "subprocess pairs with skills"
-   mechanism made concrete
+4. role profiles: only the review gate (judge) is sanctioned — kind: role,
+   runAs: subagent (v0.8 convergence-gate model); scout/worker must not
+   reappear as reference roles
 """
 import re
 from pathlib import Path
@@ -90,7 +89,8 @@ def test_review_gate_is_opinion_only():
 
 
 def test_role_profiles_declare_subprocess():
-    for role in ("anchor.scout", "anchor.worker", "anchor.judge"):
+    # v0.8: the only sanctioned reference subagent role is the review gate.
+    for role in ("anchor.judge",):
         skill_file = SKILLS_DIR / role / "SKILL.md"
         assert skill_file.is_file(), f"{role}: role profile missing"
         fm = _frontmatter(skill_file.read_text(encoding="utf-8"))
@@ -98,26 +98,11 @@ def test_role_profiles_declare_subprocess():
         assert fm.get("runAs") == "subagent", f"{role}: must declare runAs: subagent"
 
 
-def test_worker_couples_to_subprocess_action_skills():
-    # §15.3: the worker's operating manual is built from action skills whose
-    # execution mode is subprocess — the concrete "subprocess pairs with skills".
-    worker = (SKILLS_DIR / "anchor.worker" / "SKILL.md").read_text(encoding="utf-8")
-    refs = set(re.findall(r"`anchor\.(write|test|scan|degrade)`", worker))
-    assert refs, "anchor.worker must reference action skills as its operating manual"
-    for ref in refs:
-        text = (SKILLS_DIR / f"anchor.{ref}" / "SKILL.md").read_text(encoding="utf-8")
-        assert re.search(r"^\s*>\s*Execution:\s*subprocess\b", text, re.MULTILINE), (
-            f"anchor.{ref}: must be subprocess-mode to couple with the worker (§15.3)"
+def test_no_unapproved_subagent_roles():
+    # v0.8 convergence-gate model: only judge is sanctioned; scout/worker
+    # must not reappear as reference roles.
+    for name in ("anchor.scout", "anchor.worker"):
+        skill_file = SKILLS_DIR / name / "SKILL.md"
+        assert not skill_file.exists(), (
+            f"{name} must not exist: v0.8 removed non-judge subagent roles"
         )
-
-
-def test_scout_artifacts_scoped_to_investigations():
-    # §15.2 default layout: scout writes .investigations/; any mention of
-    # .artifacts/ must be a disclaimer (worker's territory), never a claim.
-    scout = (SKILLS_DIR / "anchor.scout" / "SKILL.md").read_text(encoding="utf-8")
-    assert ".investigations/" in scout, "scout must write .investigations/"
-    for line in scout.splitlines():
-        if ".artifacts/" in line:
-            assert ("不写" in line) or ("not write" in line.lower()) or ("worker" in line), (
-                f"scout must not claim .artifacts/ as its output: {line.strip()}"
-            )

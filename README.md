@@ -16,12 +16,14 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 |-----------|--------|-----------|----------|
 | **Scanner** | ✅ [anchorlaw-scanner](python/anchorlaw-scanner/) | ✅ [anchorlaw-scanner](typescript/anchorlaw-scanner/) | **VERIFIED** — tested on real projects |
 | **Anchors** | ✅ [anchorlaw](python/anchorlaw/) | — | **EXPERIMENTAL** — API stable, no efficacy data |
-| **Source Provenance (v0.3/v0.7)** | ✅ `source` param + probe type (v0.7) | — | **SCOPED** — implemented in Python (source param, INVALID when missing/static on test, `probe:` type v0.7); 1 RE project (CoreSwap) produced sourced anchors |
+| **Source Provenance (v0.3/v0.7)** | ✅ `source` param + probe type (v0.7) | — | **SCOPED** — implemented in Python (source param, INVALID when missing/static on test, `probe:` type v0.7); 1 project (CoreSwap) produced sourced anchors |
 | **Noise Cards** | ✅ [anchorlaw](python/anchorlaw/) | — | **UNVERIFIED** — schema defined, no accumulated data |
 | **AI Context** | ✅ [anchorlaw](python/anchorlaw/) | — | **CONJECTURE** — format defined, no A/B test |
-| **Degraded Verification (v0.3)** | — | — | **CONJECTURE** — modes defined, no RE project has exercised Partial/Degraded paths |
+| **Degraded Verification (v0.3)** | — | — | **CONJECTURE** — modes defined, no project beyond the reference host has exercised Partial/Degraded paths |
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
+>
+> **v0.8 update (2026-08-08):** Convergence-gate model — programming is linear convergence; the main agent writes with full context; the only sanctioned subagent role is the review gate (judge). `anchor.write`/`anchor.test` are `inline`.
 >
 > **v0.7 update (2026-08-08):** First-host practice feedback (CoreSwap 8576-24blocks) absorbed — source artifact requirement + `probe` source type (§5.5), retry-cap scope (§9.4), verification executor separation (§9.6), order-dependent semantic equivalence (§13), judge three-source baseline (§15.4).
 >
@@ -102,7 +104,7 @@ The single allowed defense is `@idk` — an honest declaration that opens the ba
 anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.7.md        # Language-agnostic protocol spec (current)
+│   └── protocol-v0.8.md        # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -127,8 +129,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.7](spec/protocol-v0.7.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.7.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
+- [Protocol Specification v0.8](spec/protocol-v0.8.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.8.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

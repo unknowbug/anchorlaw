@@ -4,7 +4,8 @@ Verifies the Reasonix reference implementation (`.reasonix/skills/`) against
 the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
 
 1. manifest skill set == implementation file set (action skills only;
-   execution roles scout/worker/judge are §15 reference, not manifest entries)
+   execution roles are §15 reference, not manifest entries; v0.8: only
+   the review gate judge is sanctioned)
 2. frontmatter valid (name present, matches directory name, description present)
 3. index description line within 120-char budget
 4. Protocol reference line present (single source of truth, §14.1)
@@ -13,12 +14,13 @@ the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
 6. layer dependency direction (§14.2): no upward references, except L0
    `anchor.concepts` (semantic index MAY point onward to any layer)
 7. execution mode (§14.1 v0.6): body `> Execution:` matches manifest column
+8. execution roles: only the review gate (judge) is sanctioned (v0.8)
 """
 import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.7.md"
+PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.8.md"
 SKILLS_DIR = REPO_ROOT / ".reasonix" / "skills"
 
 # §14.6 catalog rows: | `anchor.concepts` | L0 | inline | ...
@@ -187,11 +189,11 @@ def test_execution_mode_matches_manifest():
 
 def test_roles_present_and_outside_manifest():
     # §15 execution roles are reference-implementation profiles, NOT §14.6
-    # manifest action skills.
+    # manifest action skills. v0.8: only the review gate (judge) is sanctioned.
     manifest = _manifest()
     roles = _roles()
-    assert set(roles) == {"anchor.scout", "anchor.worker", "anchor.judge"}, (
-        f"execution role profiles: {sorted(roles)}"
+    assert set(roles) == {"anchor.judge"}, (
+        f"execution role profiles: {sorted(roles)} (only judge is sanctioned, v0.8)"
     )
     for name, path in roles.items():
         assert name not in manifest, (
