@@ -16,12 +16,14 @@ Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测�
 |-----------|--------|-----------|--------|
 | **扫描器** | ✅ [anchorlaw-scanner](python/anchorlaw-scanner/) | ✅ [anchorlaw-scanner](typescript/anchorlaw-scanner/) | **已验证** — 在真实项目上测试通过 |
 | **锚点系统** | ✅ [anchorlaw](python/anchorlaw/) | — | **实验性** — API 稳定，缺乏实践效能数据 |
-| **Source Provenance (v0.3)** | — | — | **猜想** — 字段已定义，0个RE项目产出过带source的anchor |
+| **Source Provenance (v0.3/v0.7)** | ✅ `source` 参数 + probe 类型（v0.7） | — | **SCOPED** — Python 已实现（source 参数、缺失/static 对 test 标 INVALID、`probe:` 类型 v0.7）；1 个 RE 项目（CoreSwap）产出过带 source 的 anchor |
 | **噪声卡** | ✅ [anchorlaw](python/anchorlaw/) | — | **未验证** — schema 已定义，无项目积累超过 10 张卡 |
 | **AI 上下文注入** | ✅ [anchorlaw](python/anchorlaw/) | — | **猜想** — 格式已定义，未做 A/B 对照实验 |
 | **降级验证 (v0.3)** | — | — | **猜想** — 三种模式已定义，无RE项目走过Partial/Degraded路径 |
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
+>
+> **v0.7 更新 (2026-08-08):** 首个宿主实践反馈（CoreSwap 8576-24blocks）并入——source 落盘证据 + `probe` source 类型（§5.5）、retry cap 范围澄清（§9.4）、验证执行者分离（§9.6）、order-dependent 语义等价（§13）、judge 三源交叉核对（§15.4）。
 >
 > **v0.6 更新 (2026-08-08):** Agent Execution Topology（§15）+ Host Integration Contract（§16）——四层接口面完整：声称（§13）/ 知识（§14）/ 执行隔离（§15）/ 宿主接入（§16）。subprocess 型 skill 让主会话保持干净。
 >
@@ -114,7 +116,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.6.md#9-degraded-verification)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.7.md#9-degraded-verification)。
 
 ---
 
@@ -144,7 +146,7 @@ anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
-│   └── protocol-v0.6.md        # 语言无关的协议规范（当前版）
+│   └── protocol-v0.7.md        # 语言无关的协议规范（当前版）
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
@@ -170,7 +172,7 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.6](spec/protocol-v0.6.md)
+- [协议规范 v0.7](spec/protocol-v0.7.md)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

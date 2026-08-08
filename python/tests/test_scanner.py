@@ -110,6 +110,38 @@ class TestMissingAnchor:
         assert s["by_severity"]["info"] >= 1
         assert s["by_severity"]["warning"] == 0  # no false WARNING inflation
 
+    def test_source_artifact_missing_warns(self, tmp_path):
+        # §5.5 v0.7 Source Artifact Requirement: no .investigations/.artifacts
+        # record → WARN (source-artifact-missing), not a silent PASS.
+        _write(tmp_path, "a.py", '''
+            @anchor.test("probe assert", lambda: True,
+                         source="probe:block_probe!SURFBIOME#003")
+            def fn():
+                pass
+        ''')
+        results = scan_directory(str(tmp_path))
+        flat = [p for plist in results.values() for p in plist]
+        missing = [p for p in flat if p.pattern_type.label == "source-artifact-missing"]
+        assert missing, "source without on-disk record must WARN (v0.7)"
+
+    def test_source_artifact_present_no_warn(self, tmp_path):
+        # Record exists under .investigations/ → no source-artifact-missing.
+        rec_dir = tmp_path / ".investigations"
+        rec_dir.mkdir()
+        (rec_dir / "regression-record.md").write_text(
+            "SURFBIOME#003: -biomeDump 812 73 -337 = badlands\n", encoding="utf-8"
+        )
+        _write(tmp_path, "a.py", '''
+            @anchor.test("probe assert", lambda: True,
+                         source="probe:block_probe!SURFBIOME#003")
+            def fn():
+                pass
+        ''')
+        results = scan_directory(str(tmp_path))
+        flat = [p for plist in results.values() for p in plist]
+        missing = [p for p in flat if p.pattern_type.label == "source-artifact-missing"]
+        assert not missing, "record present → no WARN expected"
+
     def test_test_prefixed_skipped(self, tmp_path):
         f = _write(tmp_path, "a.py", """
             def test_something():

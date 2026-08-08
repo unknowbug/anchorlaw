@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.judge — 审查角色（subprocess）
 
-> Protocol: spec/protocol-v0.6.md §15.4 (Consistency Contract), §16 (Host Integration)
+> Protocol: spec/protocol-v0.7.md §15.4 (Consistency Contract), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -19,11 +19,19 @@ runAs: subagent
 
 ## 审查清单（对 worker 产物）
 
-1. **证据完整性**：`@anchor.test` 的 source 字段是否满足 §5.5（trace/memory，非 static）？缺失 → 驳回意见
+**三源交叉核对（v0.7，§15.4 Judge review baseline）**——审查 MUST 交叉核对，防止交付快照滞后：
+1. `.artifacts` 交付快照（worker/subagent 产出）
+2. **git HEAD + 工作区 diff**（代码实际应用版——subagent 交付后可能被宿主修改/合并）
+3. 验证/回归记录（`.investigations/` 下 regression 类文档）
+三者不一致时（如快照旧于工作区），**以工作区实际状态为准**并标注差异。
+
+其余检查项：
+1. **证据完整性**：`@anchor.test` 的 source 字段是否满足 §5.5（trace/memory/probe，非 static）？缺失 → 驳回意见
 2. **置信度状态**：产物 status 是否合法（draft/candidate；出现 confirmed 且非人类授予 → 标记违规）
 3. **产物契约**：是否落盘 + 索引已更新（§15.2）？缺失 → 驳回意见
-4. **噪声卡历史**：该函数有无未解决噪声卡（§3）？有 → 意见中标注
-5. **retry cap**：Lift→Verify 循环是否 ≤3（§9.4）？超限 → 意见中标注「回 Scout 取新证据」
+4. **source 落盘证据（v0.7 §5.5）**：source 引用的验证记录是否有 on-disk artifact（命令 + 输出摘要）？缺失 → 意见中标注
+5. **噪声卡历史**：该函数有无未解决噪声卡（§3）？有 → 意见中标注
+6. **retry cap**：逆向假设的 Lift→Verify 循环是否 ≤3（§9.4，工程修复不计）？超限 → 意见中标注「回 Scout 取新证据」
 
 ## 产出
 

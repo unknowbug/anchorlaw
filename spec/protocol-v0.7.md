@@ -1,10 +1,17 @@
-# Anchorlaw Protocol v0.6
+# Anchorlaw Protocol v0.7
 
 > **语言无关的代码验证协议规范**
 >
 > "任何声称都必须有可验证的实践锚点。"
 >
 > Status: **Working Draft**. Components are at different maturity levels — see [Maturity](#maturity).
+>
+> v0.7: first-host practice feedback absorbed — CoreSwap 8576-24blocks task
+> (2026-08-08) exercised the execution topology and produced five protocol
+> patches: source artifact requirement (§5.5, incl. new `probe` source type),
+> retry-cap scope clarification (§9.4), verification executor separation
+> (§9.6), order-dependent semantic equivalence (§13), and judge three-source
+> review baseline (§15.4).
 >
 > v0.6: completed the four-layer interface surface — added Agent Execution
 > Topology (§15, execution isolation with skill coupling) and the Host
@@ -29,6 +36,17 @@
 | **Missing anchor severity layering** — I/O functions get INFO, not WARNING | photo_screener trial: 21 warnings, many on `load_and_preprocess` etc. | [6.1 Severity Layering](#61-severity-layering) |
 | **Anchor registry interop** — scanner recognizes out-of-line anchors | photo_screener trial: `pract_anchors.py` invisible to scanner | [6.2 Registry-Aware Scanning](#62-registry-aware-scanning) |
 | **@i_dont_know staleness** — auto-escalate after 90 days | 待补充260607: 噪声即课题; unverified unknowns rot | [5.3 Staleness Detection](#53-staleness-detection) |
+
+## Changelog from v0.6
+
+| Change | Trigger | Section |
+|--------|---------|---------|
+| **Source artifact requirement + `probe` source type** — `source` MUST have an on-disk evidence artifact (command + output summary in `.investigations/`/`.artifacts/`); scan gate checks existence (WARN); `probe:<binary>!<entry>#<id>` added as a source type | CoreSwap 8576-24blocks: judge challenged "did the probe actually run?" — source was format-valid but no mechanism required the verification record to be findable; `probe:` was in practice but undefined in §5.5 | [§5.5](#55-source-provenance-v03) |
+| **Retry-cap scope clarification** — the 3-attempt cap counts *reverse-engineering hypothesis* verification rounds, NOT engineering bug fixes | CoreSwap SearchTree port: 3 iterations all crashed (null pointer → C++ exception → MSVC long 32-bit truncation), all engineering fixes — miscounting the cap would force abandoning a fixable port | [§9.4](#94-retry-cap-anti-entropy) |
+| **Verification executor separation** — analysis (static) and verification (runtime, tool-requiring) may be performed by different executors; layered labels reflect actual execution; handoff = command template + criteria → executor runs + persists raw output → analyst interprets | CoreSwap: analysis subagent sandbox could not run block_probe/gradle; runtime verification was done by the main session | [§9.6](#96-verification-executor-separation-v07) |
+| **Order-dependent semantic equivalence** — result equivalence is insufficient for order-dependent semantics (tie-break, cache order, traversal order, query-sequence dependence) | CoreSwap biome tie-break: C++ linear find `<` picks forest, vanilla SearchTree tree-order picks badlands; Java `previousResultNode` cache makes tie results depend on query sequence — static result-equivalence check cannot detect it | [§13](#13-protocol-generality-anchor-abstraction-v04) |
+| **Judge three-source review baseline** — review MUST cross-check artifact snapshot vs git HEAD/working-tree diff vs verification records; working tree wins | CoreSwap judge read only the `.artifacts` snapshot and mis-reported "32-bit unfixed" after the 64-bit fix was applied by the main session | [§15.4](#154-consistency-contract) |
+| **Version bump** v0.6 → v0.7 | five normative patches from first-host practice | [§10](#10-versioning) |
 
 ## Changelog from v0.6 (post-release fixes)
 
@@ -339,6 +357,7 @@ source="<source_type>:<binary_or_file>!<function>#<id>, offset=<addr>, <key_obse
 |------|---------|:--:|:--:|
 | `trace` | Dynamic debugging: register/memory snapshot from Frida/x64dbg/etc. | ✅ | ✅ |
 | `memory` | Memory dump: extracted constant tables, vtables, string tables | ✅ | ✅ |
+| `probe` (v0.7) | Independent probe binary: compiled test harness whose parseable output asserts the behavior (e.g. `block_probe` for biome checks) | ✅ | ✅ |
 | `static` | Static analysis inference (F5 output, IDA disassembly, Ghidra decompiler) | ❌ | ✅ |
 
 **Rule:** @pt MUST use `trace` or `memory` source. @pt with `static` source or without source → INVALID (rejected at review).
@@ -362,6 +381,10 @@ source="<source_type>:<binary_or_file>!<function>#<id>, offset=<addr>, <key_obse
 ```
 
 **Implementation note:** The `source` parameter is a string. Implementations MAY validate its format but MUST preserve it verbatim. The `anchorlaw_stub.py`-based approach passes `source` as an additional keyword argument to the decorator; when anchorlaw is not installed, the stub silently discards it (the anchor degrades to no-op but the source string remains in source code for audit).
+
+**Rule (v0.7): Source Artifact Requirement.** `source` MUST be more than format-valid — the verification record it references MUST be findable on disk: the command that produced it and an output summary, stored under `.investigations/` or `.artifacts/` (e.g. a `regression-record.md` entry). The scan gate MUST check existence of the referenced record (at least WARN level: when a `source` references a probe/record with no on-disk artifact, warn — do not allow a silent PASS). Scope: this requirement applies to runtime-derived sources (`trace`, `memory`, `probe`); a `static` source (allowed only for `@anchor.idk`) is an inference without a run record and is exempt.
+
+Rationale (CoreSwap 8576-24blocks): after adding `@anchor.test(..., source="probe:block_probe!SURFBIOME#003")`, the scan validated only the format; the judge challenged "did the probe actually run?" — it had run (`-biomeDump 812 73 -337 = badlands`) but the protocol had no mechanism requiring the verification record to be persisted, so `regression-record.md` had to be written afterwards. The value of `source` is reproducibility, and reproducibility presupposes the verification record can be found.
 
 ---
 
@@ -430,14 +453,14 @@ This enables **out-of-line anchor files** (`anchorlaw_anchors.py`) — anchors r
 |-----------|--------|-----------|-----------|----------|----------------|
 | Scanner | ✅ | ✅ | annotation-extraction | **Verified** | photo_screener: 38 findings 0 FP; 55 unit tests (v0.4); severity layering verified by tests |
 | Anchors | ✅ | — | **Experimental** | photo_screener: 18/18 tests passed, 0 bugs found, 0 regressions |
-| Source Provenance (v0.3) | — | — | **Conjecture** | Implemented in Python (v0.6 post-release): `source` param accepted, INVALID when missing/static for `@anchor.test`. 0 RE projects have produced sourced anchors yet. |
+| Source Provenance (v0.3) | — | — | **Scoped (first-host practice)** | Implemented in Python (v0.6 post-release + v0.7): `source` param accepted, INVALID when missing/static for `@anchor.test`; `probe:` type added v0.7. CoreSwap 8576-24blocks produced `probe:block_probe!SURFBIOME#003` anchors + regression records. |
 | Noise Cards | ✅ | — | **Unverified** | 0 cards accumulated |
 | AI Context | ✅ | — | **Conjecture** | 0 injection cycles run |
 | Stub Uninstall | ✅ | ✅ (comment-form) | ✅ (comment-form) | **Verified** | Tested: delete stub + anchorlaw, code still runs via no-op fallback; comment-form inert by construction |
 | Degraded Verification (v0.3) | — | — | **Conjecture** | Modes defined. No RE project has exercised Partial/Degraded paths. |
 | Agent Skills (v0.5) | — | — | **Conjecture** | §14 manifest defined. Reasonix reference implementation ships with manifest conformance tests (v0.5). No third-party agent trial yet. |
-| Execution Topology (v0.6) | — | — | **Conjecture** | §15 isolation/artifact/consistency contracts defined. Reasonix reference ships subprocess profiles (v0.6) + conformance tests. No host-side trial yet. |
-| Host Integration Contract (v0.6) | — | — | **Conjecture** | §16 interface points defined. No host has implemented the contract yet — RE-Framework integration deferred by design (hosts implement interface points, not adaptation). |
+| Execution Topology (v0.6) | — | — | **Scoped (first-host trial)** | §15 contracts defined. CoreSwap 8576-24blocks (2026-08-08) exercised subprocess roles/judge/artifact chain; produced 5 patches (absorbed v0.7: §9.6 executor separation, §15.4 judge baseline). Reference conformance tests ship. |
+| Host Integration Contract (v0.6) | — | — | **Scoped (first-host trial)** | §16 interface points defined. CoreSwap acted as first host via RE-Framework conventions; boundary clauses held (no framework restructuring). R3 (host-platform todo matching) logged for the Reasonix maintainers, outside the protocol. |
 
 ---
 
@@ -491,6 +514,12 @@ When Partial or Degraded mode is active, the Lift→Verify cycle has a **hard ca
 
 Rationale: repeatedly tweaking B1 hypotheses (Lift code) without new A-layer data (traces) is the definition of process entropy (实践偏离:过程熵增). The cap breaks this cycle by refusing to let B1 iterate in isolation.
 
+**Scope Clarification (v0.7):** the 3-attempt cap counts **reverse-engineering hypothesis verification rounds** — repeatedly adjusting a B1 hypothesis (a model of *how the mechanism works*) with no new A-layer data (trace/probe) is process entropy and consumes the cap. **Engineering fixes do NOT consume the cap**: fixing implementation defects (compilation failures, crashes, runtime errors) may iterate indefinitely until correct. Distinguishing criterion:
+- Hypothesis verification: changes the *understanding* of the mechanism; verifies whether the understanding is correct → counts toward the cap
+- Engineering fix: changes an *implementation defect*; verifies whether the program runs as already-confirmed semantics → does not count
+
+Rationale (CoreSwap 8576-24blocks): the SearchTree port (MultiNoiseUtil.SearchTree C++ version) iterated 3 versions, all crashing (null pointer → C++ exception → MSVC long 32-bit truncating INT64_MAX to -1) — every iteration was an engineering defect fix, unrelated to reverse-engineering hypotheses; miscounting the cap would have forced abandoning a fixable correct port. The host human adjudicated.
+
 ### 9.5 Degraded Mode Honesty Statement
 
 When operating in Partial or Degraded mode, tools and exports MUST prefix their output with:
@@ -499,13 +528,23 @@ When operating in Partial or Degraded mode, tools and exports MUST prefix their 
 
 This is not defensive — it is an honest declaration of the current verification ceiling. The protocol remains useful: anchors document hypotheses with provenance, noise cards accumulate known failures, and the structure preserves everything needed for full verification when A-layer conditions permit.
 
+### 9.6 Verification Executor Separation (v0.7)
+
+Analysis (static, no runtime) and verification (runtime, tool-requiring) MAY be performed by different executors — especially when an analysis subprocess sandbox has no shell or blocks executables.
+
+1. **Layered labels reflect actual execution**: Full/Partial/Degraded describe the *actual means at verification execution time*, not the analyst's intent. An analysis artifact MUST NOT advance to `candidate` on static result-matching alone without runtime verification evidence (unless explicitly declared Degraded with an honest statement).
+2. **Verification handoff**: the analyst produces a "command template + expected criteria"; the executor runs it and persists the raw output; the raw output returns to the analyst for interpretation. The executor executes but does not interpret; the analyst interprets but does not fabricate execution.
+3. **Artifact chain completeness**: the handed-off command, the raw output, and the interpretation MUST reference each other under `.investigations/` / `.artifacts/`; a missing link means verification is incomplete.
+
+Rationale (CoreSwap 8576-24blocks): the analysis subagent sandbox could not run block_probe/gradle, so all runtime verification was run by the main session. The manual flow worked (worker produces template → main session executes without interpreting → worker interprets), but it relied on self-discipline and needed to be protocolized.
+
 ---
 
 ## 10. Versioning
 
 - Protocol versions are `v{major}.{minor}`.
 - Minor version changes MUST be backward-compatible (old noise cards remain readable).
-- Current version: **v0.6** — pre-stable. All components subject to change based on practice feedback.
+- Current version: **v0.7** — pre-stable. All components subject to change based on practice feedback.
 
 ---
 
@@ -541,6 +580,11 @@ Per [§0](#0-key-words-and-universal-quantifier-discipline), every universal cla
 | "Subprocess MUST return only final answer + artifact references" | §15.2 | Reference role profiles follow this; isolation itself is host capability | ⚠️ scoped (reference implementation) |
 | "Review gate MUST NOT change status directly" | §15.4 | `test_review_gate_is_opinion_only` covers the judge reference profile | ⚠️ scoped (reference implementation) |
 | "Host MUST implement the four interface points" | §16.1/§16.3 | No host has implemented the contract yet (Conjecture) | ⚠️ scoped (unverified) |
+| "`source` references MUST have an on-disk artifact; scan gate WARNs on missing" | §5.5 (v0.7) | Reference scanner implements the existence check; CoreSwap workflow persisted regression records | ⚠️ scoped (reference implementation + first-host practice) |
+| "Retry cap counts hypothesis rounds, not engineering fixes" | §9.4 (v0.7) | CoreSwap SearchTree port (3 crash iterations, all engineering) adjudicated by host human | ⚠️ scoped (first-host practice) |
+| "Verification executor separation: layered labels reflect actual execution" | §9.6 (v0.7) | CoreSwap analysis subagent sandbox lacked shell; main session executed | ⚠️ scoped (first-host practice) |
+| "Order-dependent semantics MUST be explicitly annotated/verified" | §13 (v0.7) | CoreSwap biome tie-break: static result-equivalence missed forest-vs-badlands | ⚠️ scoped (first-host practice) |
+| "Judge MUST cross-check artifact snapshot vs git diff vs verification records" | §15.4 (v0.7) | CoreSwap stale-snapshot mis-report ("32-bit unfixed") after main-session fix | ⚠️ scoped (first-host practice) |
 
 ---
 
@@ -572,6 +616,16 @@ Implementations MUST follow:
 - Scanner patterns (P1-P6) are defined language-agnostically; each implementation maps them to its language's syntax (e.g. `except:` in Python ↔ `catch (...)` in C++).
 
 The C++ form was validated against a real header-inline project (CoreSwap, `density.h`, 842 lines): annotations extracted correctly, zero false positives.
+
+**Order-dependent semantic equivalence (v0.7):** three-language equivalence by default verifies *result equivalence* (same input → same output). For **order-dependent semantics** (tie-break, cache-hit order, traversal order, query-sequence dependence), result equivalence is insufficient to prove semantic equivalence.
+
+Restored points (P1 or above) involving ordering/caching/tie-break/traversal MUST:
+
+1. Explicitly annotate the order-dependence in the `@anchor` description (e.g. "tie-break takes the tree-order-first entry")
+2. Verify **determinism**: repeated runs with the same input produce stable results
+3. Verify **query-sequence alignment**: if the reference implementation's result depends on the call sequence (e.g. Java `ThreadLocal` `previousResultNode` cache, fixed traversal order in `populateBiomes`), the C++ implementation MUST replicate that sequence or prove the result is sequence-independent
+
+Rationale (CoreSwap 8576-24blocks): the biome tie-break — C++ linear `find` with strict `<` picks the first entry (forest), while vanilla `MultiNoiseUtil.SearchTree` tree-order traversal picks badlands (and the Java `previousResultNode` cache makes the tie result depend on the query sequence). Static result-equivalence matching (same point, 6-dimension bit-identical) could not detect this difference; tie semantics and query sequence must be verified explicitly.
 
 ---
 
@@ -749,6 +803,23 @@ The coupling flow (SHOULD):
 - A review gate (Judge) MAY examine artifacts and issue review opinions, but
   MUST NOT change a status directly — the human approves promotion.
 - The retry cap from [§9.4](#94-retry-cap-anti-entropy) applies per function.
+
+**Judge review baseline (v0.7)** — the judge MUST cross-check three sources to
+prevent stale delivery snapshots:
+
+1. The `.artifacts` delivery snapshot (worker/subagent output)
+2. git HEAD + working-tree diff (the code as actually applied — a subagent
+   delivery may have been modified/merged by the host afterwards)
+3. Verification/regression records (regression-type documents under
+   `.investigations/`)
+
+When the three disagree (e.g. snapshot older than the working tree), the
+working tree is authoritative and the discrepancy MUST be noted.
+
+Rationale (CoreSwap 8576-24blocks): the judge reviewed only the `.artifacts`
+snapshot, while the SearchTree `Node::getSquaredDistance` 64-bit fix was
+applied by the main session — the judge mis-reported "32-bit unfixed" based on
+the stale snapshot.
 
 ### 15.5 Interface-Surface Audit (v0.6)
 

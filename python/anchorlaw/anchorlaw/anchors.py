@@ -65,8 +65,12 @@ class TestAnchor:
 
     @property
     def has_valid_source(self) -> bool:
-        """§5.5: @anchor.test source MUST be non-empty and of type trace/memory."""
-        return self.source.startswith("trace:") or self.source.startswith("memory:")
+        """§5.5: @anchor.test source MUST be non-empty and of type trace/memory/probe."""
+        return (
+            self.source.startswith("trace:")
+            or self.source.startswith("memory:")
+            or self.source.startswith("probe:")
+        )
 
 
 @dataclass

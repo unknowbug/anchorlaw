@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.scout — 勘探角色（subprocess）
 
-> Protocol: spec/protocol-v0.6.md §15 (Execution Topology), §16 (Host Integration)
+> Protocol: spec/protocol-v0.7.md §15 (Execution Topology), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 

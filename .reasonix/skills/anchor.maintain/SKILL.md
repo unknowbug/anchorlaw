@@ -5,7 +5,7 @@ description: 维护 Anchorlaw 协议本身——测试全绿铁律、self-scan�
 
 # anchor.maintain — 协议维护工作流
 
-> Protocol: spec/protocol-v0.6.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
+> Protocol: spec/protocol-v0.7.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
 > Layer: L4 (Maintain) — 仅限 Anchorlaw 仓库内部（§14.6：MAY 限于协议自身仓库）
 > Execution: inline
 
@@ -24,8 +24,7 @@ description: 维护 Anchorlaw 协议本身——测试全绿铁律、self-scan�
    - v0.x 升版记录**真实触发原因**，不许无理由升版
    - Maturity 表 Latest Evidence 写实测数据，不写「应该可以」
 5. **通用协议铁律**：Anchorlaw 是语言无关协议，禁止过度 Python 化——anchor 抽象 = 声明位置 + 验证载体（§13）；跨语言新特性先在协议定义语言无关语义，再逐语言实现。
-6. **提交纪律**：author 固定 `unknowbug`（禁止改 user.name）；commit message 英文、动词开头（`feat(v0.5): ...`）；commit 前测试全绿 + changelog/maturity 同步；push 后 GitHub→GitCode 自动同步。
-7. **禁止修改 `E:\PYTHON\MC`（CoreSwap）目录**——需要实测时复制到 `E:\tmp` 副本或只读分析。
+6. **提交纪律**：author 固定 `unknowbug`（禁止改 user.name）；commit message 英文、动词开头（`feat(v0.7): ...`）；commit 前测试全绿 + changelog/maturity 同步；push 后 GitHub→GitCode 自动同步。
 
 ## 输出
 

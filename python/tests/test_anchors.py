@@ -268,6 +268,20 @@ class TestSourceProvenance:
         fa = _registry.get(anchor_static)
         assert not fa.tests[0].has_valid_source  # §5.5: static NOT allowed for @test
 
+    def test_probe_source_accepted_for_test(self):
+        # §5.5 v0.7: probe (independent probe binary) is a valid @test source
+        _registry.clear()
+
+        @pract_test(
+            "probe assertion", lambda: anchor_probe() == 1,
+            source="probe:block_probe!SURFBIOME#003, -biomeDump 812 73 -337 = badlands",
+        )
+        def anchor_probe():
+            return 1
+
+        fa = _registry.get(anchor_probe)
+        assert fa.tests[0].has_valid_source  # probe: valid for @test (v0.7)
+
     def test_idk_source_allowed_static(self):
         _registry.clear()
 

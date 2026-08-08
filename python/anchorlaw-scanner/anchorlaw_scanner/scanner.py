@@ -32,6 +32,7 @@ class PatternType(Enum):
     VAGUE_TODO = auto()
     DEFENSIVE_NULL_CHAIN = auto()
     TRIVIAL_TEST = auto()
+    SOURCE_ARTIFACT_MISSING = auto()  # §5.5 v0.7 Source Artifact Requirement
 
     @property
     def label(self) -> str:
@@ -42,6 +43,7 @@ class PatternType(Enum):
             PatternType.VAGUE_TODO: "vague-todo",
             PatternType.DEFENSIVE_NULL_CHAIN: "defensive-null-chain",
             PatternType.TRIVIAL_TEST: "trivial-test",
+            PatternType.SOURCE_ARTIFACT_MISSING: "source-artifact-missing",
         }[self]
 
     @property
@@ -54,6 +56,7 @@ class PatternType(Enum):
             PatternType.VAGUE_TODO: "info",
             PatternType.DEFENSIVE_NULL_CHAIN: "warning",
             PatternType.TRIVIAL_TEST: "warning",
+            PatternType.SOURCE_ARTIFACT_MISSING: "warning",
         }[self]
 
     @property
@@ -81,6 +84,10 @@ class PatternType(Enum):
             PatternType.TRIVIAL_TEST:
                 "This test assertion may be tautological (e.g., assert f(x) == f(x)). "
                 "Test anchors must contain substantive practice validation.",
+            PatternType.SOURCE_ARTIFACT_MISSING:
+                "source references a verification record with no on-disk artifact. "
+                "§5.5 v0.7: the record (command + output summary) must exist under "
+                ".investigations/ or .artifacts/ to be reproducible.",
         }[self]
 
 
@@ -626,6 +633,57 @@ def scan_file(file_path: str) -> List[DefensivePattern]:
     return patterns
 
 
+def _collect_record_store(dir_path: str) -> str:
+    """Concatenate text under .investigations/ and .artifacts/ — the on-disk
+    verification records that `source` references must be findable here
+    (§5.5 v0.7 Source Artifact Requirement)."""
+    parts = []
+    for sub in (".investigations", ".artifacts"):
+        store_dir = Path(dir_path) / sub
+        if store_dir.is_dir():
+            for f in store_dir.rglob("*"):
+                if f.is_file() and f.suffix in (".md", ".txt", ".log", ".yaml", ".yml", ".json"):
+                    try:
+                        parts.append(f.read_text(encoding="utf-8", errors="ignore"))
+                    except OSError:
+                        pass
+    return "\n".join(parts)
+
+
+def _scan_source_artifact_references(
+    file_path: str, source_lines: List[str], record_store: str
+) -> List[DefensivePattern]:
+    """§5.5 v0.7: a `source="..."` string must reference an on-disk verification
+    record. WARN when the referenced id/entry token is absent from the store."""
+    findings = []
+    source_re = re.compile(r'source\s*=\s*"([^"]+)"')
+    for lineno, line in enumerate(source_lines, start=1):
+        m = source_re.search(line)
+        if not m:
+            continue
+        source_str = m.group(1)
+        # Reference tokens with their #/! prefix (e.g. "#003", "!SURFBIOME") —
+        # prefix-bearing tokens avoid silent PASS on bare short substrings.
+        tokens = ["#" + t for t in re.findall(r"#([A-Za-z0-9_]+)", source_str)]
+        tokens += ["!" + t for t in re.findall(r"!([A-Za-z0-9_]+)", source_str)]
+        if source_str.startswith("static:"):
+            continue  # §5.5: static source (idk-only) has no run record to persist
+        found = any(tok in record_store for tok in tokens) if tokens else False
+        if not found:
+            findings.append(DefensivePattern(
+                pattern_type=PatternType.SOURCE_ARTIFACT_MISSING,
+                file_path=file_path,
+                line_number=lineno,
+                code_snippet=line.strip(),
+                suggestion=(
+                    f"source=\"{source_str[:60]}\" references no on-disk verification "
+                    f"record; persist the command + output summary under "
+                    f".investigations/ or .artifacts/ (e.g. regression-record.md)."
+                ),
+            ))
+    return findings
+
+
 def scan_directory(dir_path: str, recursive: bool = True) -> Dict[str, List[DefensivePattern]]:
     """Recursively scan a directory for defensive patterns in Python files.
 
@@ -633,6 +691,10 @@ def scan_directory(dir_path: str, recursive: bool = True) -> Dict[str, List[Defe
     """
     # Load out-of-line anchor registrations before scanning
     _load_anchors_from_project(dir_path)
+
+    # §5.5 v0.7 Source Artifact Requirement: collect on-disk verification
+    # records once; source references are checked against them per file.
+    record_store = _collect_record_store(dir_path)
 
     results = {}
     base = Path(dir_path)
@@ -648,6 +710,13 @@ def scan_directory(dir_path: str, recursive: bool = True) -> Dict[str, List[Defe
             continue
         try:
             patterns = scan_file(str(py_file))
+            try:
+                lines = py_file.read_text(encoding="utf-8").splitlines()
+            except OSError:
+                lines = []
+            patterns.extend(
+                _scan_source_artifact_references(str(py_file), lines, record_store)
+            )
             if patterns:
                 results[str(py_file)] = patterns
         except Exception as e:

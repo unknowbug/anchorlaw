@@ -26,7 +26,7 @@
 | Change | Trigger | Section |
 |--------|---------|---------|
 | **Protocol rename** Practify → Anchorlaw (repo, packages, CLI) | generic-name collision risk; 10 same-name GitHub repos | §0 |
-| **C++ support** — comment-form `@anchor.test` / `@anchor.idk` annotations | CoreSwap integration (E:\PYTHON\MC): header-inline worldgen + probe binaries | [§2.4](#24-cross-language-notes), [§13](#13-protocol-generality-anchor-abstraction-v04) |
+| **C++ support** — comment-form `@anchor.test` / `@anchor.idk` annotations | CoreSwap integration: header-inline worldgen + probe binaries | [§2.4](#24-cross-language-notes), [§13](#13-protocol-generality-anchor-abstraction-v04) |
 | **Key Words (RFC 2119)** + universal quantifier discipline | unverified universal claims violate the Second Law | [§0](#0-key-words-and-universal-quantifier-discipline) |
 | **Universal claim audit** — every MUST/guarantee carries evidence or is scoped | audit found 'All languages' claim exceeded Rust implementation | [§11](#11-universal-claim-audit-v04) |
 | **Rule challenge process (Third Law)** — FP evidence forces rule downgrade/removal | protocol had no path to challenge its own rules | [§12](#12-rule-challenge-process-third-law-v04) |
