@@ -23,6 +23,8 @@ Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测�
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
 >
+> **v0.5 更新 (2026-08-08):** Agent Skill Manifest（§14）——分层、单职责的 skills 把协议知识改为按需加载，修复 Agent 侧注意力稀释。参考实现随仓库提供（`.reasonix/skills/`）。
+>
 > **v0.3 更新 (2026-06-18):** 新增 Source Provenance（数据来源标注）、Degraded Verification（三种验证模式）、Verify 重试上限。详见 [协议规范 v0.3](spec/protocol-v0.3.md)。
 
 ---
@@ -108,7 +110,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.3.md#9-degraded-verification)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.5.md#9-degraded-verification)。
 
 ---
 
@@ -138,7 +140,7 @@ anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
-│   └── protocol-v0.1.md        # 语言无关的协议规范
+│   └── protocol-v0.5.md        # 语言无关的协议规范（当前版）
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
@@ -164,7 +166,7 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.1](spec/protocol-v0.1.md)
+- [协议规范 v0.5](spec/protocol-v0.5.md)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

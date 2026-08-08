@@ -2,7 +2,6 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
 *.whl
 .venv/
 
@@ -24,4 +23,6 @@ Thumbs.db
 # Anchorlaw local data (user-specific, created by `anchorlaw init`)
 .pract/
 build/
-*.egg-info/
+
+# Reasonix desktop session metadata (local state, not project content)
+.reasonix/desktop-*.json
