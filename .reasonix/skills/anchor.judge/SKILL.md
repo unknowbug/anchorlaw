@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.judge — 审查角色（subprocess）
 
-> Protocol: spec/protocol-v0.12.md §15.4 (Consistency Contract), §16 (Host Integration)
+> Protocol: spec/protocol-v0.13.md §15.4 (Consistency Contract), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -17,7 +17,7 @@ runAs: subagent
 - **只出审查意见，绝不直接修改产物 status。** 状态提升由主会话/宿主人类裁决。
 - `confirmed` 只能由宿主侧人类授予——审查意见只能建议 `candidate`。
 
-## 双模式（v0.12 §15.1/§15.4）
+## 双模式（v0.13 §15.1/§15.4）
 
 v0.10 起 judge 角色有两种用法，分别对应流水线的驱动与把关：
 
@@ -36,7 +36,7 @@ judge 不是只在任务收尾跑——以下决策点 MUST 触发审查（工�
 2. **重大转向前** — 结案重开（推翻已确认结论）/ 根因定论（如「无 bug」断言）/ 范围决策（增减验证范围），行动前 MUST 先审查被推翻/被断言的结论。
 3. **阶段结论授予 `candidate`** — SHOULD 触发审查；未审查即授予时，缺失审查意见 MUST 在产物中标注。
 
-（v0.11 输入契约 + 四段流水线触发点，见 [协议 §15.4](spec/protocol-v0.12.md#154-consistency-contract)）：
+（v0.11 输入契约 + 四段流水线触发点，见 [协议 §15.4](spec/protocol-v0.13.md#154-consistency-contract)）：
 4. **输入契约接受** — Judge 接受外部需求文档 + 软件规范输入并推导验收判据（stage 0，无输入不得开工）；
 5. **规范审查** — Judge 审过实施规范才进规划（stage 1 终）；
 6. **计划批准** — Judge 批准模块划分（stage 2 终）；
