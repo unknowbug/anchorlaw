@@ -106,7 +106,7 @@ The single allowed defense is `@idk` — an honest declaration that opens the ba
 anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.11.md       # Language-agnostic protocol spec (current)
+│   └── protocol-v0.12.md       # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -131,8 +131,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.11](spec/protocol-v0.11.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.11.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
+- [Protocol Specification v0.12](spec/protocol-v0.12.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.12.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

@@ -1,4 +1,4 @@
-"""Execution Topology conformance tests (protocol v0.11 §15/§16).
+"""Execution Topology conformance tests (protocol v0.12 §15/§16).
 
 Verifies the execution layer of the reference implementation:
 
@@ -104,7 +104,7 @@ def test_role_profiles_declare_subprocess():
 def test_roles_defined_in_protocol_pipeline():
     # v0.10 Judge-driven pipeline (§15.1): scout/worker are sanctioned
     # reference roles, each with an explicit pipeline stage.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.11.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.12.md").read_text(encoding="utf-8")
     for marker in ("**Scout** (subprocess)", "**Worker** (subprocess)", "Input contract", "Parallel implementation"):
         assert marker in proto, f"protocol §15.1 missing role/stage marker: {marker}"
 
@@ -112,7 +112,7 @@ def test_roles_defined_in_protocol_pipeline():
 def test_judge_trigger_points_normative_in_protocol():
     # v0.9 §15.4: the review gate is a mandatory checkpoint at specific
     # decision points, not only a closing gate.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.11.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.12.md").read_text(encoding="utf-8")
     for marker in (
         "**Judge trigger points (v0.9; extended v0.10)**",
         "**Self-review ≠ review gate (v0.9)**",
@@ -137,7 +137,7 @@ def test_agents_force_chain_lists_judge_triggers():
     agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
     # index pointer exists
     assert "协议 §15.4" in agents and "只索引不复制" in agents
-    # force-chain skeleton retained (v0.10 six-stage pipeline, 非镜像)
+    # force-chain skeleton retained (v0.12 four-stage pipeline, 非镜像)
     for marker in ("输入契约", "实施规范", "实施计划", "并行实施", "交付"):
         assert marker in agents, f"AGENTS.md pipeline skeleton missing: {marker}"
     # must NOT copy the protocol's normative bullet text (mirror drift guard)
@@ -161,7 +161,7 @@ def test_section11_audits_v09_claims():
     # v0.9 self-reference (protocol §11): every new universal claim MUST be
     # audited in the §11 table; the audit rows must be present so a §15.4
     # change cannot silently desync the claim audit.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.11.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.12.md").read_text(encoding="utf-8")
     audit_rows = (
         '`confirmed` MUST be granted only after a judge review opinion exists',
         "Major redirections (case reopening, root-cause determination, significant scope",
@@ -187,7 +187,7 @@ def test_verification_termination_gates_in_protocol():
     # v0.9/v0.10 §15.4 termination gates: the pipeline MUST terminate on
     # mechanical criteria — external test set, three-tier opinions,
     # Judge-nod termination (v0.10, replaces the round cap).
-    proto = (REPO_ROOT / "spec" / "protocol-v0.11.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.12.md").read_text(encoding="utf-8")
     assert "**Verification termination gates" in proto
     # A: termination on the external test set; no in-place test additions
     assert "The external test set passes" in proto
@@ -196,13 +196,17 @@ def test_verification_termination_gates_in_protocol():
     assert "exactly three tiers" in proto
     assert "(i) test failure" in proto and "(ii) build/compile failure" in proto
     assert "MUST NOT require more than one verification" in proto
-    # C: Judge-nod termination (v0.10) — criteria satisfied = done; unmet
-    # criteria escalate to the human (§12 or amendment), never infinite loop
+    # C: Judge-nod termination with mechanical fallback (v0.12) — criteria
+    # satisfied = done; same-criterion iteration capped at 3, then MUST
+    # mechanically escalate to the human (§12 or amendment)
     assert "Judge-nod termination" in proto
+    assert "mechanical fallback" in proto
+    assert "capped at 3" in proto
     assert "escalate to the human" in proto
     assert "Acceptance criteria first (v0.10; v0.11 amended)" in proto
+    assert "MUST be persisted as an artifact" in proto
     # E: evidence conflicts go through §12 or recorded exclusion, never the loop
-    assert "never by\n  entering the verification loop" in proto or "never by\n  entering" in proto
+    assert "never by\n  entering the verification loop" in proto or "never by\n  entering" in proto or "never by entering" in proto
 
 
 def test_verification_termination_gates_in_agents():
