@@ -14,13 +14,13 @@ the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
 6. layer dependency direction (§14.2): no upward references, except L0
    `anchor.concepts` (semantic index MAY point onward to any layer)
 7. execution mode (§14.1 v0.6): body `> Execution:` matches manifest column
-8. execution roles: only the review gate (judge) is sanctioned (v0.8)
+8. execution roles: judge / scout / worker are sanctioned (v0.10)
 """
 import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.9.md"
+PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.10.md"
 SKILLS_DIR = REPO_ROOT / ".reasonix" / "skills"
 
 # §14.6 catalog rows: | `anchor.concepts` | L0 | inline | ...
@@ -189,11 +189,12 @@ def test_execution_mode_matches_manifest():
 
 def test_roles_present_and_outside_manifest():
     # §15 execution roles are reference-implementation profiles, NOT §14.6
-    # manifest action skills. v0.8: only the review gate (judge) is sanctioned.
+    # manifest action skills. v0.10: judge / scout / worker are sanctioned
+    # (Judge-driven pipeline); v0.8's "only judge" is superseded.
     manifest = _manifest()
     roles = _roles()
-    assert set(roles) == {"anchor.judge"}, (
-        f"execution role profiles: {sorted(roles)} (only judge is sanctioned, v0.8)"
+    assert set(roles) == {"anchor.judge", "anchor.scout", "anchor.worker"}, (
+        f"execution role profiles: {sorted(roles)} (v0.10 sanctions the three)"
     )
     for name, path in roles.items():
         assert name not in manifest, (

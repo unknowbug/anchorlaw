@@ -120,7 +120,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.9.md#9-degraded-verification)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.10.md#9-degraded-verification-v03-draft)。
 
 ---
 
@@ -150,7 +150,7 @@ anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
-│   └── protocol-v0.9.md        # 语言无关的协议规范（当前版）
+│   └── protocol-v0.10.md       # 语言无关的协议规范（当前版）
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
@@ -176,7 +176,7 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.9](spec/protocol-v0.9.md)
+- [协议规范 v0.10](spec/protocol-v0.10.md)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

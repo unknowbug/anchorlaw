@@ -1,4 +1,4 @@
-"""Execution Topology conformance tests (protocol v0.9 §15/§16).
+"""Execution Topology conformance tests (protocol v0.10 §15/§16).
 
 Verifies the execution layer of the reference implementation:
 
@@ -8,11 +8,11 @@ Verifies the execution layer of the reference implementation:
 2. confidence state machine: one-way draft -> candidate -> confirmed,
    `confirmed` reserved for the host's human (§15.4)
 3. review gate: judge output is opinion-only, never a status change (§15.4)
-4. role profiles: only the review gate (judge) is sanctioned — kind: role,
-   runAs: subagent (v0.8 convergence-gate model); scout/worker must not
-   reappear as reference roles
-5. judge institutionalization (v0.9): trigger points are normative and
-   mirrored across protocol §15.4 / AGENTS.md force chain / judge SKILL
+4. role profiles: judge / scout / worker are sanctioned reference roles —
+   kind: role, runAs: subagent (v0.10 Judge-driven pipeline, §15.1);
+   v0.8's "only judge" restriction is superseded
+5. judge institutionalization (v0.9; v0.10 extended): trigger points are
+   normative and mirrored across protocol §15.4 / AGENTS.md index / judge SKILL
 """
 import re
 from pathlib import Path
@@ -91,8 +91,9 @@ def test_review_gate_is_opinion_only():
 
 
 def test_role_profiles_declare_subprocess():
-    # v0.8: the only sanctioned reference subagent role is the review gate.
-    for role in ("anchor.judge",):
+    # v0.10: judge / scout / worker are the sanctioned reference roles
+    # (Judge-driven pipeline, §15.1).
+    for role in ("anchor.judge", "anchor.scout", "anchor.worker"):
         skill_file = SKILLS_DIR / role / "SKILL.md"
         assert skill_file.is_file(), f"{role}: role profile missing"
         fm = _frontmatter(skill_file.read_text(encoding="utf-8"))
@@ -100,26 +101,27 @@ def test_role_profiles_declare_subprocess():
         assert fm.get("runAs") == "subagent", f"{role}: must declare runAs: subagent"
 
 
-def test_no_unapproved_subagent_roles():
-    # v0.8 convergence-gate model: only judge is sanctioned; scout/worker
-    # must not reappear as reference roles.
-    for name in ("anchor.scout", "anchor.worker"):
-        skill_file = SKILLS_DIR / name / "SKILL.md"
-        assert not skill_file.exists(), (
-            f"{name} must not exist: v0.8 removed non-judge subagent roles"
-        )
+def test_roles_defined_in_protocol_pipeline():
+    # v0.10 Judge-driven pipeline (§15.1): scout/worker are sanctioned
+    # reference roles, each with an explicit pipeline stage.
+    proto = (REPO_ROOT / "spec" / "protocol-v0.10.md").read_text(encoding="utf-8")
+    for marker in ("**Scout** (subprocess)", "**Worker** (subprocess)", "Requirements discovery", "Parallel implementation"):
+        assert marker in proto, f"protocol §15.1 missing role/stage marker: {marker}"
 
 
 def test_judge_trigger_points_normative_in_protocol():
     # v0.9 §15.4: the review gate is a mandatory checkpoint at specific
     # decision points, not only a closing gate.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.10.md").read_text(encoding="utf-8")
     for marker in (
-        "**Judge trigger points (v0.9)**",
+        "**Judge trigger points (v0.9; extended v0.10)**",
         "**Self-review ≠ review gate (v0.9)**",
         "**Plan-time judge placement (v0.9)**",
     ):
         assert marker in proto, f"protocol §15.4 missing marker: {marker}"
+    # v0.10 pipeline trigger points are normative
+    for stage_marker in ("Requirements approval", "Human-gate submission", "Module integration", "Delivery acceptance"):
+        assert stage_marker in proto, f"protocol §15.4 missing stage trigger: {stage_marker}"
     # confirmed gating MUST be normative (not advisory)
     assert "MUST precede any human grant of `confirmed`" in proto
     # producer self-check MUST NOT be presented as the review gate
@@ -135,9 +137,9 @@ def test_agents_force_chain_lists_judge_triggers():
     agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
     # index pointer exists
     assert "协议 §15.4" in agents and "只索引不复制" in agents
-    # force-chain skeleton retained (原创工作流，非镜像)
-    for marker in ("验证", "审查", "提交"):
-        assert marker in agents, f"AGENTS.md force chain missing: {marker}"
+    # force-chain skeleton retained (v0.10 six-stage pipeline, 非镜像)
+    for marker in ("需求发掘", "人类确认门", "实施规范", "并行实施", "交付"):
+        assert marker in agents, f"AGENTS.md pipeline skeleton missing: {marker}"
     # must NOT copy the protocol's normative bullet text (mirror drift guard)
     for banned in ("MUST 有 judge 审查意见", "重大转向 MUST judge", "自评 ≠ judge"):
         assert banned not in agents, (
@@ -148,7 +150,7 @@ def test_agents_force_chain_lists_judge_triggers():
 def test_judge_skill_documents_trigger_points():
     # v0.9 judge reference profile: trigger-point section aligned with §15.4.
     skill = (SKILLS_DIR / "anchor.judge" / "SKILL.md").read_text(encoding="utf-8")
-    assert "## 强制触发点（v0.9 §15.4）" in skill
+    assert "## 强制触发点（v0.9；v0.10 扩展）" in skill
     assert "`confirmed` 授予前" in skill
     for marker in ("结案重开", "根因定论", "范围决策"):
         assert marker in skill, f"judge SKILL trigger list missing: {marker}"
@@ -159,7 +161,7 @@ def test_section11_audits_v09_claims():
     # v0.9 self-reference (protocol §11): every new universal claim MUST be
     # audited in the §11 table; the audit rows must be present so a §15.4
     # change cannot silently desync the claim audit.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.10.md").read_text(encoding="utf-8")
     audit_rows = (
         '`confirmed` MUST be granted only after a judge review opinion exists',
         "Major redirections (case reopening, root-cause determination, significant scope",
@@ -182,10 +184,11 @@ def test_section11_audits_v09_claims():
 
 
 def test_verification_termination_gates_in_protocol():
-    # v0.9 §15.4 termination gates: the convergence gate MUST terminate on
-    # mechanical criteria — external test set, three-tier opinions, round cap.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.9.md").read_text(encoding="utf-8")
-    assert "**Verification termination gates (v0.9)**" in proto
+    # v0.9/v0.10 §15.4 termination gates: the pipeline MUST terminate on
+    # mechanical criteria — external test set, three-tier opinions,
+    # Judge-nod termination (v0.10, replaces the round cap).
+    proto = (REPO_ROOT / "spec" / "protocol-v0.10.md").read_text(encoding="utf-8")
+    assert "**Verification termination gates" in proto
     # A: termination on the external test set; no in-place test additions
     assert "The external test set passes" in proto
     assert "MUST NOT add tests during the verification phase" in proto
@@ -193,9 +196,11 @@ def test_verification_termination_gates_in_protocol():
     assert "exactly three tiers" in proto
     assert "(i) test failure" in proto and "(ii) build/compile failure" in proto
     assert "MUST NOT require more than one verification" in proto
-    # C: round cap counted in the plan, escalate on round 4
-    assert "counted explicitly in the workflow plan" in proto
+    # C: Judge-nod termination (v0.10) — criteria satisfied = done; unmet
+    # criteria escalate to the human (§12 or amendment), never infinite loop
+    assert "Judge-nod termination" in proto
     assert "escalate to the human" in proto
+    assert "Acceptance criteria first (v0.10)" in proto
     # E: evidence conflicts go through §12 or recorded exclusion, never the loop
     assert "never by\n  entering the verification loop" in proto or "never by\n  entering" in proto
 
