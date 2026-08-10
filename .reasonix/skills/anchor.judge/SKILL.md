@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.judge — 审查角色（subprocess）
 
-> Protocol: spec/protocol-v0.10.md §15.4 (Consistency Contract), §16 (Host Integration)
+> Protocol: spec/protocol-v0.11.md §15.4 (Consistency Contract), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -17,15 +17,15 @@ runAs: subagent
 - **只出审查意见，绝不直接修改产物 status。** 状态提升由主会话/宿主人类裁决。
 - `confirmed` 只能由宿主侧人类授予——审查意见只能建议 `candidate`。
 
-## 双模式（v0.10 §15.1/§15.4）
+## 双模式（v0.11 §15.1/§15.4）
 
 v0.10 起 judge 角色有两种用法，分别对应流水线的驱动与把关：
 
-1. **驱动者（主会话化身，inline 判据）** — 主会话以 Judge 角色全程驱动六段流水线：
-   需求判断（派 `anchor.scout` 分析 → 判断清晰/可实现）→ 人类确认门提交 → 规范审查 → 计划批准 →
+1. **驱动者（主会话化身，inline 判据）** — 主会话以 Judge 角色全程驱动四段流水线（v0.11）：
+   输入契约接受（外部需求 + 规范 → 推导验收判据）→ 规范审查 → 计划批准 →
    模块并入审查 → 交付总审。持有验收判据，对照判据裁决，不依赖轮次计数。
 2. **隔离验收者（subprocess，独立视角）** — 在两个关键节点 MUST 派隔离 judge subprocess 独立验收：
-   **模块并入前（stage 5）+ 交付前（stage 6）**。自评≠审查：主会话 Judge 的点头是驱动，
+   **模块并入前（stage 3）+ 交付前（stage 4）**。自评≠审查：主会话 Judge 的点头是驱动，
    隔离 judge 的裁定是门。
 
 ## 强制触发点（v0.9；v0.10 扩展）
@@ -36,13 +36,12 @@ judge 不是只在任务收尾跑——以下决策点 MUST 触发审查（工�
 2. **重大转向前** — 结案重开（推翻已确认结论）/ 根因定论（如「无 bug」断言）/ 范围决策（增减验证范围），行动前 MUST 先审查被推翻/被断言的结论。
 3. **阶段结论授予 `candidate`** — SHOULD 触发审查；未审查即授予时，缺失审查意见 MUST 在产物中标注。
 
-（v0.10 六段流水线触发点，见 [协议 §15.4](spec/protocol-v0.10.md#154-consistency-contract)）：
-4. **需求确认** — Judge 点头完整需求文档（stage 1 终）；
-5. **人类确认门提交** — Judge 提交需求 + 验收判据给人类，等待确认（stage 2，未确认不得实施）；
-6. **规范审查** — Judge 审过实施规范才进规划（stage 3 终）；
-7. **计划批准** — Judge 批准模块划分（stage 4 终）；
-8. **模块并入** — Judge 审每模块并入/打回（stage 5）；
-9. **交付验收** — Judge 总审 + 隔离 judge 独立验收后授权交付（stage 6）。
+（v0.11 输入契约 + 四段流水线触发点，见 [协议 §15.4](spec/protocol-v0.11.md#154-consistency-contract)）：
+4. **输入契约接受** — Judge 接受外部需求文档 + 软件规范输入并推导验收判据（stage 0，无输入不得开工）；
+5. **规范审查** — Judge 审过实施规范才进规划（stage 1 终）；
+6. **计划批准** — Judge 批准模块划分（stage 2 终）；
+7. **模块并入** — Judge 审每模块并入/打回（stage 3）；
+8. **交付验收** — Judge 总审 + 隔离 judge 独立验收后授权交付（stage 4）。
 
 **自评 ≠ 审查**：主 Agent/执行者的自检与验证是证据，不是本角色的审查——审查 MUST 由独立执行者完成（本角色即独立 subprocess）。
 

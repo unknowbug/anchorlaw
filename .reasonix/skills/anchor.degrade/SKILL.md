@@ -5,7 +5,7 @@ description: 降级验证（§9）——代码不可独立编译时分类 Full/P
 
 # anchor.degrade — 降级验证
 
-> Protocol: spec/protocol-v0.10.md §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.11.md §9 (Degraded Verification)
 > Layer: L2 (Anchors) — 与 anchor.test 同域（CLI 入口同为 anchorlaw test）
 > Execution: subprocess
 

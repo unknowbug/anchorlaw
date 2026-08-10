@@ -5,7 +5,7 @@ description: 维护 Anchorlaw 协议本身——测试全绿铁律、self-scan�
 
 # anchor.maintain — 协议维护工作流
 
-> Protocol: spec/protocol-v0.10.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
+> Protocol: spec/protocol-v0.11.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
 > Layer: L4 (Maintain) — 仅限 Anchorlaw 仓库内部（§14.6：MAY 限于协议自身仓库）
 > Execution: inline
 

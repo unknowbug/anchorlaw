@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.worker — 模块实施角色（subprocess）
 
-> Protocol: spec/protocol-v0.10.md §15.1 (Definition), §15.2 (Isolation Semantics), §15.4 (Consistency Contract)
+> Protocol: spec/protocol-v0.11.md §15.1 (Definition), §15.2 (Isolation Semantics), §15.4 (Consistency Contract)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -17,7 +17,7 @@ runAs: subagent
 - 被 Judge 派遣，按**已批准的实施规范与计划**实现一个模块。
 - 完成 → 产物落盘 + 提交并入申请；并入与否由 Judge 判定（自评≠审查）。
 
-## 触发场景（流水线 stage 5）
+## 触发场景（流水线 stage 3）
 
 Judge 按实施计划派本角色实施指定模块。每个模块由一个 Worker 产出，多模块并行（规范锁定保证一致）。
 

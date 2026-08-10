@@ -5,7 +5,7 @@ description: 静态审查——跑 scanner 找 P1-P6 防御性模式，按 ERR/W
 
 # anchor.scan — 静态审查
 
-> Protocol: spec/protocol-v0.10.md §6 (Scanner Pattern Catalog), §7 Level 1
+> Protocol: spec/protocol-v0.11.md §6 (Scanner Pattern Catalog), §7 Level 1
 > Layer: L1 (Scanner)
 > Execution: subprocess
 
@@ -13,7 +13,7 @@ description: 静态审查——跑 scanner 找 P1-P6 防御性模式，按 ERR/W
 
 以下两个触发点 MUST 运行本 skill（改完代码待提交前，或收到防御性模式报告时）：
 
-1. **模块并入审查前（流水线 stage 5）**（与 §15.4 门禁中 judge 审查配套；v0.10 流水线 stage 5 并入审查）：Worker 完成模块、或主 Agent 完成代码改动后，先跑 scan 获得 findings 清单并逐条处置，再交 Judge 并入审查——scan 的 findings 清单是 Judge 审查的机械证据来源之一（AGENTS.md 将 scan 列为「发散型优化例外」：触发必跑，执行方式 subprocess 可选，二者不冲突）。
+1. **模块并入审查前（流水线 stage 3）**（与 §15.4 门禁中 judge 审查配套；v0.10 流水线 stage 5 并入审查）：Worker 完成模块、或主 Agent 完成代码改动后，先跑 scan 获得 findings 清单并逐条处置，再交 Judge 并入审查——scan 的 findings 清单是 Judge 审查的机械证据来源之一（AGENTS.md 将 scan 列为「发散型优化例外」：触发必跑，执行方式 subprocess 可选，二者不冲突）。
 2. **收到防御性模式报告时**：CI 报告 / scanner 输出 / 他人反馈疑似防御性模式，MUST 跑 scan 核实后再处置，不得凭感觉判断「没问题」。
 
 **计划预置（§15.4 Plan-time placement 精神）**：工作流计划（todo）在规划阶段预置本 skill 的触发步骤；到达并入审查步骤时发现未预置/未执行 → MUST 停下补跑 scan 再进入审查，不得跳过。
