@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.scout — 规范起草角色（subprocess）
 
-> Protocol: spec/protocol-v0.13.md §15.1 (Definition), §15.2 (Isolation Semantics)
+> Protocol: spec/protocol-v0.14.md §15.1 (Definition), §15.2 (Isolation Semantics)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -19,7 +19,7 @@ runAs: subagent
 
 ## 触发场景（流水线 stage 1）
 
-**实施规范起草（stage 1）** — 输入契约（已确认需求文档 + 软件规范定义）交接后，Judge 派本角色起草实施规范：变量命名统一规范、模块化划分建议、框架边界。规范由 Judge 审查批准后才进规划（stage 2）。
+**实施规范起草（stage 1）** — 输入契约（已确认需求文档 + 技术约束规范；架构设计归本角色起草）交接后，Judge 派本角色起草实施规范：变量命名统一规范、模块化划分建议、依赖方向、框架边界、接口。规范由 Judge 审查批准后才进规划（stage 2）。
 
 > 需求发掘不在本角色职责内——它属于独立的需求协议（Scout 驱动 + 人机对话），本角色只消费其产出。
 
