@@ -23,6 +23,8 @@ It detects **defensive code patterns** that signal cognitive gaps and provides a
 
 > **Honesty notice**: Components marked EXPERIMENTAL, UNVERIFIED, or CONJECTURE are working hypotheses. Their value has not been demonstrated through practice. Use them to help us test the hypotheses — not because we claim they work.
 >
+> **v0.17 update (2026-08-12):** §12 challenge outcomes (Reasonix/Go audit) — ① parse-error marker: an unparseable source file is a tool-level `parse-error` (INFO), never a P1-P6 pattern (SyntaxError was misclassified as swallowed-exception); ② comment-form language claims downgraded: Go/Java/C++ registration means annotation-extraction ONLY, P1-P6 detection is not mapped to them; ③ four new language-agnostic reliability-risk patterns P7-P10 (LIFECYCLE / STATE_MACHINE / PATH-COORDINATION / COMPLEXITY) defined, implementations map them per language.
+>
 > **v0.16 update (2026-08-10):** Go/Java registered as comment-form languages (line comments `// @anchor.*`, same declaration site as C++; independent probe/test binary as validation carrier) and wired into the reference extractor (annotation-extraction). Rust declared not supported by design — its compiler, borrow checker, and test framework already provide the verification this protocol adds elsewhere; the proc-macros plan is abandoned (§2.4/§13).
 >
 > **v0.15 update (2026-08-10):** C-gate halted escalation — after 3 iterations on the same acceptance criterion without it being met (the review is still reporting unresolved issues), the pipeline MUST halt entirely: the Judge submits a detailed report of the review situation and unresolved issues to the human, who decides (criterion wrong → §12/amendment, approach wrong → planning, or otherwise). The Judge's round-4 pre-classification is removed — no further iteration, fix, or re-review without the human's decision (§15.4).
@@ -123,7 +125,7 @@ The single allowed defense is `@idk` — an honest declaration that opens the ba
 anchorlaw/
 ├── README.md                    <-- you are here
 ├── spec/
-│   └── protocol-v0.16.md       # Language-agnostic protocol spec (current)
+│   └── protocol-v0.17.md       # Language-agnostic protocol spec (current)
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
@@ -148,8 +150,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.16](spec/protocol-v0.16.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.16.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
+- [Protocol Specification v0.17](spec/protocol-v0.17.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.17.md#9-degraded-verification-v03-draft) — three operating modes for when code can't compile
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

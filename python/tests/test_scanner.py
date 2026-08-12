@@ -256,3 +256,21 @@ class TestScanAPI:
         _write(tmp_path, ".hidden.py", "def h():\n    return 1\n")
         results = scan_directory(str(tmp_path))
         assert not any(".hidden" in k for k in results)
+
+class TestParseError:
+    """v0.17 (§12 challenge, Reasonix audit): SyntaxError must NOT be
+    misclassified as swallowed-exception — it is a tool-level parse-error
+    marker (INFO), never a P1-P6 defensive pattern."""
+
+    def test_syntax_error_is_parse_error_not_swallowed(self, tmp_path):
+        f = _write(tmp_path, "broken.py", "x = (1; )\n")
+        patterns = scan_file(f)
+        assert len(patterns) == 1
+        assert patterns[0].pattern_type == PatternType.PARSE_ERROR
+        assert PatternType.SWALLOWED_EXCEPTION not in _types(scan_file(f))
+        assert "Syntax error" in patterns[0].suggestion
+
+    def test_parse_error_severity_is_info(self, tmp_path):
+        f = _write(tmp_path, "broken2.py", "def f(:\n")
+        patterns = scan_file(f)
+        assert patterns[0].effective_severity == "info"

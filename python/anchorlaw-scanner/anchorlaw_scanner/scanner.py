@@ -33,6 +33,7 @@ class PatternType(Enum):
     DEFENSIVE_NULL_CHAIN = auto()
     TRIVIAL_TEST = auto()
     SOURCE_ARTIFACT_MISSING = auto()  # §5.5 v0.7 Source Artifact Requirement
+    PARSE_ERROR = auto()  # tool-level marker (v0.17): unparseable file, NOT a P1-P6 pattern
 
     @property
     def label(self) -> str:
@@ -44,6 +45,7 @@ class PatternType(Enum):
             PatternType.DEFENSIVE_NULL_CHAIN: "defensive-null-chain",
             PatternType.TRIVIAL_TEST: "trivial-test",
             PatternType.SOURCE_ARTIFACT_MISSING: "source-artifact-missing",
+            PatternType.PARSE_ERROR: "parse-error",
         }[self]
 
     @property
@@ -57,6 +59,7 @@ class PatternType(Enum):
             PatternType.DEFENSIVE_NULL_CHAIN: "warning",
             PatternType.TRIVIAL_TEST: "warning",
             PatternType.SOURCE_ARTIFACT_MISSING: "warning",
+            PatternType.PARSE_ERROR: "info",
         }[self]
 
     @property
@@ -603,8 +606,11 @@ def scan_file(file_path: str) -> List[DefensivePattern]:
     try:
         tree = ast.parse(source, filename=file_path)
     except SyntaxError as e:
+        # v0.17 (§12 challenge, Reasonix audit): a parse failure is NOT a
+        # swallowed-exception pattern — it is a tool-level marker (INFO),
+        # never a P1-P6 defensive pattern.
         return [DefensivePattern(
-            pattern_type=PatternType.SWALLOWED_EXCEPTION,
+            pattern_type=PatternType.PARSE_ERROR,
             file_path=file_path,
             line_number=e.lineno or 0,
             code_snippet=e.text or "",
