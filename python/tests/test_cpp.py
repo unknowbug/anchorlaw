@@ -101,3 +101,68 @@ class TestSummarize:
         assert s["test"] == 1
         assert s["idk"] == 1
         assert s["invalid"] == []
+
+class TestCliCppWiring:
+    """CLI 接线：check 命令对 C++ 文件做 annotation-extraction
+    （参考实现改进，协议 §8 C++ = annotation-extraction 声称的实现入口）。"""
+
+    def test_check_cpp_file_valid(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        f = _write(tmp_path, "foo.cpp", '''
+            // @anchor.test("valid anchor", source="trace:probe#001")
+            int foo() { return 1; }
+        ''')
+        ns = argparse.Namespace(command="check", path=f, lang="cpp",
+                                no_recursive=False)
+        cli._cmd_check(ns)  # valid → 不抛 SystemExit
+        out = capsys.readouterr().out
+        assert "VALID" in out
+        assert "Total: 1 anchors" in out
+
+    def test_check_cpp_file_invalid_exits(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        f = _write(tmp_path, "bad.cpp", '''
+            // @anchor.test("missing source")
+            int bad() { return 0; }
+        ''')
+        ns = argparse.Namespace(command="check", path=f, lang="cpp",
+                                no_recursive=False)
+        with pytest.raises(SystemExit) as e:
+            cli._cmd_check(ns)
+        assert e.value.code == 1
+        out = capsys.readouterr().out
+        assert "INVALID" in out
+        assert "must be fixed" in out
+
+    def test_check_cpp_dir_with_lang_cpp(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        _write(tmp_path, "a.cpp", '''
+            // @anchor.test("a ok", source="trace:p#1")
+            int a() { return 1; }
+        ''')
+        _write(tmp_path, "b.h", '''
+            // @anchor.idk("b unknown")
+            int b();
+        ''')
+        ns = argparse.Namespace(command="check", path=str(tmp_path), lang="cpp",
+                                no_recursive=False)
+        cli._cmd_check(ns)
+        out = capsys.readouterr().out
+        assert "Total: 2 anchors" in out
+        assert "test=1 idk=1" in out
+
+    def test_check_cpp_dir_skips_py_files(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        _write(tmp_path, "x.py", '''
+            def f(x):
+                return x
+        ''')
+        ns = argparse.Namespace(command="check", path=str(tmp_path), lang="cpp",
+                                no_recursive=False)
+        cli._cmd_check(ns)
+        out = capsys.readouterr().out
+        assert "Total: 0 anchors" in out  # C++ 模式不处理 .py

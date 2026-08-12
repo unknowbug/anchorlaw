@@ -61,6 +61,9 @@ anchorlaw-scanner check src/
 # TypeScript
 npm install anchorlaw-scanner
 npx anchorlaw-scanner check src/
+
+# C++ (@anchor 注释式标注提取验证 — annotation-extraction, Level 1)
+anchorlaw-scanner check --lang cpp src/
 ```
 
 The scanner finds:

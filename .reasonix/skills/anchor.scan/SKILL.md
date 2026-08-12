@@ -26,7 +26,8 @@ description: 静态审查——跑 scanner 找 P1-P6 防御性模式，按 ERR/W
 ## 操作步骤
 
 1. 运行扫描（CLI，§14.4）：
-   - `anchorlaw-scanner check <dir>`（独立 scanner 包）
+   - `anchorlaw-scanner check <dir>`（独立 scanner 包，Python 防御模式）
+   - `anchorlaw-scanner check --lang cpp <dir>`（C++ @anchor 标注提取验证，§8 annotation-extraction）
    - 或 `anchorlaw check <dir>`（完整包内置入口，`--no-recursive` 可关递归）
 2. 解读输出分级（§6.1）：
    - **ERROR** → 必须修（吞噬异常、无意义测试等致命模式）
