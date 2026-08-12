@@ -75,8 +75,8 @@ def _cmd_check(args):
     if path.is_file() and is_cpp_file(str(path)):
         _print_cpp_results({str(path): _cpp_scan_file(str(path))})
         return
-    # C++: directory with --lang cpp → annotation-extraction
-    if path.is_dir() and args.lang == "cpp":
+    # Comment-form languages (C++/Go/Java): directory with --lang → annotation-extraction
+    if path.is_dir() and args.lang != "python":
         _print_cpp_results(_cpp_scan_dir(str(path), recursive=not args.no_recursive))
         return
 
@@ -170,9 +170,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_check = sub.add_parser("check", help="Scan for defensive patterns")
     p_check.add_argument("path", help="File or directory path")
-    p_check.add_argument("--lang", choices=["python", "cpp"], default="python",
+    p_check.add_argument("--lang", choices=["python", "cpp", "go", "java"], default="python",
                          help="Scan language: python (defensive patterns) or "
-                              "cpp (@anchor annotation-extraction, Level 1)")
+                              "comment-form (cpp/go/java: @anchor annotation-extraction, Level 1)")
     p_check.add_argument("--no-recursive", action="store_true",
                          help="Don't recursively scan subdirectories")
 

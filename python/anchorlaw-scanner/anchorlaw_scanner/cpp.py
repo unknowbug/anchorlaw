@@ -1,23 +1,23 @@
 # -*- coding: utf-8 -*-
-"""C++ 支持：scanner 识别 @anchor 注释式标注（语言无关的标注抽象）。
+"""注释式标注提取器（C++ / Go / Java）：scanner 识别 @anchor 注释式标注（语言无关的标注抽象）。
 
 设计原则（通用协议性）：
 - Anchor 是语言无关的概念：声明位置 + 验证载体。
 - Python: 装饰器 @test(...)（运行时注册）
 - TypeScript: JSDoc 注释（现有实现）
-- C++: 行注释 // @anchor.test(...) / // @anchor.idk(...)
-- 验证载体独立：C++ 场景下通常是 probe/test binary（如 block_probe.cpp 对比 Java 输出）
+- C++ / Go / Java: 行注释 // @anchor.test(...) / // @anchor.idk(...)（§2.4/§13 v0.16 登记）
+- 验证载体独立：通常是 probe/test binary（如 block_probe.cpp 对比参考实现输出）
 
-本模块实现 C++ 文件的标注提取与格式验证（不做完整 C++ AST 分析，
-避免把协议 scanner 变成 C++ 编译器）。
+本模块实现注释式语言文件的标注提取与格式验证（不做完整 AST 分析，
+避免把协议 scanner 变成语言编译器）。
 """
 import os
 import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-# C++ 源文件扩展名
-CPP_EXTENSIONS = {".cpp", ".cc", ".cxx", ".c", ".h", ".hpp", ".hh", ".hxx"}
+# 注释式标注语言源文件扩展名（C++ / Go / Java）
+CPP_EXTENSIONS = {".cpp", ".cc", ".cxx", ".c", ".h", ".hpp", ".hh", ".hxx", ".go", ".java"}
 
 # // @anchor.test("描述", source="trace:...") 或 // @anchor.idk("描述")
 _ANCHOR_RE = re.compile(

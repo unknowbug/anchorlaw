@@ -166,3 +166,63 @@ class TestCliCppWiring:
         cli._cmd_check(ns)
         out = capsys.readouterr().out
         assert "Total: 0 anchors" in out  # C++ 模式不处理 .py
+
+class TestCommentFormGoJava:
+    """v0.16：Go/Java 与 C++ 同注释式声明位置（行注释 // @anchor.*）。"""
+
+    def test_go_java_extensions(self):
+        assert is_cpp_file("main.go")
+        assert is_cpp_file("App.java")
+
+    def test_scan_go_file(self, tmp_path):
+        f = _write(tmp_path, "main.go", '''
+            // @anchor.test("density matches Java", source="probe:block_probe!density")
+            func density(x, y, z int) int { return 0 }
+        ''')
+        anchors = scan_cpp_file(f)
+        assert len(anchors) == 1
+        assert anchors[0].kind == "test"
+        assert anchors[0].valid
+        assert anchors[0].source == "probe:block_probe!density"
+
+    def test_scan_java_file_invalid_missing_source(self, tmp_path):
+        f = _write(tmp_path, "App.java", '''
+            // @anchor.test("missing source")
+            public int density() { return 0; }
+        ''')
+        anchors = scan_cpp_file(f)
+        assert len(anchors) == 1
+        assert not anchors[0].valid
+        assert any("source" in i for i in anchors[0].issues)
+
+    def test_cli_check_go_file(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        f = _write(tmp_path, "main.go", '''
+            // @anchor.test("ok", source="trace:p#1")
+            func f() {}
+        ''')
+        ns = argparse.Namespace(command="check", path=f, lang="go",
+                                no_recursive=False)
+        cli._cmd_check(ns)
+        out = capsys.readouterr().out
+        assert "VALID" in out
+        assert "Total: 1 anchors" in out
+
+    def test_cli_check_java_dir(self, tmp_path, capsys):
+        import argparse
+        from anchorlaw_scanner import cli
+        _write(tmp_path, "App.java", '''
+            // @anchor.test("a ok", source="trace:p#1")
+            public int a() { return 1; }
+        ''')
+        _write(tmp_path, "main.go", '''
+            // @anchor.idk("g unknown")
+            func g() {}
+        ''')
+        ns = argparse.Namespace(command="check", path=str(tmp_path), lang="java",
+                                no_recursive=False)
+        cli._cmd_check(ns)
+        out = capsys.readouterr().out
+        # 注释式模式（cpp/go/java）共享同一提取器，目录扫描覆盖全部注释式文件
+        assert "Total: 2 anchors" in out  # App.java test + main.go idk

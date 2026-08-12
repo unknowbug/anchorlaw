@@ -1,4 +1,4 @@
-"""Execution Topology conformance tests (protocol v0.15 §15/§16).
+"""Execution Topology conformance tests (protocol v0.16 §15/§16).
 
 Verifies the execution layer of the reference implementation:
 
@@ -104,7 +104,7 @@ def test_role_profiles_declare_subprocess():
 def test_roles_defined_in_protocol_pipeline():
     # v0.10 Judge-driven pipeline (§15.1): scout/worker are sanctioned
     # reference roles, each with an explicit pipeline stage.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     for marker in ("**Scout** (subprocess)", "**Worker** (subprocess)", "Input contract", "Parallel implementation"):
         assert marker in proto, f"protocol §15.1 missing role/stage marker: {marker}"
 
@@ -112,7 +112,7 @@ def test_roles_defined_in_protocol_pipeline():
 def test_judge_trigger_points_normative_in_protocol():
     # v0.9 §15.4: the review gate is a mandatory checkpoint at specific
     # decision points, not only a closing gate.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     for marker in (
         "**Judge trigger points (v0.9; extended v0.10)**",
         "**Self-review ≠ review gate (v0.9)**",
@@ -161,7 +161,7 @@ def test_section11_audits_v09_claims():
     # v0.9 self-reference (protocol §11): every new universal claim MUST be
     # audited in the §11 table; the audit rows must be present so a §15.4
     # change cannot silently desync the claim audit.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     audit_rows = (
         '`confirmed` MUST be granted only after a judge review opinion exists',
         "Major redirections (case reopening, root-cause determination, significant scope",
@@ -187,7 +187,7 @@ def test_verification_termination_gates_in_protocol():
     # v0.9/v0.10 §15.4 termination gates: the pipeline MUST terminate on
     # mechanical criteria — external test set, three-tier opinions,
     # Judge-nod termination (v0.10, replaces the round cap).
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     assert "**Verification termination gates" in proto
     # A: termination on the external test set; no in-place test additions
     assert "The external test set passes" in proto
@@ -218,7 +218,7 @@ def test_v013_challenge_outcome_registered():
     # registered in §11; input-contract confirmation criterion in §16.1
     # (v0.14 generalized, protocol-neutral); §9.4 retry cap
     # upgraded to evidence saturation.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     for marker in (
         "scoped to this domain",
         "Input-contract confirmation criterion (v0.13; v0.14 generalized)",
@@ -233,7 +233,7 @@ def test_v014_input_contract_layering():
     # specification (customer-confirmable facts); architecture design is
     # stage-1 output. §16.1 criterion generalized — no RE-specific adaption:
     # the three protocols are independently operable frameworks.
-    proto = (REPO_ROOT / "spec" / "protocol-v0.15.md").read_text(encoding="utf-8")
+    proto = (REPO_ROOT / "spec" / "protocol-v0.16.md").read_text(encoding="utf-8")
     for marker in (
         "technical-constraint specification",
         "does NOT carry the architecture design",
