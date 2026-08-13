@@ -5,7 +5,7 @@
 
 ## 初始同步（2026-08-12）
 
-- **来源**：`.reasonix/skills/anchor.*/SKILL.md`（11 个，协议参考实现）
+- **来源**：`.reasonix/skills/anchor.*/SKILL.md`（11 个，协议参考实现）；同步内容随 commit `079c717`（2026-08-13 子树落地）入库
 - **动作**：正文 1:1 复制 → frontmatter 适配（`anchor.x` → `anchor-x` kebab-case 改名、新增 `whenToUse`、移除 Reasonix 专有 `kind`/`runAs` 字段）
 - **正文漂移**：0（仅行尾符 CRLF→LF 归一化差异，已由 `tests/test_manifest.py` 以正文级比对守护）
 - **适配映射**（frontmatter 变更汇总）：
@@ -25,4 +25,5 @@
 
 | 日期 | 来源 commit | 内容 | 正文漂移 |
 |------|-------------|------|----------|
-| 2026-08-12 | （初始同步，工作区状态） | 11 技能 DSH 化移植 | 0 |
+| 2026-08-12 | （初始同步，工作区状态；随 079c717 入库） | 11 技能 DSH 化移植 | 0 |
+| 2026-08-13 | 3df7cc3 | anchor.maintain 正文移除易变测试计数（原"当前 78 个"，实测 98，改后不写死数字）；上游 `.reasonix/skills/` 修改 + DSH 镜像同步 | 0 |
