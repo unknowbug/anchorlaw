@@ -30,3 +30,5 @@ build/
 
 # Reasonix desktop session metadata (local state, not project content)
 .reasonix/desktop-*.json
+
+anchorlaw_stub.py

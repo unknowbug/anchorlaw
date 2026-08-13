@@ -1,0 +1,178 @@
+# The `anchorlaw` agent preset: the standard coding agent, plus the Anchorlaw
+# protocol toolchain (scanner/report/ai-context/status), its 11 anchor skills,
+# and a Judge-driven pipeline persona (protocol spec/protocol-v0.17 §15/§16).
+#
+# Maintained by 大肥鱼 (DSH agent). Source of truth lives in the project
+# workspace: E:\PYTHON\Anchorlaw\dsh (preset/ + plugins/ + skills/).
+# Install/sync via scripts/install.ps1 — do NOT hand-edit the installed copy
+# under ~/.dsh/.agent-presets/anchorlaw/, it is regenerated.
+#
+# Local rows:
+#   - anchorlaw-tools → ./plugins/anchorlaw-tools.js (relative to THIS preset dir,
+#     so the file travels with the preset; import-free ESM Cordis plugin)
+#   - skill-filesystem customSkillDirs → ./skills/ (the 11 anchor-* skills,
+#     copied from skills/ at install time; baseUrl = preset dir)
+
+
+# The preset's own persona, shadowing the deployment default for this agent.
+- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: |-
+      You are a coding agent powered by the {{model}} model, running on the DeepSeek Harness, operating the Anchorlaw protocol (code verification for vibe coding; spec/protocol-v0.17). Your working directory is {{cwd}}.
+
+      You act as the JUDGE in the Anchorlaw four-stage pipeline when a task is construction-type with a confirmed input contract (external requirements + technical constraints; §16.1 input-contract confirmation criterion): 0 input contract → 1 implementation spec (delegate anchor-scout) → 2 plan → 3 parallel implementation (delegate anchor-worker per module) → 4 delivery (delegate isolated anchor-judge acceptance). Every stage ends with your judgment; acceptance criteria come first and are derived from the input contract before implementation starts (§15.4). `confirmed` is granted ONLY by the human — you may recommend `candidate`, never grant `confirmed`.
+
+      Delegate scout/worker/judge through the subagent tool for isolation (§15.2/§15.3); their working context must never enter your main session. Stop conditions (§15.4): 3 rounds without meeting the same acceptance criterion → hard-stop the pipeline and hand the human a review report; never loop reviews silently.
+
+      Trigger the anchor skills at their mandated points: anchor-scan before every merge and on defensive-pattern reports; anchor-challenge for scanner false positives (§12); anchor-write when anchoring public functions; anchor-test to verify; anchor-degrade when code cannot compile standalone (§9, evidence-saturation retry cap); anchor-noise on runtime failures (L3). anchor-concepts for semantics before writing/reviewing anchors.
+
+      Maintain the Anchorlaw DSH project in this workspace per AGENTS.md: keep the self-check green, keep skills/plugin/preset in sync via scripts/install.ps1, and mirror protocol changes from the upstream repo E:\PYTHON\Anchorlaw with evidence (changelog/maturity/§11 audit discipline).
+
+- id: agent-instructions
+  name: '@deepseek-ai/dsh-agent-instructions'
+  config:
+    maxBytes: 65536
+
+# ── shell ───────────────────────────────────────────────────────────────────
+
+- id: tool-bash
+  name: '@deepseek-ai/dsh-tool-bash'
+  disabled: !!js process.platform === 'win32'
+
+- id: tool-pwsh
+  name: '@deepseek-ai/dsh-tool-pwsh'
+  disabled: !!js process.platform !== 'win32'
+
+# ── filesystem ──────────────────────────────────────────────────────────────
+
+- id: tool-fs
+  name: '@deepseek-ai/dsh-tool-fs'
+
+- id: tool-fs-search
+  name: '@deepseek-ai/dsh-tool-fs-search'
+  config:
+    sampleOverCapGlobResults: false
+
+# ── background jobs & goals ─────────────────────────────────────────────────
+
+- id: tool-jobs
+  name: '@deepseek-ai/dsh-tool-jobs'
+
+- id: tool-goal
+  name: '@deepseek-ai/dsh-tool-goal'
+
+# ── plan mode ───────────────────────────────────────────────────────────────
+
+- id: planning
+  name: cordis:group
+  group: true
+  isolate:
+    planMode: true
+  config:
+    - id: plan-mode
+      name: '@deepseek-ai/dsh-plan-mode'
+      config:
+        section: |
+              You are in plan mode. Stay in plan mode until exit_plan_mode succeeds or the user switches the session mode. Imperative language to implement changes means plan the implementation, not execute it. A user's conversational agreement — including an answer confirming something you asked — approves nothing and does not end plan mode; fold the confirmed decision into the plan and submit it through exit_plan_mode.
+
+              Explore first. Use non-mutating reads, searches, static analysis, and checks to ground the plan in the actual repository. Do not edit or write files, change configuration, run formatters or code generation that rewrites tracked files, commit, or otherwise carry out the plan. Prefer existing functions and patterns over new machinery.
+
+              The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
+
+              Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer. Do not ask the user where code lives or how current behavior works when you can find out.
+
+              Make the plan decision-complete: state the goal and success criteria; group implementation changes by subsystem; identify public API, schema, and data-flow changes; cover edge cases, failure modes, tests, acceptance criteria, and explicit assumptions. Keep it concise enough to review but detailed enough that another engineer can implement it without making design decisions.
+
+              When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
+
+# ── compaction ──────────────────────────────────────────────────────────────
+
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+
+# ── delegation (scout/worker/judge run isolated via subagent) ───────────────
+
+- id: delegation
+  name: cordis:group
+  group: true
+  isolate:
+    workflowEngine: true
+  config:
+    - id: tool-subagent-control
+      name: '@deepseek-ai/dsh-tool-subagent-control'
+
+    - id: tool-subagent-list-agents
+      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+
+    - id: tool-subagent
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: spawn
+        toolName: subagent
+        backgroundMode: continuable
+
+    - id: tool-subagent-fork
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: fork
+        toolName: subagent_fork
+        backgroundMode: continuable
+
+    - id: workflow-worker-thread
+      name: '@deepseek-ai/dsh-workflow-worker-thread'
+      config:
+        provider: spawn
+
+    - id: tool-workflow
+      name: '@deepseek-ai/dsh-tool-workflow'
+
+# ── remaining model-facing rows ─────────────────────────────────────────────
+
+- id: tool-ask-user
+  name: '@deepseek-ai/dsh-tool-ask-user'
+
+- id: tool-todo
+  name: '@deepseek-ai/dsh-tool-todo'
+  config:
+    allowParallelInProgress: true
+
+- id: tool-web
+  name: '@deepseek-ai/dsh-tool-web'
+  config:
+    fetch: false
+    searchTimeoutMs: 60000
+
+# ── anchorlaw toolchain (local plugin, travels with this preset) ────────────
+
+- id: anchorlaw-tools
+  name: ./plugins/anchorlaw-tools.js
+  config: {}
+
+# ── anchorlaw skills (embedded in this preset, synced by install.ps1) ───────
+
+- id: skill-filesystem
+  name: '@deepseek-ai/dsh-skill-filesystem'
+  config:
+    customSkillDirs:
+      - !!js "process.getBuiltinModule('node:url').fileURLToPath(new URL('skills/', baseUrl))"
+
+- id: tool-skill
+  name: '@deepseek-ai/dsh-tool-skill'

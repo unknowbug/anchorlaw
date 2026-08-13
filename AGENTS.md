@@ -81,3 +81,7 @@ anchor 抽象 = 声明位置 + 验证载体（协议 §13），Python 装饰器 
 
 - **崩溃日志铁律**：任何交付的程序/原生库必须带全局崩溃捕获（异常+调用栈+写 crash 文件+不吞异常）
 - **知识库记录**：重要结论带「猜测→验证→排除→发现」完整链条，被排除的假说也记录（标注 ❌）
+
+## 七、宿主适配层（dsh/ 子树）
+
+本仓库同时托管 DSH（DeepSeek Harness）宿主适配层：`dsh/` 子树（DSH 技能格式、anchorlaw 工具插件、agent preset、维护脚本与 SYNC.md 溯源）。协议核心（spec/python/typescript/.reasonix 技能）仍以仓库根为单一事实源；`dsh/skills/` 的技能正文由 `.reasonix/skills/` 派生，受 `dsh/tests/test_manifest.py` 正文级一致性守护（只允许行尾归一化与 frontmatter 适配差异）。DSH 侧维护入口见 `dsh/AGENTS.md`。
