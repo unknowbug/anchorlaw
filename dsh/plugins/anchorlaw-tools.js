@@ -10,7 +10,8 @@
 //   anchorlaw_ai_context  — noise cards + curriculum export for LLM injection
 //   anchorlaw_status      — toolchain versions + discovered anchor-* skills
 //
-// Maintained by: 大肥鱼 (DSH agent). Source of truth: E:\PYTHON\Anchorlaw-dsh\plugins\.
+// Maintained by: 大肥鱼 (DSH agent). Source of truth: this repo's dsh/ subtree
+// (github.com/unknowbug/anchorlaw, dsh/plugins/), per dsh/AGENTS.md §六.
 
 export const name = 'anchorlaw-tools'
 export const inject = ['tools']
