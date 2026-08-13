@@ -16,7 +16,7 @@ whenToUse: 在 Anchorlaw 仓库内修改协议或实现本身时（L4，仅限�
 
 ## 铁律
 
-1. **测试全绿**：任何改动必须 `python -m pytest --rootdir=python python/tests -q` 全绿（当前 78 个，新增时保持全绿；命令行被沙箱拦截时用包装脚本调 `pytest.main()`）。
+1. **测试全绿**：任何改动必须 `python -m pytest --rootdir=python python/tests -q` 全绿（新增时保持全绿；命令行被沙箱拦截时用包装脚本调 `pytest.main()`）。
 2. **自指铁律**：scanner 必须能扫自己的代码不崩溃（第一律反身应用）。
 3. **新功能必须配测试**：协议宣称的每条行为都要有测试证据，否则 §8 Maturity 标 Unverified。
 4. **协议文档纪律**：
