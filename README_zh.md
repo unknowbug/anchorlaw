@@ -1,5 +1,7 @@
 # Anchorlaw 协议
 
+**[English](README.md) | [中文](README_zh.md)**
+
 > **"任何声称都必须有可验证的实践锚点。"**
 >
 > —— 唯物实践论 第一律（实践锚定剃刀）
@@ -65,6 +67,9 @@ anchorlaw-scanner check src/
 # TypeScript
 npm install anchorlaw-scanner
 npx anchorlaw-scanner check src/
+
+# C++（@anchor 注释式标注提取验证 — annotation-extraction, Level 1）
+anchorlaw-scanner check --lang cpp src/
 ```
 
 扫描器检测以下防御性模式：
@@ -140,6 +145,25 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 
 ---
 
+## DeepSeek Harness（DSH）宿主适配层
+
+同一协议、单一仓库：`dsh/` 子树是 DSH（DeepSeek Harness）宿主适配层——协议核心留在仓库根，DSH 生态适配在 `dsh/`（由 DSH agent 大肥鱼维护）：
+
+- **11 个协议技能** — `dsh/skills/` 持有 DSH 格式技能（`anchor-*`，kebab-case + `whenToUse`）；正文派生自 `.reasonix/skills/`，由 `dsh/tests/test_manifest.py` 做正文级一致性守护
+- **模型工具** — `dsh/plugins/anchorlaw-tools.js` 注册 4 个工具：`anchorlaw_scan`（L1 扫描器）、`anchorlaw_report`（健康报告）、`anchorlaw_ai_context`（噪声卡 + 课程注入）、`anchorlaw_status`（工具链状态）
+- **Agent preset** — `dsh/preset/` 打包 `anchorlaw` preset：Judge 驱动四段流水线人格（规范 §15.4），scout/worker/judge 经隔离 subagent 委派
+
+```powershell
+# 安装/同步到 DSH 运行时（用户级 preset + 技能；可再生成——禁止手改）
+pwsh dsh/scripts/install.ps1
+# 四项自检：工具链 / 技能 manifest / scanner 自扫 / 安装产物
+pwsh dsh/scripts/selfcheck.ps1
+```
+
+维护入口：[`dsh/AGENTS.md`](dsh/AGENTS.md) — 单一事实源；正文改动走 `.reasonix/skills/`，`dsh/skills/` 只做 frontmatter 适配。
+
+---
+
 ## 核心原理
 
 传统开发把"写代码"和"写测试"分开。Vibe coding 让这种分离变得昂贵——AI 快速生成代码，但验证发生在事后、靠人工，并且反馈在迭代中丢失。
@@ -170,8 +194,13 @@ anchorlaw/
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
-└── typescript/
-    └── anchorlaw-scanner/       # TS/JS 扫描器（Level 1, 开发中）
+├── typescript/
+│   └── anchorlaw-scanner/       # TS/JS 扫描器（Level 1, 开发中）
+└── dsh/
+    ├── skills/                  # 11 个 DSH 格式 anchor-* 技能（派生自 .reasonix/skills/）
+    ├── plugins/                 # anchorlaw-tools.js — 4 个模型工具
+    ├── preset/                  # anchorlaw agent preset（Judge 驱动流水线）
+    └── AGENTS.md                # DSH 宿主适配维护入口
 ```
 
 ---

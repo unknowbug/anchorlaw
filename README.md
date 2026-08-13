@@ -1,5 +1,7 @@
 # Anchorlaw Protocol
 
+**[English](README.md) | [中文](README_zh.md)**
+
 > **"Any claim must have a verifiable practice anchor."**
 >
 > — First Law, Materialist Practice Theory
@@ -101,6 +103,25 @@ def process(data: list[int]) -> list[int]:
 
 ---
 
+## DeepSeek Harness (DSH) Host Adaptation
+
+Same protocol, single repository: the `dsh/` subtree is the DSH (DeepSeek Harness) host adaptation layer — the protocol core stays at the repo root, the DSH ecosystem adaptation lives in `dsh/` (maintained by the DSH agent 大肥鱼):
+
+- **11 protocol skills** — `dsh/skills/` holds the DSH-format skills (`anchor-*`, kebab-case + `whenToUse`); bodies are derived from `.reasonix/skills/`, with byte-level consistency enforced by `dsh/tests/test_manifest.py`
+- **Model tools** — `dsh/plugins/anchorlaw-tools.js` registers 4 tools: `anchorlaw_scan` (Level-1 scanner), `anchorlaw_report` (health report), `anchorlaw_ai_context` (noise cards + curriculum injection), `anchorlaw_status` (toolchain status)
+- **Agent preset** — `dsh/preset/` packages the `anchorlaw` preset: the Judge-driven four-stage pipeline persona (spec §15.4), with scout/worker/judge delegated through isolated subagents
+
+```powershell
+# install/sync to the DSH runtime (user-level preset + skills; regenerable — never hand-edit)
+pwsh dsh/scripts/install.ps1
+# four-item self-check: toolchain / skill manifest / scanner self-scan / installed artifacts
+pwsh dsh/scripts/selfcheck.ps1
+```
+
+Maintenance entry: [`dsh/AGENTS.md`](dsh/AGENTS.md) — single source of truth; body edits go to `.reasonix/skills/`, `dsh/skills/` holds frontmatter adaptation only.
+
+---
+
 ## The Principle
 
 Traditional development separates "writing code" from "writing tests." Vibe coding makes this separation costly — AI generates code fast, but verification happens later, manually, and feedback is lost between iterations.
@@ -129,8 +150,13 @@ anchorlaw/
 ├── python/
 │   ├── anchorlaw-scanner/       # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
-└── typescript/
-    └── anchorlaw-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
+├── typescript/
+│   └── anchorlaw-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
+└── dsh/
+    ├── skills/                  # 11 DSH-format anchor-* skills (derived from .reasonix/skills/)
+    ├── plugins/                 # anchorlaw-tools.js — 4 model tools
+    ├── preset/                  # anchorlaw agent preset (Judge-driven pipeline)
+    └── AGENTS.md                # DSH host adaptation maintenance entry
 ```
 
 ---
