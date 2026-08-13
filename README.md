@@ -112,11 +112,15 @@ Same protocol, single repository: the `dsh/` subtree is the DSH (DeepSeek Harnes
 - **Agent preset** — `dsh/preset/` packages the `anchorlaw` preset: the Judge-driven four-stage pipeline persona (spec §15.4), with scout/worker/judge delegated through isolated subagents
 
 ```powershell
-# install/sync to the DSH runtime (user-level preset + skills; regenerable — never hand-edit)
+# host-level (default): user-level preset + skills; regenerable — never hand-edit
 pwsh dsh/scripts/install.ps1
+# project-level (Reasonix-style): skills load only in <dir> sessions, not elsewhere
+pwsh dsh/scripts/install.ps1 -Project E:\path\to\project
 # four-item self-check: toolchain / skill manifest / scanner self-scan / installed artifacts
 pwsh dsh/scripts/selfcheck.ps1
 ```
+
+Project-level install places the 11 `anchor-*` skills under `<project>/.dsh/skills/` (DSH's native project-scoped root) — a session opened inside that project loads them, sessions elsewhere do not. The `anchorlaw_*` tools still ship with the anchorlaw preset; DSH has no project-level plugin mechanism yet (upstream suggestion: [deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)).
 
 Maintenance entry: [`dsh/AGENTS.md`](dsh/AGENTS.md) — single source of truth; body edits go to `.reasonix/skills/`, `dsh/skills/` holds frontmatter adaptation only.
 

@@ -21,7 +21,7 @@
 | `plugins/anchorlaw-tools.js` | 4 个模型工具插件（scan/report/ai-context/status） | **事实源**（改这里） |
 | `preset/agent.cordis.yml` | anchorlaw agent preset 组合 | **事实源**（改这里） |
 | `preset/preset.yml` | preset 显示元数据 | 事实源 |
-| `scripts/install.ps1` | 安装/同步到 DSH 运行时 | 维护工具 |
+| `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
 | `scripts/selfcheck.ps1` | 四项自检 | 维护工具 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + **正文级**上游一致性） | 维护测试 |
 | `SYNC.md` | 溯源戳（上次同步的上游 commit + 时间 + 差异） | 溯源记录 |

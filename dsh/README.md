@@ -18,14 +18,18 @@
 ## 快速开始
 
 ```powershell
-# 1. 安装/同步到 DSH 运行时（preset + 用户级技能）
+# 模式 A：宿主级（默认）——preset + 用户级技能；任何项目会话可选 anchorlaw preset
 pwsh scripts/install.ps1
 
-# 2. 自检（工具链 / 技能 manifest / 自扫 / 安装产物）
+# 模式 B：项目级（Reasonix 式）——技能装进项目，进入该项目工作区才加载、离开即无
+pwsh scripts/install.ps1 -Project E:\path\to\project
+
+# 自检（工具链 / 技能 manifest / 自扫 / 安装产物）
 pwsh scripts/selfcheck.ps1
 ```
 
-装完后新建会话时选择 **anchorlaw** preset，即可使用 4 个 `anchorlaw_*` 工具和 11 个 `anchor-*` 技能。
+- **宿主级（默认）**：4 个 `anchorlaw_*` 工具 + 11 个 `anchor-*` 技能随 **anchorlaw preset** 与用户级技能安装；任何项目新建会话时选择 **anchorlaw** preset 即可使用（与工作目录无关）。
+- **项目级（`-Project`）**：11 个 `anchor-*` 技能装到 `<项目>/.dsh/skills/`（DSH 原生项目级根，rank 100）——进入该项目工作区的会话加载、离开不加载，与 Reasonix 按项目部署一致。插件文件同步落到 `<项目>/.dsh/plugins/` 备用；DSH 目前尚无项目级插件加载机制（建议已提交上游：deepseek-ai/deepseek-harness discussion #306），`anchorlaw_*` 工具仍随 anchorlaw preset 提供。
 
 ## 目录结构
 

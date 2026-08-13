@@ -154,11 +154,15 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 - **Agent preset** — `dsh/preset/` 打包 `anchorlaw` preset：Judge 驱动四段流水线人格（规范 §15.4），scout/worker/judge 经隔离 subagent 委派
 
 ```powershell
-# 安装/同步到 DSH 运行时（用户级 preset + 技能；可再生成——禁止手改）
+# 宿主级（默认）：用户级 preset + 技能；可再生成——禁止手改
 pwsh dsh/scripts/install.ps1
+# 项目级（Reasonix 式）：技能只在 <目录> 工作区的会话加载，离开即无
+pwsh dsh/scripts/install.ps1 -Project E:\path\to\project
 # 四项自检：工具链 / 技能 manifest / scanner 自扫 / 安装产物
 pwsh dsh/scripts/selfcheck.ps1
 ```
+
+项目级安装把 11 个 `anchor-*` 技能装进 `<项目>/.dsh/skills/`（DSH 原生项目级根）——进入该项目工作区的会话加载，其他会话不加载，与 Reasonix 按项目部署一致。`anchorlaw_*` 工具仍随 anchorlaw preset 提供；DSH 目前尚无项目级插件机制（上游建议：[deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)）。
 
 维护入口：[`dsh/AGENTS.md`](dsh/AGENTS.md) — 单一事实源；正文改动走 `.reasonix/skills/`，`dsh/skills/` 只做 frontmatter 适配。
 
