@@ -94,6 +94,12 @@ export function apply(ctx, config) {
     return [{ type: 'text', text: String(v) }]
   }
 
+  // NOTE: ctx.tools.register() projects `parameters` VERBATIM to the model and
+  // does not compile it — it must already be a JSON Schema object root
+  // ({ type: 'object', properties: ... }). A flat per-property spec (defineTool
+  // input style) reaches the LLM without a top-level type and fails with
+  // "Invalid schema for function ... got 'type: null'". The shape is enforced
+  // by dsh/tests/check_plugin_schema.mjs (run from scripts/selfcheck.ps1).
   function register(definition) {
     ctx.effect(() => ctx.tools.register(definition))
   }
@@ -102,9 +108,13 @@ export function apply(ctx, config) {
     name: 'anchorlaw_scan',
     description: 'Run the Anchorlaw protocol scanner (Level 1) over a file or directory and return the defensive-pattern findings (P1-P6) with ERR/WARN/INFO severity. Non-zero exit code 1 means ERR-level patterns were found; the findings are still returned as text.',
     parameters: {
-      path: { type: 'string', required: true, description: 'File or directory to scan, absolute or relative to the session workspace.' },
-      lang: { type: 'string', enum: ['python', 'cpp', 'go', 'java'], default: 'python', description: 'python = defensive patterns; cpp/go/java = @anchor annotation-extraction.' },
-      recursive: { type: 'boolean', default: true, description: 'Recursively scan subdirectories.' },
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'File or directory to scan, absolute or relative to the session workspace.' },
+        lang: { type: 'string', enum: ['python', 'cpp', 'go', 'java'], default: 'python', description: 'python = defensive patterns; cpp/go/java = @anchor annotation-extraction.' },
+        recursive: { type: 'boolean', default: true, description: 'Recursively scan subdirectories.' },
+      },
+      required: ['path'],
     },
     output: { schema: { type: 'string' }, render(_args, v) { return renderText(v) } },
     async execute(args, exec) {
@@ -124,7 +134,11 @@ export function apply(ctx, config) {
     name: 'anchorlaw_report',
     description: 'Run the Anchorlaw protocol health report (scanner findings + noise-card backlog + diagnostic verdict) for a file or directory.',
     parameters: {
-      path: { type: 'string', required: true, description: 'File or directory to report on, absolute or relative to the session workspace.' },
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'File or directory to report on, absolute or relative to the session workspace.' },
+      },
+      required: ['path'],
     },
     output: { schema: { type: 'string' }, render(_args, v) { return renderText(v) } },
     async execute(args, exec) {
@@ -141,9 +155,12 @@ export function apply(ctx, config) {
     name: 'anchorlaw_ai_context',
     description: 'Export Anchorlaw AI context injection text (noise cards + extracted curriculum) for the given functions. Requires an initialized .anchorlaw directory in the working directory.',
     parameters: {
-      functions: { type: 'string', description: 'Comma-separated function names to filter noise cards for.' },
-      limit: { type: 'number', default: 20, description: 'Maximum number of cards.' },
-      all: { type: 'boolean', default: false, description: 'Include resolved cards.' },
+      type: 'object',
+      properties: {
+        functions: { type: 'string', description: 'Comma-separated function names to filter noise cards for.' },
+        limit: { type: 'number', default: 20, description: 'Maximum number of cards.' },
+        all: { type: 'boolean', default: false, description: 'Include resolved cards.' },
+      },
     },
     output: { schema: { type: 'string' }, render(_args, v) { return renderText(v) } },
     async execute(args, exec) {
@@ -163,7 +180,7 @@ export function apply(ctx, config) {
   register({
     name: 'anchorlaw_status',
     description: 'Report the Anchorlaw toolchain status: session workspace, python + anchorlaw-scanner + anchorlaw versions, and the list of installed anchor-* skills visible to the current session.',
-    parameters: {},
+    parameters: { type: 'object', properties: {} },
     output: { schema: { type: 'string' }, render(_args, v) { return renderText(v) } },
     async execute(_args, exec) {
       const lines = []

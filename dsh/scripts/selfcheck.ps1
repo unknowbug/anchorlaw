@@ -6,6 +6,9 @@
 #   2. skill manifest validity (DSH naming/frontmatter) via tests/test_manifest.py
 #   3. scanner self-scan of the project's own python sources (ERR must be 0)
 #   4. installed preset + skills presence under ~/.dsh
+#   5. plugin tool-schema shape (compiled JSON-Schema parameters) via
+#      tests/check_plugin_schema.mjs — a flat spec would reach the LLM without
+#      a top-level type and break every session ("Invalid schema ... type: null").
 
 $ErrorActionPreference = 'Continue'
 
@@ -46,6 +49,12 @@ $userSkills = Join-Path $dshHome 'skills'
 $count = @(Get-ChildItem -Path $userSkills -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -like 'anchor-*' }).Count
 Write-Host "  OK user skills: $count anchor-* directories"
 if ($count -lt 11) { Write-Host "  FAIL: expected 11 anchor skills"; $fail = 1 }
+
+# 5. plugin tool-schema shape (compiled JSON-Schema parameters; see check_plugin_schema.mjs)
+Write-Host ""
+Write-Host "[5] plugin tool schemas"
+node (Join-Path $srcRoot 'tests\check_plugin_schema.mjs') 2>&1
+if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: plugin tool schemas not compiled JSON Schema"; $fail = 1 }
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "== ALL CHECKS PASSED ==" } else { Write-Host "== CHECKS FAILED ==" }

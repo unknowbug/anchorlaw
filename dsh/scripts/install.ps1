@@ -10,15 +10,20 @@
 #   them and a session outside does not. The plugin file is also copied to
 #   <dir>/.dsh/plugins/ for future project-level plugin support; DSH currently
 #   has no project-level plugin mechanism (suggestion filed upstream:
-#   deepseek-ai/deepseek-harness discussion #306), so the anchorlaw_* tools
-#   remain available through the anchorlaw preset (host-level).
+#   deepseek-ai/deepseek-harness discussion #306).
+#   Host-level install additionally mounts the 4 anchorlaw_* tools globally:
+#   it appends an `insert` row to <dshHome>/profiles/<profile>/cordis.patch.yml
+#   (the ONLY user patch layer DSH reads; ~/.dsh/cordis.patch.yml is ignored by
+#   the host) and copies the plugin to <profile>/plugins/anchorlaw/.
 #
 # Idempotent: safe to re-run after editing any source file. Requires full file
 # access to the DSH home (outside the session workspace).
 
 param(
   # Project directory for project-level (Reasonix-style) install.
-  [string]$Project = ''
+  [string]$Project = '',
+  # DSH profile name for the global tool mount (default: web).
+  [string]$Profile = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -88,8 +93,72 @@ if (Test-Path (Join-Path $srcRoot 'skills')) {
   Copy-Item -Path (Join-Path $srcRoot 'skills\*') -Destination $userSkills -Recurse -Force
 }
 
+# 4. Global tool mount — DSH reads ONLY the profile's own patch layer
+#    (<dshHome>/profiles/<profile>/cordis.patch.yml; baseUrl = profile dir,
+#    hot-reloaded). ~/.dsh/cordis.patch.yml is NOT read by the host. The
+#    anchorlaw plugin row is appended as an `insert` patch so the four
+#    anchorlaw_* tools are available in every session (global layer).
+#
+#    GATE: never mount a plugin whose tool schemas are not compiled JSON
+#    Schema. A flat per-property spec (defineTool input style) is projected
+#    verbatim to the LLM without a top-level type and breaks EVERY session
+#    ("Invalid schema for function ... got 'type: null'"). The check must pass
+#    before the patch is written (2026-08-13 incident guard).
+$profileName = if ($Profile) { $Profile } else { 'web' }
+$profileDir = Join-Path $dshHome "profiles\$profileName"
+$patchPath = Join-Path $profileDir 'cordis.patch.yml'
+$profilePluginDir = Join-Path $profileDir 'plugins\anchorlaw'
+
+if (Test-Path (Join-Path $profileDir 'package.json')) {
+  node (Join-Path $srcRoot 'tests\check_plugin_schema.mjs') 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    throw "plugin tool-schema check failed - refusing to mount global tools"
+  }
+
+  # Plugin file travels with the profile (resolved relative to baseUrl = profile dir)
+  New-Item -ItemType Directory -Path $profilePluginDir -Force | Out-Null
+  Copy-Item -Path (Join-Path $srcRoot 'plugins\anchorlaw-tools.js') -Destination (Join-Path $profilePluginDir 'anchorlaw-tools.js') -Force
+
+  # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row, then append ours.
+  $py = @'
+import io, os, yaml
+path = os.environ['ANCHORLAW_PATCH_PATH']
+try:
+    with io.open(path, encoding='utf-8') as f:
+        data = yaml.safe_load(f)
+except FileNotFoundError:
+    data = None
+rows = list(data) if isinstance(data, list) else []
+rows = [r for r in rows if not (
+    isinstance(r, dict) and any(
+        (e or {}).get('id') == 'anchorlaw-tools-global' for e in (r.get('insert') or [])))]
+rows.append({'insert': [{'id': 'anchorlaw-tools-global',
+                         'name': './plugins/anchorlaw/anchorlaw-tools.js',
+                         'config': {}}]})
+out = ('# Managed by install.ps1 - global anchorlaw tools for this profile '
+       '(anchorlaw-tools-global). Re-run install.ps1 to refresh; do not hand-edit.\n' +
+       yaml.safe_dump(rows, allow_unicode=True, sort_keys=False))
+with io.open(path, 'w', encoding='utf-8', newline='\n') as f:
+    f.write(out)
+'@
+  $tmpPy = Join-Path $env:TEMP 'anchorlaw-patch-merge.py'
+  Set-Content -Path $tmpPy -Value $py -Encoding UTF8
+  $env:ANCHORLAW_PATCH_PATH = $patchPath
+  python $tmpPy
+  $mergeCode = $LASTEXITCODE
+  Remove-Item $tmpPy -Force -ErrorAction SilentlyContinue
+  Remove-Item Env:ANCHORLAW_PATCH_PATH -ErrorAction SilentlyContinue
+  if ($mergeCode -ne 0) { throw "failed to merge profile patch $patchPath" }
+  Write-Host "  OK global tools: $patchPath (anchorlaw-tools-global)"
+} else {
+  Write-Host "  skip global tools: profile '$profileName' not found at $profileDir"
+  Write-Host "        (create it with 'dsh plugin --profile $profileName add <package>', then re-run install.ps1)"
+}
+
 Write-Host ""
 Write-Host "Installed:"
 Get-ChildItem -Path $presetDir -Recurse -File | ForEach-Object { Write-Host "  $($_.FullName.Replace($presetDir, 'preset'))" }
+Write-Host "  global: $patchPath (anchorlaw-tools-global)"
 Write-Host ""
-Write-Host "Next: open a new session on the 'anchorlaw' preset, or run scripts/selfcheck.ps1 to verify."
+Write-Host "Next: run scripts/selfcheck.ps1 to verify; open a NEW session (or wait for profile hot-reload)"
+Write-Host "      and the 4 anchorlaw_* tools are available in every session."

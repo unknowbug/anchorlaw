@@ -6,7 +6,7 @@
 ## 〇、开始工作前（每个 session 必做）
 
 1. 确认仓库状态：本仓库根即协议事实源，本目录（`dsh/`）即 DSH 适配事实源——**单一仓库，无第二份协议副本**。
-2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物四项）。
+2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema 五项）。
 3. 若改动涉及协议语义：协议正文在上层 `../spec/protocol-v0.17.md`（§8 Maturity / §11 全称声称审计 / §14 Skill Manifest），证据必须跟着走；技能正文改动只能改 `../.reasonix/skills/`（规范正文），本目录技能由派生+校验守护。
 
 ## 一、本目录定位（一句话）
@@ -21,8 +21,9 @@
 | `plugins/anchorlaw-tools.js` | 4 个模型工具插件（scan/report/ai-context/status） | **事实源**（改这里） |
 | `preset/agent.cordis.yml` | anchorlaw agent preset 组合 | **事实源**（改这里） |
 | `preset/preset.yml` | preset 显示元数据 | 事实源 |
-| `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
-| `scripts/selfcheck.ps1` | 四项自检 | 维护工具 |
+| `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级：preset + 用户技能 + **全局工具挂载**到活动 profile 的 `cordis.patch.yml`；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
+| `scripts/selfcheck.ps1` | 五项自检（含插件工具 schema 校验，2026-08-13 事故门禁） | 维护工具 |
+| `tests/check_plugin_schema.mjs` | 插件工具 schema 形态校验（编译后 JSON-Schema parameters） | 维护测试 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + **正文级**上游一致性） | 维护测试 |
 | `SYNC.md` | 溯源戳（上次同步的上游 commit + 时间 + 差异） | 溯源记录 |
 | `demo/` | 演示代码（防御模式 + 锚定函数） | 演示 |
@@ -35,7 +36,7 @@
 
 ## 三、维护铁律（对应上游 anchor.maintain，DSH 版）
 
-1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿（第 3 项自扫=第一律反身应用：scanner 必须能扫自己的代码不崩溃）。
+1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿（第 3 项自扫=第一律反身应用：scanner 必须能扫自己的代码不崩溃；第 5 项插件工具 schema 校验=挂载门禁：扁平 schema 会让所有会话报 `Invalid schema ... type: null`——2026-08-13 事故，install.ps1 挂载前也会先跑这道校验）。
 2. **单一事实源**：协议核心只存仓库根一份；技能正文规范份在 `../.reasonix/skills/`，DSH 份是适配（kebab-case 命名 + whenToUse frontmatter），正文由 test_manifest.py 逐字节守护。
 3. **新能力必须配验证**：新增技能/工具要能通过自检或实测证明，否则标注 Unverified。
 4. **命名纪律**：DSH 技能名必须 kebab-case（`anchor-judge` 而非 `anchor.judge`）；插件工具名 `anchorlaw_*`。
