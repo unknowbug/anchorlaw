@@ -19,7 +19,7 @@
 
 1. **技能正文改动**：只允许发生在 `.reasonix/skills/`（规范正文）。改后更新本文件的差异记录，然后确认 `dsh/tests/test_manifest.py` 通过。
 2. **frontmatter 适配改动**：直接改 `dsh/skills/<name>/SKILL.md`，并在此文件登记变更。
-3. **协议语义更新**：先改 `../spec/protocol-v0.17.md`（§8 Maturity / §11 审计随行），再同步技能正文与 DSH 适配。
+3. **协议语义更新**：先改 `../spec/protocol-v0.18.md`（§8 Maturity / §11 审计随行），再同步技能正文与 DSH 适配。
 
 ## 变更日志
 

@@ -6,7 +6,7 @@ whenToUse: 运行时观察到失败/异常，或存在未解决噪声卡积压�
 
 # anchor.noise — 噪声卡管理
 
-> Protocol: spec/protocol-v0.17.md §3 (Noise Card JSON Schema)
+> Protocol: spec/protocol-v0.18.md §3 (Noise Card JSON Schema)
 > Layer: L3 (Noise)
 > Execution: inline
 

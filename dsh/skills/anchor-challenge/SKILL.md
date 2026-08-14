@@ -6,7 +6,7 @@ whenToUse: scanner 疑似误报（挑战规则，§12）时（L1，主会话内 
 
 # anchor.challenge — 规则挑战流程
 
-> Protocol: spec/protocol-v0.17.md §12 (Rule Challenge Process)
+> Protocol: spec/protocol-v0.18.md §12 (Rule Challenge Process)
 > Layer: L1 (Scanner)
 > Execution: inline
 

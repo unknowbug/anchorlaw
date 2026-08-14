@@ -25,6 +25,8 @@ Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测�
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
 >
+> **v0.18 更新 (2026-08-13):** DSH 宿主适配——DeepSeek Harness（DSH）成为首个完整实现 §16 宿主接入契约全部四个接口点的宿主：`dsh/` 子树提供 11 个 anchor-* 技能（DSH 格式，kebab-case + whenToUse）、4 个模型工具（`anchorlaw_scan` / `anchorlaw_report` / `anchorlaw_ai_context` / `anchorlaw_status`，支持宿主级全局挂载）、`anchorlaw` agent preset（Judge 驱动流水线，§15.4）与项目级（Reasonix 式）安装模式。见 [DSH 宿主适配层](#deepseek-harnessdsh-宿主适配层)。
+>
 > **v0.17 更新 (2026-08-12):** §12 挑战裁决（Reasonix/Go 实测）——① parse-error 标记：不可解析的源文件是工具层 `parse-error`（INFO），绝不归入 P1-P6 模式（SyntaxError 曾被误分类为吞噬异常）；② 注释式语言声称降级：Go/Java/C++ 注册 = 仅标注提取，P1-P6 缺陷检测未映射；③ 新增 4 个语言无关可靠性风险模式 P7-P10（生命周期/状态机/路径协调/复杂度），实现按语言映射。
 >
 > **v0.16 更新 (2026-08-10):** Go/Java 登记为注释式语言（行注释 `// @anchor.*`，声明位置同 C++；独立 probe/test binary 为验证载体），参考提取器已接线（annotation-extraction）。Rust 声明不需要支持——其编译器/借用检查/测试框架自带本协议要加的验证；proc-macros 计划废弃（§2.4/§13）。
@@ -141,7 +143,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 | **半功能** | 代码有未解析的外部依赖 | ❌ | ❌（anchor 仍记录 source，验证推迟） |
 | **降级** | Anchorlaw 未安装 | ❌ | ❌（人工对照 trace 审查） |
 
-这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.17.md#9-degraded-verification-v03-draft)。
+这不是防御性条款——是诚实地标注当前能做到什么。详见 [协议规范 §9](spec/protocol-v0.18.md#9-degraded-verification-v03-draft)。
 
 ---
 
@@ -196,7 +198,7 @@ anchorlaw/
 ├── README.md                    # 英文顶层说明
 ├── README_zh.md                 # 中文顶层说明（你在这里）
 ├── spec/
-│   └── protocol-v0.17.md       # 语言无关的协议规范（当前版）
+│   └── protocol-v0.18.md       # 语言无关的协议规范（当前版）
 ├── python/
 │   ├── anchorlaw-scanner/       # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
@@ -227,7 +229,7 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.17](spec/protocol-v0.17.md)
+- [协议规范 v0.18](spec/protocol-v0.18.md)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

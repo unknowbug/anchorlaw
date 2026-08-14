@@ -7,7 +7,7 @@ runAs: subagent
 
 # anchor.scout — 规范起草角色（subprocess）
 
-> Protocol: spec/protocol-v0.17.md §15.1 (Definition), §15.2 (Isolation Semantics)
+> Protocol: spec/protocol-v0.18.md §15.1 (Definition), §15.2 (Isolation Semantics)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 

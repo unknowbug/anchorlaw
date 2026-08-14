@@ -6,7 +6,7 @@ whenToUse: 在 Anchorlaw 仓库内修改协议或实现本身时（L4，仅限�
 
 # anchor.maintain — 协议维护工作流
 
-> Protocol: spec/protocol-v0.17.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
+> Protocol: spec/protocol-v0.18.md §0 (Universal Quantifier Discipline), §8 (Maturity), §10 (Versioning), §11 (Audit)
 > Layer: L4 (Maintain) — 仅限 Anchorlaw 仓库内部（§14.6：MAY 限于协议自身仓库）
 > Execution: inline
 
