@@ -21,7 +21,7 @@
 | `plugins/anchorlaw-tools.js` | 4 个模型工具插件（scan/report/ai-context/status） | **事实源**（改这里） |
 | `preset/agent.cordis.yml` | anchorlaw agent preset 组合 | **事实源**（改这里） |
 | `preset/preset.yml` | preset 显示元数据 | 事实源 |
-| `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级：preset + 用户技能 + **全局工具挂载**到活动 profile 的 `cordis.patch.yml`；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
+| `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级：preset + 用户技能 + **全局工具挂载**到 profiles/ 下所有 profile 的 `cordis.patch.yml`（自动检测；`-Profile <name>` 指定单个）；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
 | `scripts/selfcheck.ps1` | 五项自检（含插件工具 schema 校验，2026-08-13 事故门禁） | 维护工具 |
 | `tests/check_plugin_schema.mjs` | 插件工具 schema 形态校验（编译后 JSON-Schema parameters） | 维护测试 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + **正文级**上游一致性） | 维护测试 |
@@ -31,12 +31,13 @@
 | **安装产物（勿手改）** | | |
 | `~/.dsh/.agent-presets/anchorlaw/` | 已安装 preset（组合 + plugins/ + skills/） | install.ps1 生成 |
 | `~/.dsh/skills/anchor-*` | 用户级全局技能 | install.ps1 同步 |
+| `~/.dsh/profiles/*/cordis.patch.yml` + `plugins/anchorlaw/` | 全局工具挂载（insert 行 + 插件文件） | install.ps1 生成 |
 
 **同步纪律（核心铁律）**：所有修改只改本目录事实源，然后跑 `scripts/install.ps1` 重装——安装产物一律视为可再生，禁止手改。装完跑 `scripts/selfcheck.ps1` 验证。技能**正文**不允许在本目录手改——改 `../.reasonix/skills/` 后由 test_manifest.py 守护一致性（只允许行尾归一化差异）。
 
 ## 三、维护铁律（对应上游 anchor.maintain，DSH 版）
 
-1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿（第 3 项自扫=第一律反身应用：scanner 必须能扫自己的代码不崩溃；第 5 项插件工具 schema 校验=挂载门禁：扁平 schema 会让所有会话报 `Invalid schema ... type: null`——2026-08-13 事故，install.ps1 挂载前也会先跑这道校验）。
+1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿。第 3 项自扫=第一律反身应用；第 5 项插件工具 schema 校验=挂载门禁（2026-08-13 事故：扁平 schema 让所有会话报 `Invalid schema ... type: null`；install.ps1 挂载前也先跑这道校验）。
 2. **单一事实源**：协议核心只存仓库根一份；技能正文规范份在 `../.reasonix/skills/`，DSH 份是适配（kebab-case 命名 + whenToUse frontmatter），正文由 test_manifest.py 逐字节守护。
 3. **新能力必须配验证**：新增技能/工具要能通过自检或实测证明，否则标注 Unverified。
 4. **命名纪律**：DSH 技能名必须 kebab-case（`anchor-judge` 而非 `anchor.judge`）；插件工具名 `anchorlaw_*`。
@@ -57,3 +58,19 @@
 ## 六、会话工作目录说明
 
 历史会话工作目录 `E:\PYTHON\Anchorlaw-dsh` 仅保留为本地工作副本（不再作为事实源）；本仓库 `dsh/` 子树是 DSH 适配的唯一事实源。推荐新会话将工作目录指向本仓库根（加载根 AGENTS.md + 本文件）或本目录。
+
+## 七、DSH 工具调用（模型工具优先，不裸跑 CLI）
+
+4 个 `anchorlaw_*` 模型工具由全局挂载提供，**新会话**的工具列表可见（会话 composition 在创建时固定；工具没出现就重开会话）：
+
+| 工具 | 底层 CLI | 用途 |
+|------|----------|------|
+| `anchorlaw_scan` | `anchorlaw-scanner check` | L1 防御模式扫描（P1-P6；`lang` 可选 cpp/go/java 注释式提取） |
+| `anchorlaw_report` | `anchorlaw-scanner report` | 健康报告（扫描 + 噪声卡积压 + 诊断结论） |
+| `anchorlaw_ai_context` | `anchorlaw ai-context` | 噪声卡 + 课程导出（LLM 上下文注入） |
+| `anchorlaw_status` | — | 工具链版本 + 已发现 anchor-* 技能 |
+
+**约定**：
+- DSH 会话内做协议动作**优先调用这些工具**，不要裸跑 `python -m anchorlaw*` CLI——工具封装了 CLI、会话 cwd 解析与沙箱语义（工具描述即协议 §6/§3 的 DSH 形态）。
+- 工具路径参数相对当前会话工作区（cwd），可传绝对路径。
+- 维护 dsh/ 自身时同样优先用工具（扫描/报告本目录），与自检第 5 项互为印证。
