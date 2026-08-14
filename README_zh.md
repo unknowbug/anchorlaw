@@ -25,7 +25,7 @@ Anchorlaw 是一套**面向 vibe coding 的代码验证协议**——不是测�
 
 > **诚实声明**：标记为"实验性""未验证""猜想"的组件是工作假设。它们的价值尚未通过实践检验。邀请你帮助我们检验这些假设——而非因为我们声称它们有效。
 >
-> **v0.18 更新 (2026-08-13):** DSH 宿主适配——DeepSeek Harness（DSH）成为首个完整实现 §16 宿主接入契约全部四个接口点的宿主：`dsh/` 子树提供 11 个 anchor-* 技能（DSH 格式，kebab-case + whenToUse）、4 个模型工具（`anchorlaw_scan` / `anchorlaw_report` / `anchorlaw_ai_context` / `anchorlaw_status`，支持宿主级全局挂载）、`anchorlaw` agent preset（Judge 驱动流水线，§15.4）与项目级（Reasonix 式）安装模式。见 [DSH 宿主适配层](#deepseek-harnessdsh-宿主适配层)。
+> **v0.18 更新 (2026-08-13):** DSH 宿主适配——DeepSeek Harness（DSH）成为首个完整实现 §16 宿主接入契约全部四个接口点的宿主：`dsh/` 子树提供 11 个 anchor-* 技能（DSH 格式，kebab-case + whenToUse）、4 个模型工具（`anchorlaw_scan` / `anchorlaw_report` / `anchorlaw_ai_context` / `anchorlaw_status`，支持宿主级全局挂载）、`anchorlaw` agent preset（Judge 驱动流水线，§15.4）与项目级（Reasonix 式）安装模式。见 [DSH 宿主适配层](#deepseek-harnessdsh-宿主适配层)。实现修复（2026-08-15）：`anchorlaw noise resolve` 现接受 `noise list` 打印的短后缀 ID（此前仅完整 `noise-…` ID 可解析，与 CLI help 承诺的 "ID（或后缀）"不符）；已补 4 个单元测试。
 >
 > **v0.17 更新 (2026-08-12):** §12 挑战裁决（Reasonix/Go 实测）——① parse-error 标记：不可解析的源文件是工具层 `parse-error`（INFO），绝不归入 P1-P6 模式（SyntaxError 曾被误分类为吞噬异常）；② 注释式语言声称降级：Go/Java/C++ 注册 = 仅标注提取，P1-P6 缺陷检测未映射；③ 新增 4 个语言无关可靠性风险模式 P7-P10（生命周期/状态机/路径协调/复杂度），实现按语言映射。
 >
