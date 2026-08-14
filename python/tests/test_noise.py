@@ -71,6 +71,31 @@ class TestNoiseCard:
         assert store.get("n1").converted_to_test == "regression_x"
         assert not store.resolve("nope")
 
+    def test_resolve_by_display_suffix(self, tmp_path):
+        # ai_context_entry prints the last 8 chars of the id; the CLI help
+        # promises "(or suffix)" — that displayed suffix must resolve.
+        store = NoiseStore(str(tmp_path / "cards.json"))
+        store.add(_card("noise-aaaa00001111"))
+        assert store.resolve("1111") is True
+        assert store.get("noise-aaaa00001111").resolved
+
+    def test_resolve_by_hex_without_prefix(self, tmp_path):
+        # The full hex part without the "noise-" prefix also resolves.
+        store = NoiseStore(str(tmp_path / "cards.json"))
+        store.add(_card("noise-aaaa00001111"))
+        assert store.resolve("aaaa00001111") is True
+        assert store.get("noise-aaaa00001111").resolved
+
+    def test_resolve_ambiguous_suffix_returns_false(self, tmp_path):
+        # A suffix shared by several cards is ambiguous → refuse to resolve
+        # rather than silently resolving the wrong card.
+        store = NoiseStore(str(tmp_path / "cards.json"))
+        store.add(_card("noise-aaaa00001111"))
+        store.add(_card("noise-bbbb00001111"))
+        assert not store.resolve("1111")
+        assert not store.get("noise-aaaa00001111").resolved
+        assert not store.get("noise-bbbb00001111").resolved
+
     def test_search(self, tmp_path):
         store = NoiseStore(str(tmp_path / "cards.json"))
         store.add(_card("n1", trigger="timeout"))
@@ -124,6 +149,19 @@ class TestModuleLevelAPI:
         monkeypatch.chdir(tmp_path)
         create_noise_card(trigger="t", function_name="f", observed="o", expected="e")
         assert resolve_noise("missing-id") is False  # 未知 id 返回 False
+
+    def test_resolve_noise_suffix_module_api(self, tmp_path, monkeypatch):
+        # End-to-end: the short suffix shown by `anchorlaw noise list`
+        # (ai_context_entry) resolves via the module API, matching the CLI
+        # help contract "Noise ID (or suffix)".
+        monkeypatch.chdir(tmp_path)
+        card = create_noise_card(trigger="t", function_name="f",
+                                 observed="o", expected="e")
+        suffix = card.noise_id[-8:]
+        assert suffix != card.noise_id
+        assert resolve_noise(suffix, converted_test="regression_x") is True
+        assert card.resolved
+        assert card.converted_to_test == "regression_x"
 
     def test_search_module_api(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)

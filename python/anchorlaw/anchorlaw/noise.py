@@ -133,8 +133,25 @@ class NoiseStore:
     def get(self, noise_id: str) -> Optional[NoiseCard]:
         return self._cards.get(noise_id)
 
-    def resolve(self, noise_id: str, converted_test: str = "") -> bool:
+    def _find(self, noise_id: str) -> Optional[NoiseCard]:
+        """Resolve a user-supplied id to a card.
+
+        Accepts the full id ("noise-xxxxxxxxxxxx"), the hex part without
+        the "noise-" prefix, or the short display suffix (the last 8 hex
+        chars printed by ai_context_entry). Exact match wins; a suffix
+        matching several cards is ambiguous and yields None so we never
+        resolve the wrong card.
+        """
         card = self._cards.get(noise_id)
+        if card:
+            return card
+        matches = [c for c in self._cards.values() if c.noise_id.endswith(noise_id)]
+        if len(matches) == 1:
+            return matches[0]
+        return None
+
+    def resolve(self, noise_id: str, converted_test: str = "") -> bool:
+        card = self._find(noise_id)
         if card:
             card.mark_resolved(converted_test)
             self._save()
