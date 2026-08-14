@@ -23,6 +23,7 @@
 | `preset/preset.yml` | preset 显示元数据 | 事实源 |
 | `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级：preset + 用户技能 + **全局工具挂载**到 profiles/ 下所有 profile 的 `cordis.patch.yml`（自动检测；`-Profile <name>` 指定单个）；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
 | `scripts/selfcheck.ps1` | 五项自检（含插件工具 schema 校验，2026-08-13 事故门禁） | 维护工具 |
+| `scripts/run_tests_sandbox.py` | 沙箱感知 pytest 包装——DSH Windows 沙箱封存 0o700 目录导致 pytest tmp 机制失效，本脚本改 0o755 后跑基线测试（`python -m pytest --rootdir=python python/tests -q` 的沙箱替代入口） | 维护工具 |
 | `tests/check_plugin_schema.mjs` | 插件工具 schema 形态校验（编译后 JSON-Schema parameters） | 维护测试 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + **正文级**上游一致性） | 维护测试 |
 | `SYNC.md` | 溯源戳（上次同步的上游 commit + 时间 + 差异） | 溯源记录 |
