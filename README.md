@@ -116,12 +116,12 @@ Same protocol, single repository: the `dsh/` subtree is the DSH (DeepSeek Harnes
 # active profile's cordis.patch.yml; regenerable — never hand-edit
 pwsh dsh/scripts/install.ps1
 # project-level (Reasonix-style): skills load only in <dir> sessions, not elsewhere
-pwsh dsh/scripts/install.ps1 -Project E:\path\to\project
+pwsh dsh/scripts/install.ps1 -Project /path/to/project
 # five-item self-check: toolchain / skill manifest / scanner self-scan / installed artifacts / plugin tool schemas
 pwsh dsh/scripts/selfcheck.ps1
 ```
 
-Host-level install mounts the 4 `anchorlaw_*` tools globally: it appends an `insert` row to `<dshHome>/profiles/<profile>/cordis.patch.yml` (the ONLY user patch layer DSH reads; hot-reloaded) and copies the plugin to `<profile>/plugins/anchorlaw/`. The mount is gated by `dsh/tests/check_plugin_schema.mjs`, which verifies every tool's `parameters` is a compiled JSON-Schema object root — a flat spec would reach the LLM without a top-level type and break every session (2026-08-13 incident guard).
+Host-level install mounts the 4 `anchorlaw_*` tools globally: it appends an `insert` row to every profile's `cordis.patch.yml` under `<dshHome>/profiles/` (the ONLY user patch layer DSH reads; hot-reloaded) — `-Profile <name>` mounts one profile only — and copies the plugin to `<profile>/plugins/anchorlaw/`. The mount is gated by `dsh/tests/check_plugin_schema.mjs`, which verifies every tool's `parameters` is a compiled JSON-Schema object root — a flat spec would reach the LLM without a top-level type and break every session (2026-08-13 incident guard).
 
 Project-level install places the 11 `anchor-*` skills under `<project>/.dsh/skills/` (DSH's native project-scoped root) — a session opened inside that project loads them, sessions elsewhere do not. DSH has no project-level plugin mechanism yet (upstream suggestion: [deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)); the `anchorlaw_*` tools come from the host-level global mount.
 

@@ -2,8 +2,8 @@
 # protocol toolchain (scanner/report/ai-context/status), its 11 anchor skills,
 # and a Judge-driven pipeline persona (protocol spec/protocol-v0.17 §15/§16).
 #
-# Maintained by 大肥鱼 (DSH agent). Source of truth lives in the project
-# workspace: E:\PYTHON\Anchorlaw\dsh (preset/ + plugins/ + skills/).
+# Maintained by 大肥鱼 (DSH agent). Source of truth lives in this repo's dsh/
+# subtree (github.com/unknowbug/anchorlaw — preset/ + plugins/ + skills/).
 # Install/sync via scripts/install.ps1 — do NOT hand-edit the installed copy
 # under ~/.dsh/.agent-presets/anchorlaw/, it is regenerated.
 #
@@ -27,7 +27,7 @@
 
       Trigger the anchor skills at their mandated points: anchor-scan before every merge and on defensive-pattern reports; anchor-challenge for scanner false positives (§12); anchor-write when anchoring public functions; anchor-test to verify; anchor-degrade when code cannot compile standalone (§9, evidence-saturation retry cap); anchor-noise on runtime failures (L3). anchor-concepts for semantics before writing/reviewing anchors.
 
-      Maintain the Anchorlaw DSH project in this workspace per AGENTS.md: keep the self-check green, keep skills/plugin/preset in sync via scripts/install.ps1, and mirror protocol changes from the upstream repo E:\PYTHON\Anchorlaw with evidence (changelog/maturity/§11 audit discipline).
+      Maintain the Anchorlaw DSH project in this workspace per AGENTS.md: keep the self-check green, keep skills/plugin/preset in sync via scripts/install.ps1, and mirror protocol changes from the upstream repo (github.com/unknowbug/anchorlaw) with evidence (changelog/maturity/§11 audit discipline).
 
 - id: agent-instructions
   name: '@deepseek-ai/dsh-agent-instructions'

@@ -22,13 +22,13 @@
 pwsh scripts/install.ps1
 
 # 模式 B：项目级（Reasonix 式）——技能装进项目，进入该项目工作区才加载、离开即无
-pwsh scripts/install.ps1 -Project E:\path\to\project
+pwsh scripts/install.ps1 -Project /path/to/project
 
 # 自检（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema）
 pwsh scripts/selfcheck.ps1
 ```
 
-- **宿主级（默认）**：11 个 `anchor-*` 技能随用户级技能安装（所有会话可见）；4 个 `anchorlaw_*` 工具**全局挂载**——install.ps1 把插件行以 `insert` 形态写入活动 profile 的 `cordis.patch.yml`（`profiles/<profile>/`，DSH 唯一读取的用户补丁层，热重载），插件文件落 `<profile>/plugins/anchorlaw/`。挂载前先跑 `tests/check_plugin_schema.mjs` 校验工具 schema 必须是编译后 JSON Schema（2026-08-13 事故门禁：扁平 schema 会让所有会话报 `Invalid schema ... type: null`）。任何会话（任意工作目录、任意 preset）都能用这 4 个工具。
+- **宿主级（默认）**：11 个 `anchor-*` 技能随用户级技能安装（所有会话可见）；4 个 `anchorlaw_*` 工具**全局挂载**——install.ps1 自动检测 `profiles/` 下所有含 `package.json` 的 profile（`-Profile <name>` 可只挂一个），把插件行以 `insert` 形态写入每个 profile 的 `cordis.patch.yml`（DSH 唯一读取的用户补丁层，热重载），插件文件落 `<profile>/plugins/anchorlaw/`。挂载前先跑 `tests/check_plugin_schema.mjs` 校验工具 schema 必须是编译后 JSON Schema（2026-08-13 事故门禁：扁平 schema 会让所有会话报 `Invalid schema ... type: null`）。任何会话（任意工作目录、任意 preset）都能用这 4 个工具。
 - **项目级（`-Project`）**：11 个 `anchor-*` 技能装到 `<项目>/.dsh/skills/`（DSH 原生项目级根，rank 100）——进入该项目工作区的会话加载、离开不加载，与 Reasonix 按项目部署一致。插件文件同步落到 `<项目>/.dsh/plugins/` 备用；DSH 目前尚无项目级插件加载机制（建议已提交上游：deepseek-ai/deepseek-harness discussion #306），`anchorlaw_*` 工具由宿主级全局挂载提供。
 
 ## 目录结构

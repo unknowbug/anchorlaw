@@ -157,12 +157,12 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 # 宿主级（默认）：用户级 preset + 技能 + 全局工具挂载（写入活动 profile 的 cordis.patch.yml）；可再生成——禁止手改
 pwsh dsh/scripts/install.ps1
 # 项目级（Reasonix 式）：技能只在 <目录> 工作区的会话加载，离开即无
-pwsh dsh/scripts/install.ps1 -Project E:\path\to\project
+pwsh dsh/scripts/install.ps1 -Project /path/to/project
 # 五项自检：工具链 / 技能 manifest / scanner 自扫 / 安装产物 / 插件工具 schema
 pwsh dsh/scripts/selfcheck.ps1
 ```
 
-宿主级安装把 4 个 `anchorlaw_*` 工具**全局挂载**：以 `insert` 形态写入 `<dshHome>/profiles/<profile>/cordis.patch.yml`（DSH 唯一读取的用户补丁层，热重载），插件文件落 `<profile>/plugins/anchorlaw/`。挂载前由 `dsh/tests/check_plugin_schema.mjs` 把关——每个工具的 `parameters` 必须是编译后的 JSON Schema 对象根；扁平 spec 会以无顶层 type 的形态到达模型，导致所有会话报错（2026-08-13 事故门禁）。
+宿主级安装把 4 个 `anchorlaw_*` 工具**全局挂载**：以 `insert` 形态写入 `<dshHome>/profiles/` 下**每个 profile** 的 `cordis.patch.yml`（DSH 唯一读取的用户补丁层，热重载；`-Profile <name>` 可只挂一个），插件文件落 `<profile>/plugins/anchorlaw/`。挂载前由 `dsh/tests/check_plugin_schema.mjs` 把关——每个工具的 `parameters` 必须是编译后的 JSON Schema 对象根；扁平 spec 会以无顶层 type 的形态到达模型，导致所有会话报错（2026-08-13 事故门禁）。
 
 项目级安装把 11 个 `anchor-*` 技能装进 `<项目>/.dsh/skills/`（DSH 原生项目级根）——进入该项目工作区的会话加载，其他会话不加载，与 Reasonix 按项目部署一致。DSH 目前尚无项目级插件机制（上游建议：[deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)）；`anchorlaw_*` 工具由宿主级全局挂载提供。
 

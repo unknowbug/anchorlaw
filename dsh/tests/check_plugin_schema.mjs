@@ -4,7 +4,7 @@
 // WHY THIS EXISTS (2026-08-13 incident): ctx.tools.register() projects
 // `definition.parameters` VERBATIM to the model and does NOT compile it. The
 // first version of plugins/anchorlaw-tools.js passed a flat per-property spec
-// (defineTool input style). Mounted globally through the web profile's
+// (defineTool input style). Mounted globally through a profile's
 // cordis.patch.yml, the flat spec reached the LLM without a top-level
 // `type: 'object'` and every session failed with
 // "Invalid schema for function 'anchorlaw_ai_context': ... got 'type: null'".
