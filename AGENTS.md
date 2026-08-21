@@ -6,7 +6,7 @@
 ## 〇、开始工作前（每个 session 必做）
 
 1. `git status` 确认工作区状态（远程 = `github.com/unknowbug/anchorlaw`）
-2. 跑测试确认基线全绿：`python -m pytest --rootdir=python python/tests -q`（命令行被沙箱拦截时用包装脚本调 `pytest.main()`）
+2. 跑测试确认基线全绿：`python -m pytest --rootdir=python python/tests -q`（命令行被沙箱拦截时改用 DSH 沙箱感知包装：`python dsh/scripts/run_tests_sandbox.py --rootdir=python python/tests -q --basetemp=<非点前缀路径>`——DSH Windows 沙箱封存 0o700 目录导致 pytest tmp 机制失效，该脚本改 0o755 后跑基线测试；basetemp 用非点前缀目录避免 scanner 跳过隐藏目录）
 3. 若改动涉及协议文档：同步核对 [§8 Maturity](spec/protocol-v0.18.md#8-maturity) 与 [§11 全称声称审计表](spec/protocol-v0.18.md#11-universal-claim-audit-v04)，证据必须跟着走
 
 ## 一、项目定位（一句话）
