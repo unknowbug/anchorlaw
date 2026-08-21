@@ -5,13 +5,10 @@ DSH requirements (dsh-skill-filesystem):
   - description is required
 Optional: whenToUse (string). Unknown fields are ignored by DSH.
 
-Single-source-of-truth guard against the protocol's canonical Reasonix skills
-in ../.reasonix/skills (same repository):
-  - every anchor-* here has an anchor.* counterpart
-  - the BODY (everything after the closing frontmatter delimiter) must match
-    the upstream body byte-for-byte after line-ending normalization (CRLF -> LF)
-    and surrounding-whitespace trimming. Only frontmatter adaptation is allowed.
-  - description is preserved verbatim (protocol manifest consistency, §14)
+Since v0.18 the Reasonix mirror (../.reasonix/skills) is archived under
+archive/reasonix/ and dsh/skills/ is the single skill source of truth — this
+check validates the DSH manifests themselves (naming, frontmatter shape,
+expected set); no upstream cross-check remains.
 
 Exit code 0 = pass; 1 = any check failed.
 """
@@ -27,7 +24,6 @@ SKILL_NAME = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 # This file lives at <repo>/dsh/tests/test_manifest.py
 ROOT = Path(__file__).resolve().parent.parent          # <repo>/dsh
 SKILLS_DIR = ROOT / "skills"                            # DSH-format skills
-UPSTREAM_DIR = ROOT.parent / ".reasonix" / "skills"     # canonical bodies
 
 EXPECTED = {
     "anchor-challenge", "anchor-concepts", "anchor-degrade", "anchor-judge",
@@ -52,15 +48,6 @@ def parse_frontmatter(text: str) -> dict:
     return fm
 
 
-@idk("正文提取只覆盖本仓库 SKILL.md 的 frontmatter 闭合形态（\\n--- 分隔）",
-     source="static: 仅按本仓库 manifest 形态验证")
-def body_of(text: str) -> str:
-    """Everything after the closing frontmatter delimiter, normalized (CRLF->LF)."""
-    end = text.find("\n---", 3)
-    body = text[end + 4:] if end >= 0 else text
-    return body.replace("\r\n", "\n").strip()
-
-
 @idk("main() 的退出码契约仅在 CLI 直跑路径验证，未覆盖被 import 复用的场景",
      source="static: 设计为脚本入口，未测试 import 复用")
 def main() -> int:
@@ -82,7 +69,6 @@ def main() -> int:
             continue
         text = md.read_text(encoding="utf-8")
         fm = parse_frontmatter(text)
-        body = body_of(text)
         found.add(name)
 
         # name
@@ -101,23 +87,6 @@ def main() -> int:
         if wtu is not None and not isinstance(wtu, str):
             failures.append(f"{name}: whenToUse must be a string")
 
-        # upstream cross-check: canonical body in ../.reasonix/skills/anchor.<name-without-dash>
-        upstream = UPSTREAM_DIR / name.replace("-", ".")
-        if upstream.is_dir():
-            up_md = upstream / "SKILL.md"
-            if up_md.is_file():
-                up_text = up_md.read_text(encoding="utf-8")
-                up_fm = parse_frontmatter(up_text)
-                if up_fm.get("description") != desc:
-                    failures.append(f"{name}: description drifted from upstream")
-                if body_of(up_text) != body:
-                    failures.append(f"{name}: BODY drifted from upstream "
-                                   f"(canonical edits go to .reasonix/skills/{upstream.name})")
-            else:
-                failures.append(f"{name}: upstream dir missing SKILL.md")
-        else:
-            failures.append(f"{name}: no upstream counterpart {name.replace('-', '.')}")
-
     missing = EXPECTED - found
     if missing:
         failures.append(f"missing skills: {sorted(missing)}")
@@ -131,7 +100,7 @@ def main() -> int:
             print(f"  - {f}")
         return 1
 
-    print(f"OK: {len(found)} anchor skills valid; bodies consistent with ../.reasonix/skills")
+    print(f"OK: {len(found)} anchor skills valid (dsh/skills is the single source of truth)")
     return 0
 
 

@@ -18,7 +18,10 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SKILLS_DIR = REPO_ROOT / ".reasonix" / "skills"
+# Reasonix reference implementation, archived since v0.18 (no longer maintained;
+# guarded here for archive/protocol consistency; DSH skills are guarded by
+# dsh/tests/test_manifest.py).
+SKILLS_DIR = REPO_ROOT / "archive" / "reasonix" / "skills"
 
 STATUSES = ("draft", "candidate", "confirmed")
 REQUIRED_FIELDS = ("id", "kind", "status", "source_address", "created")

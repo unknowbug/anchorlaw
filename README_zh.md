@@ -151,7 +151,7 @@ Anchorlaw 承认一个工程现实：**不是所有带 anchor 的代码都能独
 
 同一协议、单一仓库：`dsh/` 子树是 DSH（DeepSeek Harness）宿主适配层——协议核心留在仓库根，DSH 生态适配在 `dsh/`（由 DSH agent 大肥鱼维护）：
 
-- **11 个协议技能** — `dsh/skills/` 持有 DSH 格式技能（`anchor-*`，kebab-case + `whenToUse`）；正文派生自 `.reasonix/skills/`，由 `dsh/tests/test_manifest.py` 做正文级一致性守护
+- **11 个协议技能** — `dsh/skills/` 持有 DSH 格式技能（`anchor-*`，kebab-case + `whenToUse`）作为**唯一事实源**（协议 §14 是宿主无关技能规范）；manifest 合法性由 `dsh/tests/test_manifest.py` 守护
 - **模型工具** — `dsh/plugins/anchorlaw-tools.js` 注册 4 个工具：`anchorlaw_scan`（L1 扫描器）、`anchorlaw_report`（健康报告）、`anchorlaw_ai_context`（噪声卡 + 课程注入）、`anchorlaw_status`（工具链状态）
 - **Agent preset** — `dsh/preset/` 打包 `anchorlaw` preset：Judge 驱动四段流水线人格（规范 §15.4），scout/worker/judge 经隔离 subagent 委派
 
@@ -168,7 +168,7 @@ pwsh dsh/scripts/selfcheck.ps1
 
 项目级安装把 11 个 `anchor-*` 技能装进 `<项目>/.dsh/skills/`（DSH 原生项目级根）——进入该项目工作区的会话加载，其他会话不加载，与 Reasonix 按项目部署一致。DSH 目前尚无项目级插件机制（上游建议：[deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)）；`anchorlaw_*` 工具由宿主级全局挂载提供。
 
-维护入口：[`dsh/AGENTS.md`](dsh/AGENTS.md) — 单一事实源；正文改动走 `.reasonix/skills/`，`dsh/skills/` 只做 frontmatter 适配。
+维护入口：[`dsh/AGENTS.md`](dsh/AGENTS.md) — 单一事实源；技能正文直接改 `dsh/skills/`（Reasonix 镜像已于 v0.18 归档至 `archive/reasonix/`）。
 
 ---
 
@@ -205,7 +205,7 @@ anchorlaw/
 ├── typescript/
 │   └── anchorlaw-scanner/       # TS/JS 扫描器（Level 1, 开发中）
 └── dsh/
-    ├── skills/                  # 11 个 DSH 格式 anchor-* 技能（派生自 .reasonix/skills/）
+    ├── skills/                  # 11 个 DSH 格式 anchor-* 技能（唯一事实源）
     ├── plugins/                 # anchorlaw-tools.js — 4 个模型工具
     ├── preset/                  # anchorlaw agent preset（Judge 驱动流水线）
     └── AGENTS.md                # DSH 宿主适配维护入口

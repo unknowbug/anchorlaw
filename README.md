@@ -109,7 +109,7 @@ def process(data: list[int]) -> list[int]:
 
 Same protocol, single repository: the `dsh/` subtree is the DSH (DeepSeek Harness) host adaptation layer — the protocol core stays at the repo root, the DSH ecosystem adaptation lives in `dsh/` (maintained by the DSH agent 大肥鱼):
 
-- **11 protocol skills** — `dsh/skills/` holds the DSH-format skills (`anchor-*`, kebab-case + `whenToUse`); bodies are derived from `.reasonix/skills/`, with byte-level consistency enforced by `dsh/tests/test_manifest.py`
+- **11 protocol skills** — `dsh/skills/` holds the DSH-format skills (`anchor-*`, kebab-case + `whenToUse`) as the **single source of truth** (protocol §14 is the host-neutral skill spec); manifest validity is guarded by `dsh/tests/test_manifest.py`
 - **Model tools** — `dsh/plugins/anchorlaw-tools.js` registers 4 tools: `anchorlaw_scan` (Level-1 scanner), `anchorlaw_report` (health report), `anchorlaw_ai_context` (noise cards + curriculum injection), `anchorlaw_status` (toolchain status)
 - **Agent preset** — `dsh/preset/` packages the `anchorlaw` preset: the Judge-driven four-stage pipeline persona (spec §15.4), with scout/worker/judge delegated through isolated subagents
 
@@ -127,7 +127,7 @@ Host-level install mounts the 4 `anchorlaw_*` tools globally: it appends an `ins
 
 Project-level install places the 11 `anchor-*` skills under `<project>/.dsh/skills/` (DSH's native project-scoped root) — a session opened inside that project loads them, sessions elsewhere do not. DSH has no project-level plugin mechanism yet (upstream suggestion: [deepseek-ai/deepseek-harness discussion #306](https://github.com/deepseek-ai/deepseek-harness/discussions/306)); the `anchorlaw_*` tools come from the host-level global mount.
 
-Maintenance entry: [`dsh/AGENTS.md`](dsh/AGENTS.md) — single source of truth; body edits go to `.reasonix/skills/`, `dsh/skills/` holds frontmatter adaptation only.
+Maintenance entry: [`dsh/AGENTS.md`](dsh/AGENTS.md) — single source of truth; skill bodies are edited directly in `dsh/skills/` (the Reasonix mirror was archived to `archive/reasonix/` in v0.18).
 
 ---
 
@@ -162,7 +162,7 @@ anchorlaw/
 ├── typescript/
 │   └── anchorlaw-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
 └── dsh/
-    ├── skills/                  # 11 DSH-format anchor-* skills (derived from .reasonix/skills/)
+    ├── skills/                  # 11 DSH-format anchor-* skills (single source of truth)
     ├── plugins/                 # anchorlaw-tools.js — 4 model tools
     ├── preset/                  # anchorlaw agent preset (Judge-driven pipeline)
     └── AGENTS.md                # DSH host adaptation maintenance entry

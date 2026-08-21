@@ -2,7 +2,7 @@
 
 **Anchorlaw 协议（代码验证协议）的 DSH（DeepSeek Harness）宿主适配层。**
 
-本子树位于规范仓库 `github.com/unknowbug/anchorlaw` 内，与协议核心（`spec/`、`python/`、`typescript/`、`.reasonix/skills/`）共存——**同一协议，单一仓库，宿主适配不分裂**。由 DSH agent「大肥鱼」维护。
+本子树位于规范仓库 `github.com/unknowbug/anchorlaw` 内，与协议核心（`spec/`、`python/`、`typescript/`）共存——**同一协议，单一仓库，宿主适配不分裂**。由 DSH agent「大肥鱼」维护。Reasonix 宿主格式已停止维护并归档（`archive/reasonix/`）。
 
 ## 这是什么
 
@@ -34,11 +34,11 @@ pwsh scripts/selfcheck.ps1
 ## 目录结构
 
 ```
-skills/                # 11 个技能事实源（frontmatter 适配；正文派生自 ../.reasonix/skills/）
+skills/                # 11 个技能事实源（唯一事实源，正文遵守协议 §14 契约）
 plugins/               # 工具插件事实源（anchorlaw-tools.js）
 preset/                # agent preset 组合源（agent.cordis.yml + preset.yml）
 scripts/               # install.ps1（安装/同步，含全局工具挂载）、selfcheck.ps1（五项自检）
-tests/                 # test_manifest.py（正文级一致性校验）+ check_plugin_schema.mjs（工具 schema 校验）
+tests/                 # test_manifest.py（manifest 校验）+ check_plugin_schema.mjs（工具 schema 校验）
 SYNC.md                # 与协议核心的同步溯源戳
 demo/                  # 演示代码
 AGENTS.md              # DSH 维护入口（agent 每会话加载）
@@ -46,10 +46,10 @@ AGENTS.md              # DSH 维护入口（agent 每会话加载）
 
 ## 维护约定
 
-- **单一事实源**：协议核心只存仓库根；技能正文规范份在 `../.reasonix/skills/`，本目录只允许 frontmatter 适配
+- **单一事实源**：协议核心只存仓库根；DSH 技能正文规范在 `skills/`（唯一事实源，协议 §14 是宿主无关技能规范）
 - **只改事实源**（`skills/`、`plugins/`、`preset/`），然后跑 `scripts/install.ps1` 重装
 - 安装产物（`~/.dsh/.agent-presets/anchorlaw/`、`~/.dsh/skills/anchor-*`）禁止手改
-- 改动后必须 `scripts/selfcheck.ps1` 全绿（含正文级一致性校验）
+- 改动后必须 `scripts/selfcheck.ps1` 全绿（含 manifest 与工具 schema 校验）
 - 提交纪律沿用仓库（author `unknowbug`、英文动词开头、push 前人类审查）
 
 ## 依赖

@@ -1,7 +1,11 @@
 """Anchor Skill Manifest conformance tests (protocol v0.6 §14/§15).
 
-Verifies the Reasonix reference implementation (`.reasonix/skills/`) against
-the protocol's Skill Manifest (§14.6), applying the First Law reflexively:
+Verifies the Reasonix reference implementation against the protocol's Skill
+Manifest (§14.6), applying the First Law reflexively. Since v0.18 the Reasonix
+host format is archived (archive/reasonix/skills, no longer maintained); this
+suite keeps guarding the ARCHIVED reference implementation's consistency with
+the protocol §14.6 manifest. The maintained DSH skills are guarded separately
+by dsh/tests/test_manifest.py.
 
 1. manifest skill set == implementation file set (action skills only;
    execution roles are §15 reference, not manifest entries; v0.8: only
@@ -21,7 +25,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.18.md"
-SKILLS_DIR = REPO_ROOT / ".reasonix" / "skills"
+SKILLS_DIR = REPO_ROOT / "archive" / "reasonix" / "skills"
 
 # §14.6 catalog rows: | `anchor.concepts` | L0 | inline | ...
 _MANIFEST_RE = re.compile(r"^\| `(anchor\.[a-z]+)` \| (L\d) \| (inline|subprocess) \|", re.MULTILINE)
