@@ -161,11 +161,13 @@ anchorlaw/
 │   └── anchorlaw/               # Full protocol (Level 2-4, EXPERIMENTAL)
 ├── typescript/
 │   └── anchorlaw-scanner/       # TS/JS scanner (Level 1, IN DEVELOPMENT)
-└── dsh/
-    ├── skills/                  # 11 DSH-format anchor-* skills (single source of truth)
-    ├── plugins/                 # anchorlaw-tools.js — 4 model tools
-    ├── preset/                  # anchorlaw agent preset (Judge-driven pipeline)
-    └── AGENTS.md                # DSH host adaptation maintenance entry
+├── dsh/
+│   ├── skills/                  # 11 DSH-format anchor-* skills (single source of truth)
+│   ├── plugins/                 # anchorlaw-tools.js — 4 model tools
+│   ├── preset/                  # anchorlaw agent preset (Judge-driven pipeline)
+│   └── AGENTS.md                # DSH host adaptation maintenance entry
+└── archive/
+    └── reasonix/                # Reasonix host format archive (unmaintained since v0.18; fork & restore to iterate)
 ```
 
 ---

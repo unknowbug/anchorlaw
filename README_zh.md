@@ -204,11 +204,13 @@ anchorlaw/
 │   └── anchorlaw/               # 完整协议（Level 2-4, 实验性）
 ├── typescript/
 │   └── anchorlaw-scanner/       # TS/JS 扫描器（Level 1, 开发中）
-└── dsh/
-    ├── skills/                  # 11 个 DSH 格式 anchor-* 技能（唯一事实源）
-    ├── plugins/                 # anchorlaw-tools.js — 4 个模型工具
-    ├── preset/                  # anchorlaw agent preset（Judge 驱动流水线）
-    └── AGENTS.md                # DSH 宿主适配维护入口
+├── dsh/
+│   ├── skills/                  # 11 个 DSH 格式 anchor-* 技能（唯一事实源）
+│   ├── plugins/                 # anchorlaw-tools.js — 4 个模型工具
+│   ├── preset/                  # anchorlaw agent preset（Judge 驱动流水线）
+│   └── AGENTS.md                # DSH 宿主适配维护入口
+└── archive/
+    └── reasonix/                # Reasonix 宿主格式存档（v0.18 起停止维护；Fork 后可恢复迭代）
 ```
 
 ---
