@@ -6,7 +6,7 @@ whenToUse: 实现或重构公开函数后写 anchor 标注时（L2，主会话�
 
 # anchor.write — 写 Anchor 标注
 
-> Protocol: spec/protocol-v0.18.md §5.1/§5.2/§5.5, §13
+> Protocol: spec/protocol-v0.19.md §5.1/§5.2/§5.5, §13
 > Layer: L2 (Anchors)
 > Execution: inline
 

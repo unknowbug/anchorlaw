@@ -24,7 +24,7 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.18.md"
+PROTOCOL = REPO_ROOT / "spec" / "protocol-v0.19.md"
 SKILLS_DIR = REPO_ROOT / "archive" / "reasonix" / "skills"
 
 # §14.6 catalog rows: | `anchor.concepts` | L0 | inline | ...

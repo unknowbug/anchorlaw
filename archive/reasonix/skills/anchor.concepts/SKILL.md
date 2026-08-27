@@ -5,7 +5,7 @@ description: anchor 语义速查——test/idk、source 格式、staleness、健
 
 # anchor.concepts — Anchor 语义速查
 
-> Protocol: spec/protocol-v0.18.md §5 (Anchor Semantics), §13 (Anchor Abstraction)
+> Protocol: spec/protocol-v0.19.md §5 (Anchor Semantics), §13 (Anchor Abstraction)
 > Layer: L0 (Concepts) — 仅作语义参考，自身不执行任何操作
 > Execution: inline
 

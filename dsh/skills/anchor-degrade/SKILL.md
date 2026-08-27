@@ -6,7 +6,7 @@ whenToUse: 代码无法独立编译、anchorlaw test 无法执行时（L2；DSH 
 
 # anchor.degrade — 降级验证
 
-> Protocol: spec/protocol-v0.18.md §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.19.md §9 (Degraded Verification)
 > Layer: L2 (Anchors) — 与 anchor.test 同域（CLI 入口同为 anchorlaw test）
 > Execution: subprocess
 

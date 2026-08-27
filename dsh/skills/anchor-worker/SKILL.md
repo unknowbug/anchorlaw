@@ -6,7 +6,7 @@ whenToUse: 流水线 stage 3 模块实施时，由 Judge 派遣（DSH 中经 sub
 
 # anchor.worker — 模块实施角色（subprocess）
 
-> Protocol: spec/protocol-v0.18.md §15.1 (Definition), §15.2 (Isolation Semantics), §15.4 (Consistency Contract)
+> Protocol: spec/protocol-v0.19.md §15.1 (Definition), §15.2 (Isolation Semantics), §15.4 (Consistency Contract)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 

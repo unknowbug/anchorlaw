@@ -51,7 +51,7 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 | 组件 | 位置 | 状态 |
 |------|------|------|
-| **协议正文** | `spec/protocol-v0.18.md` | 语言无关代码验证协议（当前版） |
+| **协议正文** | `spec/protocol-v0.19.md` | 语言无关代码验证协议（当前版） |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | 扫描器（已验证）+ 锚点/噪声/CLI（实验性）——DSH 工具后端 |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS 扫描器（开发中） |
 
@@ -127,7 +127,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH 维护入口
 ├── spec/
-│   └── protocol-v0.18.md          # 语言无关协议（当前版）
+│   └── protocol-v0.19.md          # 语言无关协议（当前版）
 ├── python/                        # 协议实现（DSH 工具后端）
 │   ├── anchorlaw-scanner/         # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/                 # 锚点 / 噪声 / CLI（Level 2-4, 实验性）
@@ -154,8 +154,8 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.18](spec/protocol-v0.18.md)
-- 降级验证：[协议 §9](spec/protocol-v0.18.md#9-degraded-verification-v03-draft)
+- [协议规范 v0.18](spec/protocol-v0.19.md)
+- 降级验证：[协议 §9](spec/protocol-v0.19.md#9-degraded-verification-v03-draft)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---

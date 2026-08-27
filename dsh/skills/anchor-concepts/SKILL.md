@@ -6,7 +6,7 @@ whenToUse: 写或审 anchor 前需要语义速查时（L0，主会话内 inline 
 
 # anchor.concepts — Anchor 语义速查
 
-> Protocol: spec/protocol-v0.18.md §5 (Anchor Semantics), §13 (Anchor Abstraction)
+> Protocol: spec/protocol-v0.19.md §5 (Anchor Semantics), §13 (Anchor Abstraction)
 > Layer: L0 (Concepts) — 仅作语义参考，自身不执行任何操作
 > Execution: inline
 

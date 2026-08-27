@@ -6,7 +6,7 @@ whenToUse: 添加 anchor 后验证、CI 失败排查时（L2，主会话内 inli
 
 # anchor.test — 运行验证
 
-> Protocol: spec/protocol-v0.18.md §5.4 (Anchor Health States), §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.19.md §5.4 (Anchor Health States), §9 (Degraded Verification)
 > Layer: L2 (Anchors)
 > Execution: inline
 
