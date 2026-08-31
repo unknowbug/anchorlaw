@@ -51,7 +51,7 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 | Component | Where | State |
 |-----------|-------|-------|
-| **Spec** | `spec/protocol-v0.19.md` | Language-agnostic code-verification protocol (current) |
+| **Spec** | `spec/protocol-v0.20.md` | Language-agnostic code-verification protocol (current) |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | Scanner (verified) + anchors/noise/CLI (experimental) — the DSH tool backend |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS scanner (in development) |
 
@@ -70,6 +70,8 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 ### Changelog
 
+> **v0.20 (2026-09-01):** Evidence/conclusion continuity (from CoreSwap M11/M14/M16 practice) — three new clauses: ① **conclusion supersession chain** (§15.4): an overturned candidate+ conclusion is expressed as a supersession record (bidirectional links + reason; original text never rewritten), mechanically answering "what is the currently valid conclusion + its history"; ② **verification comparability statement** (§9.7): quantitative metrics MUST declare the comparison basis (carrier / coverage / comparability with prior metrics); ③ **host handover validation** (§16.3 checklist): handover items distinguish verified conclusions from unverified hypotheses, and the inheritor MUST run one cheap independent verification before using a direction-level conclusion as a premise. Evidence persistence and compaction process stay host/framework scope.
+>
 > **v0.19 (2026-08-15):** Verification-scope clarification — Anchorlaw is a VERIFICATION protocol, not a knowledge-accumulation protocol. The noise-card `discovery`/`curriculum` fields are reframed from "knowledge accumulation duty" to verification backtracking; §15.2 artifacts are the verification-reproducibility carrier (not "cross-session memory"); §14 is explicitly NOT the knowledge sink (that is a host / separate knowledge mechanism's job). The verification core (`@anchor.test` / `source` / staleness / health states / §9) is unchanged — it was the actual guard that let the seed contamination be traced, not misjudged as "Rust has no bug".
 >
 > **v0.18 (2026-08-13):** DSH host adaptation — DSH is the first host implementing the full §16 Host Integration Contract interface surface (11 skills, 4 tools, anchorlaw preset, host-level global tool mount, project-level install). Fix (2026-08-15): `anchorlaw noise resolve` accepts the short suffix id printed by `noise list`; 4 new unit tests. **v0.18 also archives the Reasonix host format** (`.reasonix/skills/` → `archive/reasonix/`); `dsh/skills/` became the single skill source of truth.
@@ -129,7 +131,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH maintenance entry
 ├── spec/
-│   └── protocol-v0.19.md          # Language-neutral protocol (current)
+│   └── protocol-v0.20.md          # Language-neutral protocol (current)
 ├── python/                        # Protocol implementation (DSH tool backend)
 │   ├── anchorlaw-scanner/         # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/                 # Anchors / noise / CLI (Level 2-4, EXPERIMENTAL)
@@ -156,8 +158,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.18](spec/protocol-v0.19.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.19.md#9-degraded-verification-v03-draft)
+- [Protocol Specification v0.18](spec/protocol-v0.20.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.20.md#9-degraded-verification-v03-draft)
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

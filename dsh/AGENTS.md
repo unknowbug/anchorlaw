@@ -7,7 +7,7 @@
 
 1. 确认仓库状态：本仓库根即协议事实源，本目录（`dsh/`）即 DSH 适配事实源——**单一仓库，无第二份协议副本**。
 2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema 五项）。
-3. 若改动涉及协议语义：协议正文在上层 `../spec/protocol-v0.19.md`（§8 Maturity / §11 全称声称审计 / §14 Skill Manifest），证据必须跟着走；技能正文直接改本目录 `skills/`（DSH 技能唯一事实源，协议 §14 是宿主无关的技能规范）。
+3. 若改动涉及协议语义：协议正文在上层 `../spec/protocol-v0.20.md`（§8 Maturity / §11 全称声称审计 / §14 Skill Manifest），证据必须跟着走；技能正文直接改本目录 `skills/`（DSH 技能唯一事实源，协议 §14 是宿主无关的技能规范）。
 
 ## 一、本目录定位（一句话）
 
@@ -48,7 +48,7 @@
 
 ## 四、与协议核心的分工（同一个仓库内）
 
-- **仓库根（`../`）**：协议正文（`spec/protocol-v0.19.md`）、Python/TS 实现、Reasonix 版存档（`archive/reasonix/`）。
+- **仓库根（`../`）**：协议正文（`spec/protocol-v0.20.md`）、Python/TS 实现、Reasonix 版存档（`archive/reasonix/`）。
 - **本目录（`dsh/`）**：DSH 生态适配层（DSH 技能格式、插件、preset、维护脚本），入口为本文件。
 - **一致性机制**：`tests/test_manifest.py` 守护 `dsh/skills/` manifest 合法性；`SYNC.md` 记录同步溯源；协议语义更新先改仓库根，再同步本目录适配。
 

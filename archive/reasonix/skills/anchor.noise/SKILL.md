@@ -5,7 +5,7 @@ description: 噪声卡管理——运行时失败积累为结构化知识：创�
 
 # anchor.noise — 噪声卡管理
 
-> Protocol: spec/protocol-v0.19.md §3 (Noise Card JSON Schema)
+> Protocol: spec/protocol-v0.20.md §3 (Noise Card JSON Schema)
 > Layer: L3 (Noise)
 > Execution: inline
 

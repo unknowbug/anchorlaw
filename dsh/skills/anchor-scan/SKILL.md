@@ -6,7 +6,7 @@ whenToUse: 模块并入审查前（流水线 stage 3）或收到防御性模式�
 
 # anchor.scan — 静态审查
 
-> Protocol: spec/protocol-v0.19.md §6 (Scanner Pattern Catalog), §7 Level 1
+> Protocol: spec/protocol-v0.20.md §6 (Scanner Pattern Catalog), §7 Level 1
 > Layer: L1 (Scanner)
 > Execution: subprocess
 

@@ -6,7 +6,7 @@ whenToUse: 流水线 stage 1 规范起草时，由 Judge 派遣（DSH 中经 sub
 
 # anchor.scout — 规范起草角色（subprocess）
 
-> Protocol: spec/protocol-v0.19.md §15.1 (Definition), §15.2 (Isolation Semantics)
+> Protocol: spec/protocol-v0.20.md §15.1 (Definition), §15.2 (Isolation Semantics)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
