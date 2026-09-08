@@ -2,5 +2,6 @@
   "name": "anchorlaw-tools",
   "version": "0.20",
   "private": true,
+  "type": "module",
   "description": "Anchorlaw protocol model tools for DSH (scan/report/ai_context/status). This manifest lets DSH's plugin-package inventory resolve a complete package identity for the loose plugin module under <profile>/plugins/anchorlaw/ — the profile's own manifest (official initProfile template) has a name but no version, which fails identityFromManifest."
 }
