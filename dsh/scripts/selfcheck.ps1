@@ -15,31 +15,34 @@ $ErrorActionPreference = 'Continue'
 $srcRoot = Split-Path -Parent $PSScriptRoot
 $fail = 0
 
+# `python` is not guaranteed on Linux (Kylin ships python3 only); resolve once.
+$pyExe = if (Get-Command python -ErrorAction SilentlyContinue) { 'python' } elseif (Get-Command python3 -ErrorAction SilentlyContinue) { 'python3' } else { 'python' }
+
 Write-Host "== Anchorlaw DSH self-check =="
 
 # 1. toolchain
 Write-Host ""
 Write-Host "[1] toolchain"
-python -c "import anchorlaw_scanner, anchorlaw; print('  OK anchorlaw-scanner + anchorlaw importable')" 2>&1
+& $pyExe -c "import anchorlaw_scanner, anchorlaw; print('  OK anchorlaw-scanner + anchorlaw importable')" 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: anchorlaw packages not importable"; $fail = 1 }
 
 # 2. skill manifest
 Write-Host ""
 Write-Host "[2] skill manifests"
-python (Join-Path $srcRoot 'tests\test_manifest.py') 2>&1
+& $pyExe (Join-Path $srcRoot (Join-Path 'tests' 'test_manifest.py')) 2>&1
 if ($LASTEXITCODE -ne 0) { $fail = 1 }
 
 # 3. scanner self-scan (own python sources: tests/ + scripts tooling)
 Write-Host ""
 Write-Host "[3] scanner self-scan"
-python -m anchorlaw_scanner check (Join-Path $srcRoot 'tests') 2>&1
+& $pyExe -m anchorlaw_scanner check (Join-Path $srcRoot 'tests') 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: ERR-level patterns in own sources"; $fail = 1 }
 
 # 4. installed artifacts
 Write-Host ""
 Write-Host "[4] installed artifacts"
 $dshHome = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $HOME '.dsh' }
-$presetDir = Join-Path $dshHome '.agent-presets\anchorlaw'
+$presetDir = Join-Path $dshHome (Join-Path '.agent-presets' 'anchorlaw')
 if (Test-Path (Join-Path $presetDir 'agent.cordis.yml')) {
   Write-Host "  OK preset: $presetDir"
 } else {
@@ -53,7 +56,7 @@ if ($count -lt 11) { Write-Host "  FAIL: expected 11 anchor skills"; $fail = 1 }
 # 5. plugin tool-schema shape (compiled JSON-Schema parameters; see check_plugin_schema.mjs)
 Write-Host ""
 Write-Host "[5] plugin tool schemas"
-node (Join-Path $srcRoot 'tests\check_plugin_schema.mjs') 2>&1
+node (Join-Path $srcRoot (Join-Path 'tests' 'check_plugin_schema.mjs')) 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: plugin tool schemas not compiled JSON Schema"; $fail = 1 }
 
 Write-Host ""
