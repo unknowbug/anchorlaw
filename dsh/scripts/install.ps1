@@ -146,6 +146,15 @@ if ($mountProfiles.Count -eq 0) {
     New-Item -ItemType Directory -Path $profilePluginDir -Force | Out-Null
     Copy-Item -Path (Join-Path $srcRoot 'plugins\anchorlaw-tools.js') -Destination (Join-Path $profilePluginDir 'anchorlaw-tools.js') -Force
     Copy-Item -Path (Join-Path $srcRoot 'plugins\package.json') -Destination (Join-Path $profilePluginDir 'package.json') -Force
+    # The plugin package version tracks the PROTOCOL version (latest spec file) —
+    # never a hand-picked number; bumps automatically with every protocol release.
+    $specDir = Join-Path (Split-Path $srcRoot -Parent) 'spec'
+    $protoVersion = (Get-ChildItem $specDir -Filter 'protocol-v*.md' -ErrorAction SilentlyContinue | ForEach-Object {
+      if ($_.Name -match '^protocol-v(\d+)\.(\d+)\.md$') { [pscustomobject]@{ Maj = [int]$Matches[1]; Min = [int]$Matches[2] } }
+    } | Sort-Object Maj, Min -Descending | Select-Object -First 1 | ForEach-Object { "$($_.Maj).$($_.Min)" })
+    if (-not $protoVersion) { $protoVersion = '0.0' }
+    $pkgPath = Join-Path $profilePluginDir 'package.json'
+    (Get-Content $pkgPath -Raw) -replace '"version":\s*"[^"]*"', ('"version": "' + $protoVersion + '"') | Set-Content $pkgPath -Encoding UTF8
 
     # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row, then append ours.
     $py = @'
