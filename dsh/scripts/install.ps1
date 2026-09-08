@@ -137,9 +137,15 @@ if ($mountProfiles.Count -eq 0) {
     $patchPath = Join-Path $profileDir 'cordis.patch.yml'
     $profilePluginDir = Join-Path $profileDir 'plugins\anchorlaw'
 
-    # Plugin file travels with the profile (resolved relative to baseUrl = profile dir)
+    # Plugin file travels with the profile (resolved relative to baseUrl = profile dir).
+    # A sibling package.json is REQUIRED: DSH's plugin-package inventory runs
+    # nearestManifest on loose modules — without it the walk hits the profile's
+    # own manifest (official initProfile template: name but NO version) and
+    # identityFromManifest throws. With it, the nearest manifest is anchorlaw's
+    # own complete identity.
     New-Item -ItemType Directory -Path $profilePluginDir -Force | Out-Null
     Copy-Item -Path (Join-Path $srcRoot 'plugins\anchorlaw-tools.js') -Destination (Join-Path $profilePluginDir 'anchorlaw-tools.js') -Force
+    Copy-Item -Path (Join-Path $srcRoot 'plugins\package.json') -Destination (Join-Path $profilePluginDir 'package.json') -Force
 
     # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row, then append ours.
     $py = @'
