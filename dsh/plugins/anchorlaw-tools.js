@@ -14,7 +14,12 @@
 // (github.com/unknowbug/anchorlaw, dsh/plugins/), per dsh/AGENTS.md §六.
 
 export const name = 'anchorlaw-tools'
-export const inject = ['tools']
+// `subprocess` MUST be declared here, not merely read with ctx.get(): apply()
+// resolves it once and returns early when absent, and cordis does not guarantee
+// service readiness by tree order (mounts are async). Declaring it makes the
+// loader wait, so the tools always register. The optional `skills`/`fs`/
+// `sandboxPolicy` reads below are different — they are consumed at call time.
+export const inject = ['tools', 'subprocess']
 
 export function apply(ctx, config) {
   // Optional capabilities, read with ctx.get and handled when absent.
