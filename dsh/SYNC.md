@@ -19,7 +19,7 @@
 
 1. **技能正文改动**：直接发生在 `dsh/skills/`（DSH 技能唯一事实源；Reasonix 镜像已于 2026-08-15 归档至 `archive/reasonix/`）。改后更新本文件的差异记录，然后确认 `dsh/tests/test_manifest.py` 通过。
 2. **frontmatter 改动**：直接改 `dsh/skills/<name>/SKILL.md`，并在此文件登记变更。
-3. **协议语义更新**：先改 `../spec/protocol-v0.20.md`（§8 Maturity / §11 审计随行），再同步 DSH 适配。
+3. **协议语义更新**：先改 `../spec/protocol-v0.21.md`（§8 Maturity / §11 审计随行），再同步 DSH 适配。
 
 ## 变更日志
 
@@ -29,3 +29,4 @@
 | 2026-08-13 | 3df7cc3 | anchor.maintain 正文移除易变测试计数（原"当前 78 个"，实测 98，改后不写死数字）；上游 `.reasonix/skills/` 修改 + DSH 镜像同步 | 0 |
 | 2026-08-15 | — | Reasonix 宿主格式停止维护：`.reasonix/skills/` 归档至 `archive/reasonix/`（含恢复脚本）；`dsh/skills/` 转正为 DSH 技能唯一事实源；test_manifest.py 改为 manifest 自持校验 | —（镜像机制取消） |
 | 2026-09-15 | harness `0d1f50007f`（dsh-v0.1.6-alpha.1）；漂移报告基线 `5dda764ed3`（dsh-0.1.5-alpha.1） | 上游插件包改名 `@deepseek-ai/dsh-workflow-worker-thread` → `@deepseek-ai/dsh-workflow-ptc`（旧包已无 package.json；preset 挂载失败 → 会话无法创建/恢复）：`preset/agent.cordis.yml` 的 `id` + `name` 同步改名，`config`（`provider: spawn`）与官方装配一致；新增 fail-closed 门禁 `tests/audit_preset_rows.mjs` 并接入 `selfcheck.ps1` 第 6 项，防同类上游漂移复发（来源：`.investigations/dsh-upstream-drift-20260909/报告.md`） | —（非技能正文；技能 11 个正文未变） |
+| 2026-09-15 | harness `0d1f50007f`（`packages/preset/agent-presets/presets/standard/agent.cordis.yml`） | **能力面对齐上游 standard preset**：补 5 行——`command-goal`（`@deepseek-ai/dsh-command-goal`）、`present`（`@deepseek-ai/dsh-tool-present`）、`tool-ralph`（disabled）、`tool-subagent-codex`（disabled）、`tool-subagent-claude-code`（disabled）；三行可选外部 agent/workflow 按上游默认保持 `disabled: true`（启用需装对应 Bundle，host 可用性本身不授予工具）。逐 id 对齐后 ours 32 = official 31 + 本地 `anchorlaw-tools`，缺失 0。协议升版 v0.20 → v0.21（宿主适配能力变化，§16 范围；协议核心不变） | —（非技能正文） |

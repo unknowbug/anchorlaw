@@ -51,7 +51,7 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 | 组件 | 位置 | 状态 |
 |------|------|------|
-| **协议正文** | `spec/protocol-v0.20.md` | 语言无关代码验证协议（当前版） |
+| **协议正文** | `spec/protocol-v0.21.md` | 语言无关代码验证协议（当前版） |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | 扫描器（已验证）+ 锚点/噪声/CLI（实验性）——DSH 工具后端 |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS 扫描器（开发中） |
 
@@ -70,6 +70,8 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 ### 更新日志
 
+> **v0.21 (2026-09-15):** DSH 宿主适配能力补齐 + fail-closed preset 门禁——`anchorlaw` agent preset 现与上游 standard preset 的行能力面对齐（补 `command-goal`、`tool-subagent-codex`、`tool-subagent-claude-code`、`tool-ralph`、`present`；其中三个可选外部 agent/workflow 行按上游默认保持 `disabled: true`，启用需装对应 Bundle）。composition 里一个无法解析的 `name:` 会让整个 preset 挂载失败（会话无法创建/恢复），故 preset 行解析性现为 fail-closed 自检项（`dsh/tests/audit_preset_rows.mjs`，第 6 项），把上游改名/移除拦在维护时而非用户 resume 时；遗留的插件改名（`dsh-workflow-worker-thread` → `dsh-workflow-ptc`）一并关闭。协议核心不变——本次属 §16 宿主适配范围。
+>
 > **v0.20 (2026-09-01):** 证据/结论的持续性（源自 CoreSwap M11/M14/M16 实战）——新增三条款：① **结论取代链**（§15.4）：被推翻的 candidate+ 结论以取代记录表达（双向链接 + 一行理由；原文永不改写），可机械回答"当前有效结论 + 演化史"；② **验证对比口径声明**（§9.7）：量化指标 MUST 声明对比口径（载体 / 覆盖面 / 与历史口径可比性）；③ **宿主交接验证**（§16.3 checklist）：交接文档区分已验证结论与未验证假设，继承方在使用方向级结论作推理前提前 MUST 做一次廉价独立验证。证据持久性与压实流程仍属宿主/框架层。
 >
 > **v0.19 (2026-08-15):** 验证职责范围澄清——Anchorlaw 是**验证协议**，不是知识沉淀协议。噪声卡片 `discovery`/`curriculum` 字段从"知识沉淀义务"改为**验证回溯**；§15.2 artifact 定位为验证可复核性载体（非"跨会话记忆"）；§14 明确**不是知识库**（那是宿主/独立知识机制的职责）。验证核心（`@anchor.test`/`source`/staleness/健康状态/§9）不变——正是它让"种子污染"能被溯源，而非被误判为"Rust 无 bug"。
@@ -131,7 +133,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH 维护入口
 ├── spec/
-│   └── protocol-v0.20.md          # 语言无关协议（当前版）
+│   └── protocol-v0.21.md          # 语言无关协议（当前版）
 ├── python/                        # 协议实现（DSH 工具后端）
 │   ├── anchorlaw-scanner/         # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/                 # 锚点 / 噪声 / CLI（Level 2-4, 实验性）
@@ -158,8 +160,8 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.18](spec/protocol-v0.20.md)
-- 降级验证：[协议 §9](spec/protocol-v0.20.md#9-degraded-verification-v03-draft)
+- [协议规范 v0.18](spec/protocol-v0.21.md)
+- 降级验证：[协议 §9](spec/protocol-v0.21.md#9-degraded-verification-v03-draft)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---
