@@ -32,7 +32,7 @@ $ErrorActionPreference = 'Stop'
 
 $srcRoot  = Split-Path -Parent $PSScriptRoot
 $dshHome  = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $HOME '.dsh' }
-$presetDir = Join-Path $dshHome '.agent-presets\anchorlaw'
+$presetDir = Join-Path $dshHome (Join-Path '.agent-presets' 'anchorlaw')
 $userSkills = Join-Path $dshHome 'skills'
 
 if ($Project) {
@@ -52,12 +52,12 @@ if ($Project) {
 
   # Skills → project-scoped root (<project>/.dsh/skills/anchor-*)
   New-Item -ItemType Directory -Path $projSkills -Force | Out-Null
-  Copy-Item -Path (Join-Path $srcRoot 'skills\*') -Destination $projSkills -Recurse -Force
+  Copy-Item -Path (Join-Path (Join-Path $srcRoot 'skills') '*') -Destination $projSkills -Recurse -Force
 
   # Plugin file also lands in the project, ready for future project-level plugin
   # loading (not auto-loaded by DSH today).
   New-Item -ItemType Directory -Path $projPlugins -Force | Out-Null
-  Copy-Item -Path (Join-Path $srcRoot 'plugins\anchorlaw-tools.js') -Destination $projPlugins -Force
+  Copy-Item -Path (Join-Path (Join-Path $srcRoot 'plugins') 'anchorlaw-tools.js') -Destination $projPlugins -Force
 
   Write-Host ""
   Write-Host "Installed (project-scoped):"
@@ -80,19 +80,24 @@ Write-Host "skills : $userSkills"
 
 # 1. Preset composition + metadata
 New-Item -ItemType Directory -Path $presetDir -Force | Out-Null
-Copy-Item -Path (Join-Path $srcRoot 'preset\agent.cordis.yml') -Destination $presetDir -Force
-Copy-Item -Path (Join-Path $srcRoot 'preset\preset.yml')       -Destination $presetDir -Force
+Copy-Item -Path (Join-Path (Join-Path $srcRoot 'preset') 'agent.cordis.yml') -Destination $presetDir -Force
+Copy-Item -Path (Join-Path (Join-Path $srcRoot 'preset') 'preset.yml')       -Destination $presetDir -Force
 
 # 2. Local plugin file (travels with the preset)
 New-Item -ItemType Directory -Path (Join-Path $presetDir 'plugins') -Force | Out-Null
-Copy-Item -Path (Join-Path $srcRoot 'plugins\anchorlaw-tools.js') -Destination (Join-Path $presetDir 'plugins') -Force
+Copy-Item -Path (Join-Path (Join-Path $srcRoot 'plugins') 'anchorlaw-tools.js') -Destination (Join-Path $presetDir 'plugins') -Force
 
 # 3. Skills: preset-embedded + user-global refresh
 if (Test-Path (Join-Path $srcRoot 'skills')) {
   $presetSkills = Join-Path $presetDir 'skills'
   Remove-Item -Path $presetSkills -Recurse -Force -ErrorAction SilentlyContinue
   Copy-Item -Path (Join-Path $srcRoot 'skills') -Destination $presetSkills -Recurse -Force
-  Copy-Item -Path (Join-Path $srcRoot 'skills\*') -Destination $userSkills -Recurse -Force
+  # Create the destination BEFORE the wildcard copy: on a fresh machine
+  # ~/.dsh/skills does not exist yet, and PowerShell then copies the first
+  # source container onto the destination path instead of into it (observed:
+  # a stray ~/.dsh/skills/SKILL.md instead of the 11 skill directories).
+  New-Item -ItemType Directory -Path $userSkills -Force | Out-Null
+  Copy-Item -Path (Join-Path (Join-Path $srcRoot 'skills') '*') -Destination $userSkills -Recurse -Force
 }
 
 # 4. Global tool mount — DSH reads ONLY a profile's own patch layer
@@ -128,14 +133,26 @@ if ($mountProfiles.Count -eq 0) {
   Write-Host "  skip global tools: no DSH profile found under $(Join-Path $dshHome 'profiles')"
   Write-Host "        (create one with 'dsh plugin --profile <name> add <package>', then re-run install.ps1)"
 } else {
-  node (Join-Path $srcRoot 'tests\check_plugin_schema.mjs') 2>&1
-  if ($LASTEXITCODE -ne 0) {
+  # Native stderr must not be fatal here: `$ErrorActionPreference = 'Stop'`
+  # turns merged stderr into a terminating error, and Node >= 22 writes a
+  # MODULE_TYPELESS_PACKAGE_JSON warning for ESM files whose nearest manifest
+  # lacks `"type": "module"` — that aborted this install before the global
+  # mount (observed on Node 24). The plugin manifest now declares type: module;
+  # this guard keeps any future stderr output from aborting a passing gate.
+  $schemaCheck = Join-Path $srcRoot (Join-Path 'tests' 'check_plugin_schema.mjs')
+  $prevEAP = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  $schemaOut = (& node $schemaCheck 2>&1 | Out-String)
+  $schemaCode = $LASTEXITCODE
+  $ErrorActionPreference = $prevEAP
+  if ($schemaOut.Trim()) { Write-Host $schemaOut.Trim() }
+  if ($schemaCode -ne 0) {
     throw "plugin tool-schema check failed - refusing to mount global tools"
   }
   foreach ($profileName in $mountProfiles) {
-    $profileDir = Join-Path $dshHome "profiles\$profileName"
+    $profileDir = Join-Path (Join-Path $dshHome 'profiles') $profileName
     $patchPath = Join-Path $profileDir 'cordis.patch.yml'
-    $profilePluginDir = Join-Path $profileDir 'plugins\anchorlaw'
+    $profilePluginDir = Join-Path $profileDir (Join-Path 'plugins' 'anchorlaw')
 
     # Plugin file travels with the profile (resolved relative to baseUrl = profile dir).
     # A sibling package.json is REQUIRED: DSH's plugin-package inventory runs
@@ -154,17 +171,35 @@ if ($mountProfiles.Count -eq 0) {
     } | Sort-Object Maj, Min -Descending | Select-Object -First 1 | ForEach-Object { "$($_.Maj).$($_.Min)" })
     if (-not $protoVersion) { $protoVersion = '0.0' }
     $pkgPath = Join-Path $profilePluginDir 'package.json'
-    (Get-Content $pkgPath -Raw) -replace '"version":\s*"[^"]*"', ('"version": "' + $protoVersion + '"') | Set-Content $pkgPath -Encoding UTF8
+    # Write WITHOUT a BOM. DSH's plugin-package inventory reads this manifest with a
+    # bare `JSON.parse(readFileSync(path, "utf8"))` — no BOM stripping — so a leading
+    # U+FEFF makes it throw on EVERY official DeepSeek request, surfacing as
+    # `DeepSeek request extension preparation failed` / `REQUEST_EXTENSION`.
+    # PowerShell 5.1's `Set-Content -Encoding UTF8` emits a BOM (PS 7's `utf8NoBOM`
+    # does not exist there), so write through .NET with an explicit no-BOM encoding.
+    $pkgJson = (Get-Content $pkgPath -Raw) -replace '"version":\s*"[^"]*"', ('"version": "' + $protoVersion + '"')
+    [System.IO.File]::WriteAllText($pkgPath, $pkgJson, (New-Object System.Text.UTF8Encoding($false)))
 
     # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row, then append ours.
     $py = @'
-import io, os, yaml
+import io, os, re, yaml
 path = os.environ['ANCHORLAW_PATCH_PATH']
 try:
     with io.open(path, encoding='utf-8') as f:
-        data = yaml.safe_load(f)
+        text = f.read()
 except FileNotFoundError:
-    data = None
+    text = None
+# The loader's own compositions use `!!js <expression>` custom tags, which PyYAML
+# cannot parse. Stash them as plain placeholder strings, merge, then restore —
+# otherwise ANY user patch that uses the tag (e.g. a `web-runtime` config
+# override) makes this merge fail outright.
+stashed = []
+if text is not None:
+    def stash(match):
+        stashed.append(match.group(0))
+        return '__DSH_JS_%d__' % (len(stashed) - 1)
+    text = re.sub(r'!!js\s+[^\n]+', stash, text)
+data = yaml.safe_load(text) if text is not None else None
 rows = list(data) if isinstance(data, list) else []
 rows = [r for r in rows if not (
     isinstance(r, dict) and any(
@@ -175,13 +210,17 @@ rows.append({'insert': [{'id': 'anchorlaw-tools-global',
 out = ('# Managed by install.ps1 - global anchorlaw tools for this profile '
        '(anchorlaw-tools-global). Re-run install.ps1 to refresh; do not hand-edit.\n' +
        yaml.safe_dump(rows, allow_unicode=True, sort_keys=False))
+for index, original in enumerate(stashed):
+    out = out.replace('"__DSH_JS_%d__"' % index, original).replace('__DSH_JS_%d__' % index, original)
 with io.open(path, 'w', encoding='utf-8', newline='\n') as f:
     f.write(out)
 '@
-    $tmpPy = Join-Path $env:TEMP 'anchorlaw-patch-merge.py'
+    $tmpPy = Join-Path ([System.IO.Path]::GetTempPath()) 'anchorlaw-patch-merge.py'
     Set-Content -Path $tmpPy -Value $py -Encoding UTF8
     $env:ANCHORLAW_PATCH_PATH = $patchPath
-    python $tmpPy
+    # `python` is not guaranteed on Linux (Kylin ships python3 only).
+    $pyExe = if (Get-Command python -ErrorAction SilentlyContinue) { 'python' } elseif (Get-Command python3 -ErrorAction SilentlyContinue) { 'python3' } else { throw 'python not found (tried python, python3)' }
+    & $pyExe $tmpPy
     $mergeCode = $LASTEXITCODE
     Remove-Item $tmpPy -Force -ErrorAction SilentlyContinue
     Remove-Item Env:ANCHORLAW_PATCH_PATH -ErrorAction SilentlyContinue
@@ -195,7 +234,7 @@ Write-Host "Installed:"
 Get-ChildItem -Path $presetDir -Recurse -File | ForEach-Object { Write-Host "  $($_.FullName.Replace($presetDir, 'preset'))" }
 if ($mountProfiles.Count -gt 0) {
   foreach ($profileName in $mountProfiles) {
-    Write-Host "  global: $(Join-Path $dshHome "profiles\$profileName\cordis.patch.yml") (anchorlaw-tools-global)"
+    Write-Host "  global: $(Join-Path (Join-Path (Join-Path $dshHome 'profiles') $profileName) 'cordis.patch.yml') (anchorlaw-tools-global)"
   }
 }
 Write-Host ""
