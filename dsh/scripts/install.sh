@@ -117,13 +117,24 @@ PY
     # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row,
     # then append ours.
     ANCHORLAW_PATCH_PATH="$patch_path" python3 - <<'PY'
-import io, os, yaml
+import io, os, re, yaml
 path = os.environ['ANCHORLAW_PATCH_PATH']
 try:
     with io.open(path, encoding='utf-8') as f:
-        data = yaml.safe_load(f)
+        text = f.read()
 except FileNotFoundError:
-    data = None
+    text = None
+# The loader's own compositions use `!!js <expression>` custom tags, which PyYAML
+# cannot parse. Stash them as plain placeholder strings, merge, then restore —
+# otherwise ANY user patch that uses the tag (e.g. a `web-runtime` config
+# override) makes this merge fail outright.
+stashed = []
+if text is not None:
+    def stash(match):
+        stashed.append(match.group(0))
+        return '__DSH_JS_%d__' % (len(stashed) - 1)
+    text = re.sub(r'!!js\s+[^\n]+', stash, text)
+data = yaml.safe_load(text) if text is not None else None
 rows = list(data) if isinstance(data, list) else []
 rows = [r for r in rows if not (
     isinstance(r, dict) and any(
@@ -134,6 +145,8 @@ rows.append({'insert': [{'id': 'anchorlaw-tools-global',
 out = ('# Managed by install.ps1 / install.sh - global anchorlaw tools for this '
        'profile (anchorlaw-tools-global). Re-run the installer to refresh; do '
        'not hand-edit.\n' + yaml.safe_dump(rows, allow_unicode=True, sort_keys=False))
+for index, original in enumerate(stashed):
+    out = out.replace('"__DSH_JS_%d__"' % index, original).replace('__DSH_JS_%d__' % index, original)
 with io.open(path, 'w', encoding='utf-8', newline='\n') as f:
     f.write(out)
 PY

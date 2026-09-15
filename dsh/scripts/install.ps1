@@ -171,17 +171,35 @@ if ($mountProfiles.Count -eq 0) {
     } | Sort-Object Maj, Min -Descending | Select-Object -First 1 | ForEach-Object { "$($_.Maj).$($_.Min)" })
     if (-not $protoVersion) { $protoVersion = '0.0' }
     $pkgPath = Join-Path $profilePluginDir 'package.json'
-    (Get-Content $pkgPath -Raw) -replace '"version":\s*"[^"]*"', ('"version": "' + $protoVersion + '"') | Set-Content $pkgPath -Encoding UTF8
+    # Write WITHOUT a BOM. DSH's plugin-package inventory reads this manifest with a
+    # bare `JSON.parse(readFileSync(path, "utf8"))` — no BOM stripping — so a leading
+    # U+FEFF makes it throw on EVERY official DeepSeek request, surfacing as
+    # `DeepSeek request extension preparation failed` / `REQUEST_EXTENSION`.
+    # PowerShell 5.1's `Set-Content -Encoding UTF8` emits a BOM (PS 7's `utf8NoBOM`
+    # does not exist there), so write through .NET with an explicit no-BOM encoding.
+    $pkgJson = (Get-Content $pkgPath -Raw) -replace '"version":\s*"[^"]*"', ('"version": "' + $protoVersion + '"')
+    [System.IO.File]::WriteAllText($pkgPath, $pkgJson, (New-Object System.Text.UTF8Encoding($false)))
 
     # Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row, then append ours.
     $py = @'
-import io, os, yaml
+import io, os, re, yaml
 path = os.environ['ANCHORLAW_PATCH_PATH']
 try:
     with io.open(path, encoding='utf-8') as f:
-        data = yaml.safe_load(f)
+        text = f.read()
 except FileNotFoundError:
-    data = None
+    text = None
+# The loader's own compositions use `!!js <expression>` custom tags, which PyYAML
+# cannot parse. Stash them as plain placeholder strings, merge, then restore —
+# otherwise ANY user patch that uses the tag (e.g. a `web-runtime` config
+# override) makes this merge fail outright.
+stashed = []
+if text is not None:
+    def stash(match):
+        stashed.append(match.group(0))
+        return '__DSH_JS_%d__' % (len(stashed) - 1)
+    text = re.sub(r'!!js\s+[^\n]+', stash, text)
+data = yaml.safe_load(text) if text is not None else None
 rows = list(data) if isinstance(data, list) else []
 rows = [r for r in rows if not (
     isinstance(r, dict) and any(
@@ -192,6 +210,8 @@ rows.append({'insert': [{'id': 'anchorlaw-tools-global',
 out = ('# Managed by install.ps1 - global anchorlaw tools for this profile '
        '(anchorlaw-tools-global). Re-run install.ps1 to refresh; do not hand-edit.\n' +
        yaml.safe_dump(rows, allow_unicode=True, sort_keys=False))
+for index, original in enumerate(stashed):
+    out = out.replace('"__DSH_JS_%d__"' % index, original).replace('__DSH_JS_%d__' % index, original)
 with io.open(path, 'w', encoding='utf-8', newline='\n') as f:
     f.write(out)
 '@
