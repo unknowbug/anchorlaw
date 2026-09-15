@@ -28,3 +28,4 @@
 | 2026-08-12 | （初始同步，工作区状态；随 079c717 入库） | 11 技能 DSH 化移植 | 0 |
 | 2026-08-13 | 3df7cc3 | anchor.maintain 正文移除易变测试计数（原"当前 78 个"，实测 98，改后不写死数字）；上游 `.reasonix/skills/` 修改 + DSH 镜像同步 | 0 |
 | 2026-08-15 | — | Reasonix 宿主格式停止维护：`.reasonix/skills/` 归档至 `archive/reasonix/`（含恢复脚本）；`dsh/skills/` 转正为 DSH 技能唯一事实源；test_manifest.py 改为 manifest 自持校验 | —（镜像机制取消） |
+| 2026-09-15 | harness `0d1f50007f`（dsh-v0.1.6-alpha.1）；漂移报告基线 `5dda764ed3`（dsh-0.1.5-alpha.1） | 上游插件包改名 `@deepseek-ai/dsh-workflow-worker-thread` → `@deepseek-ai/dsh-workflow-ptc`（旧包已无 package.json；preset 挂载失败 → 会话无法创建/恢复）：`preset/agent.cordis.yml` 的 `id` + `name` 同步改名，`config`（`provider: spawn`）与官方装配一致；新增 fail-closed 门禁 `tests/audit_preset_rows.mjs` 并接入 `selfcheck.ps1` 第 6 项，防同类上游漂移复发（来源：`.investigations/dsh-upstream-drift-20260909/报告.md`） | —（非技能正文；技能 11 个正文未变） |

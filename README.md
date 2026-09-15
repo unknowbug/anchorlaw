@@ -15,7 +15,7 @@ Anchorlaw is a **code verification toolchain for AI-assisted (vibe) coding**, ma
 ```powershell
 # 1. install once (host-level default): preset + user skills + global tool mount
 pwsh dsh/scripts/install.ps1
-# 2. five-item self-check: toolchain / skill manifest / self-scan / installed artifacts / tool schemas
+# 2. six-item self-check: toolchain / skill manifest / self-scan / installed artifacts / tool schemas / preset rows
 pwsh dsh/scripts/selfcheck.ps1
 # 3. open a NEW DSH session → 4 anchorlaw_* tools + 11 anchor-* skills in every session
 ```

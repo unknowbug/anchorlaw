@@ -15,7 +15,7 @@ Anchorlaw 是一套**面向 AI 辅助（vibe）开发的代码验证工具链**�
 ```powershell
 # 1. 安装一次（宿主级默认）：preset + 用户技能 + 全局工具挂载
 pwsh dsh/scripts/install.ps1
-# 2. 五项自检：工具链 / 技能 manifest / 自扫 / 安装产物 / 工具 schema
+# 2. 六项自检：工具链 / 技能 manifest / 自扫 / 安装产物 / 工具 schema / preset 行解析
 pwsh dsh/scripts/selfcheck.ps1
 # 3. 新开 DSH 会话 → 每个会话都有 4 个 anchorlaw_* 工具 + 11 个 anchor-* 技能
 ```

@@ -6,7 +6,7 @@
 ## 〇、开始工作前（每个 session 必做）
 
 1. 确认仓库状态：本仓库根即协议事实源，本目录（`dsh/`）即 DSH 适配事实源——**单一仓库，无第二份协议副本**。
-2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema 五项）。
+2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema / preset 行解析 六项）。
 3. 若改动涉及协议语义：协议正文在上层 `../spec/protocol-v0.20.md`（§8 Maturity / §11 全称声称审计 / §14 Skill Manifest），证据必须跟着走；技能正文直接改本目录 `skills/`（DSH 技能唯一事实源，协议 §14 是宿主无关的技能规范）。
 
 ## 一、本目录定位（一句话）
@@ -22,9 +22,10 @@
 | `preset/agent.cordis.yml` | anchorlaw agent preset 组合 | **事实源**（改这里） |
 | `preset/preset.yml` | preset 显示元数据 | 事实源 |
 | `scripts/install.ps1` | 安装/同步到 DSH 运行时（默认宿主级：preset + 用户技能 + **全局工具挂载**到 profiles/ 下所有 profile 的 `cordis.patch.yml`（自动检测；`-Profile <name>` 指定单个）；`-Project <dir>` 项目级，Reasonix 式按项目部署） | 维护工具 |
-| `scripts/selfcheck.ps1` | 五项自检（含插件工具 schema 校验，2026-08-13 事故门禁） | 维护工具 |
+| `scripts/selfcheck.ps1` | 六项自检（含插件工具 schema 校验，2026-08-13 事故门禁；含 preset 行解析门禁，2026-09-09 上游改名事故门禁） | 维护工具 |
 | `scripts/run_tests_sandbox.py` | 沙箱感知 pytest 包装——DSH Windows 沙箱封存 0o700 目录导致 pytest tmp 机制失效，本脚本改 0o755 后跑基线测试（`python -m pytest --rootdir=python python/tests -q` 的沙箱替代入口） | 维护工具 |
 | `tests/check_plugin_schema.mjs` | 插件工具 schema 形态校验（编译后 JSON-Schema parameters） | 维护测试 |
+| `tests/audit_preset_rows.mjs` | preset 行解析性门禁（fail-closed）——composition 里每个 `name:` 必须在 harness 包集合中可解析，上游改名/移除即非零退出（2026-09-09 `dsh-workflow-worker-thread` → `dsh-workflow-ptc` 漂移事故） | 维护测试 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + frontmatter 形态 + 技能集） | 维护测试 |
 | `SYNC.md` | 溯源戳（上次同步的上游 commit + 时间 + 差异） | 溯源记录 |
 | `demo/` | 演示代码（防御模式 + 锚定函数） | 演示 |
@@ -38,7 +39,7 @@
 
 ## 三、维护铁律（对应上游 anchor.maintain，DSH 版）
 
-1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿。第 3 项自扫=第一律反身应用；第 5 项插件工具 schema 校验=挂载门禁（2026-08-13 事故：扁平 schema 让所有会话报 `Invalid schema ... type: null`；install.ps1 挂载前也先跑这道校验）。
+1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿。第 3 项自扫=第一律反身应用；第 5 项插件工具 schema 校验=挂载门禁（2026-08-13 事故：扁平 schema 让所有会话报 `Invalid schema ... type: null`；install.ps1 挂载前也先跑这道校验）；第 6 项 preset 行解析门禁=fail-closed（2026-09-09 事故：上游把 `dsh-workflow-worker-thread` 改名为 `dsh-workflow-ptc`，源码引用未跟，preset 挂载失败导致会话无法创建/恢复——同类漂移必须在自检被拦下，而不是等 resume 报错）。
 2. **单一事实源**：协议核心只存仓库根一份；DSH 技能正文规范在 `dsh/skills/`（协议 §14 是宿主无关技能规范），由 test_manifest.py 守护 manifest 合法性。
 3. **新能力必须配验证**：新增技能/工具要能通过自检或实测证明，否则标注 Unverified。
 4. **命名纪律**：DSH 技能名必须 kebab-case（`anchor-judge` 而非 `anchor.judge`）；插件工具名 `anchorlaw_*`。

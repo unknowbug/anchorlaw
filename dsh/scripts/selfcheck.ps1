@@ -9,6 +9,11 @@
 #   5. plugin tool-schema shape (compiled JSON-Schema parameters) via
 #      tests/check_plugin_schema.mjs — a flat spec would reach the LLM without
 #      a top-level type and break every session ("Invalid schema ... type: null").
+#   6. preset row resolvability via tests/audit_preset_rows.mjs — every `name:` in
+#      the composition must resolve against the harness package set; an upstream
+#      rename/removal otherwise surfaces only when a session resume fails to mount
+#      (2026-09-09 drift: dsh-workflow-worker-thread → dsh-workflow-ptc, see
+#      .investigations/dsh-upstream-drift-20260909/报告.md).
 
 $ErrorActionPreference = 'Continue'
 
@@ -55,6 +60,17 @@ Write-Host ""
 Write-Host "[5] plugin tool schemas"
 node (Join-Path $srcRoot 'tests\check_plugin_schema.mjs') 2>&1
 if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: plugin tool schemas not compiled JSON Schema"; $fail = 1 }
+
+# 6. preset row resolvability (fail-closed; see audit_preset_rows.mjs)
+Write-Host ""
+Write-Host "[6] preset row resolvability"
+node (Join-Path $srcRoot 'tests\audit_preset_rows.mjs') 2>&1
+$presetAudit = $LASTEXITCODE
+if ($presetAudit -eq 2) {
+  Write-Host "  WARN: preset audit skipped (harness checkout unavailable — set DSH_CHECKOUT)"
+} elseif ($presetAudit -ne 0) {
+  Write-Host "  FAIL: unresolvable preset row(s) — upstream renamed/removed a plugin"; $fail = 1
+}
 
 Write-Host ""
 if ($fail -eq 0) { Write-Host "== ALL CHECKS PASSED ==" } else { Write-Host "== CHECKS FAILED ==" }

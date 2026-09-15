@@ -37,8 +37,8 @@ pwsh scripts/selfcheck.ps1
 skills/                # 11 个技能事实源（唯一事实源，正文遵守协议 §14 契约）
 plugins/               # 工具插件事实源（anchorlaw-tools.js）
 preset/                # agent preset 组合源（agent.cordis.yml + preset.yml）
-scripts/               # install.ps1（安装/同步，含全局工具挂载）、selfcheck.ps1（五项自检）
-tests/                 # test_manifest.py（manifest 校验）+ check_plugin_schema.mjs（工具 schema 校验）
+scripts/               # install.ps1（安装/同步，含全局工具挂载）、selfcheck.ps1（六项自检）
+tests/                 # test_manifest.py（manifest 校验）+ check_plugin_schema.mjs（工具 schema 校验）+ audit_preset_rows.mjs（preset 行解析门禁）
 SYNC.md                # 与协议核心的同步溯源戳
 demo/                  # 演示代码
 AGENTS.md              # DSH 维护入口（agent 每会话加载）
@@ -49,7 +49,7 @@ AGENTS.md              # DSH 维护入口（agent 每会话加载）
 - **单一事实源**：协议核心只存仓库根；DSH 技能正文规范在 `skills/`（唯一事实源，协议 §14 是宿主无关技能规范）
 - **只改事实源**（`skills/`、`plugins/`、`preset/`），然后跑 `scripts/install.ps1` 重装
 - 安装产物（`~/.dsh/.agent-presets/anchorlaw/`、`~/.dsh/skills/anchor-*`）禁止手改
-- 改动后必须 `scripts/selfcheck.ps1` 全绿（含 manifest 与工具 schema 校验）
+- 改动后必须 `scripts/selfcheck.ps1` 全绿（含 manifest、工具 schema 与 preset 行解析校验）
 - 提交纪律沿用仓库（author `unknowbug`、英文动词开头、push 前人类审查）
 
 ## 依赖
