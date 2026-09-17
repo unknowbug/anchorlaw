@@ -19,7 +19,7 @@
 
 1. **技能正文改动**：直接发生在 `dsh/skills/`（DSH 技能唯一事实源；Reasonix 镜像已于 2026-08-15 归档至 `archive/reasonix/`）。改后更新本文件的差异记录，然后确认 `dsh/tests/test_manifest.py` 通过。
 2. **frontmatter 改动**：直接改 `dsh/skills/<name>/SKILL.md`，并在此文件登记变更。
-3. **协议语义更新**：先改 `../spec/protocol-v0.21.md`（§8 Maturity / §11 审计随行），再同步 DSH 适配。
+3. **协议语义更新**：先改 `../spec/protocol-v0.22.md`（§8 Maturity / §11 审计随行），再同步 DSH 适配。
 
 ## 变更日志
 
@@ -32,3 +32,4 @@
 | 2026-09-15 | harness `0d1f50007f`（`packages/preset/agent-presets/presets/standard/agent.cordis.yml`） | **能力面对齐上游 standard preset**：补 5 行——`command-goal`（`@deepseek-ai/dsh-command-goal`）、`present`（`@deepseek-ai/dsh-tool-present`）、`tool-ralph`（disabled）、`tool-subagent-codex`（disabled）、`tool-subagent-claude-code`（disabled）；三行可选外部 agent/workflow 按上游默认保持 `disabled: true`（启用需装对应 Bundle，host 可用性本身不授予工具）。逐 id 对齐后 ours 32 = official 31 + 本地 `anchorlaw-tools`，缺失 0。协议升版 v0.20 → v0.21（宿主适配能力变化，§16 范围；协议核心不变） | —（非技能正文） |
 | 2026-09-15 | harness `0d1f50007f`（`packages/preset/agent-presets/src/{specifier,mount,discovery}.ts`） | **preset 行 specifier 解析语义对齐上游**：`classifyRowSpecifier()` 四分类——`cordis:` 内置 / 以 `.` 开头=preset 自带文件（相对 composition 目录）/ `file:` 与绝对路径=文件 URL（Windows 盘符路径必须）/ 其余=包名；包名解析基准由 preset 目录改为 **harness base**（已安装 harness 所在目录，checkout 下为 `apps/cli`）——上游理由：本地 preset 位于用户 home 下，Node 向上 node_modules 查找走不到 harness 依赖。`audit_preset_rows.mjs` 已镜像该语义（新增 `file:`/绝对路径分支 + 向上 node_modules 走查；`DSH_HARNESS_BASE` 可覆盖），并保留比上游更严的 exports 子路径校验（exports 外子路径挂载时会真的 import 失败）。**官方 `scanRoot()`（公开 API）体检结论：shipped 4/4 OK、我们的 anchorlaw OK**（基准须传 `apps/cli`；传 checkout 根会全量误报 BROKEN） | —（非技能正文；技能 11 个正文未变） |
 | 2026-09-15 | 同上（RE 侧差异反馈，本轮采纳） | **harness base 自动探测 + 错基准守卫**（补上轮遗留的两点，与 RE 侧对齐）：① 基准不再写死 `<checkout>/apps/cli`——按 `--harness-base` / `DSH_HARNESS_BASE` / `<checkout>/apps/cli` / `<checkout>` / `<checkout>/packages/bundle/base` 顺序，取第一个能解析探针包 `@deepseek-ai/dsh-persona` 的候选；② 全部候选都失败 → **SKIP（exit 2）+ tried 清单 + 指定方式提示**，而非把 BAD 刷满屏。另修：`--harness-base` 的值不再泄漏进 positional 参数（否则被当成 composition 文件）。实测：正常 0 退出／错基准但有可用回退→自动恢复 0 退出／全候选失败→SKIP 2／注入旧包名→BAD 1（fail-closed 不回退）；selfcheck 6/6、基线 102 绿 | —（非技能正文） |
+| 2026-09-15 | 协议 v0.21 → v0.22（CoreSwap 论文透镜报告 b3 + synthesis，`.investigations/paper-2608-25512-*`） | **协议吸收五条条款**（§9.8 验证的 temporality / 判据前置集 / §9.7.1 等价档位 / §15.4 PI-1 与 PI-2 / §14.7 引用完整性），触发证据全部来自 CoreSwap 一手事故（#156/#160/#161/#162 + M11/M16 + 三起日志灭失）；§8 Maturity 与 §11 audit 各增对应行（多数如实标 `scoped`——条款先立，下游才有唯一权威目标可对齐、可证伪）。**技能正文落点**：`anchor-judge` 审查清单 +4 项（8-11）、`anchor-test` 运行前置（副作用与逆）+ 判据前置核对、`anchor-write` 可比性档位/`S`/无效声明/逆不塞 source、`anchor-degrade` 逆登记 + 前置集核对。版本引用同步 30 文件（含 archive/reasonix 的版本行，正文保持冻结）；`spec/protocol-v0.21.md` 作为历史留档不改 | 技能 4 个正文有实质改动（其余 7 个仅版本行） |

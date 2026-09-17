@@ -51,7 +51,7 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 | Component | Where | State |
 |-----------|-------|-------|
-| **Spec** | `spec/protocol-v0.21.md` | Language-agnostic code-verification protocol (current) |
+| **Spec** | `spec/protocol-v0.22.md` | Language-agnostic code-verification protocol (current) |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | Scanner (verified) + anchors/noise/CLI (experimental) — the DSH tool backend |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS scanner (in development) |
 
@@ -70,6 +70,8 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 ### Changelog
 
+> **v0.22 (2026-09-15):** Verification temporality, criterion preconditions, equivalence tiers, process invariants — five clauses closing gaps practice had already paid for (CoreSwap #156/#160/#161/#162 + M11/M16): ① **§9.8 verification temporality** — a verification action's in-place side effects MUST carry an addressable inverse or an explicit irreversible declaration (registration only; automatic rollback is forbidden because failed-round evidence is the more valuable artifact); ② **criterion preconditions** — an acceptance criterion declares the external facts it depends on, and a lapsed premise **suspends** the criterion while never auto-changing any status; ③ **§9.7.1 equivalence tiers** — E1 same-carrier / E2 cross-carrier (compare only the mutually declared key set `S`) / E3 interleaving-unknown, plus the partial-equivalence honesty clause and an invalid-declaration list (named on its own axis, not reusing the §9.1 capability modes); ④ **§15.4 PI-1** — a halted pipeline is terminal and MUST NOT be silently inherited (PI-2 is registered unverified with its acyclicity premise stated); ⑤ **§14.7 reference integrity** — the protocol audits its own live citations at the decidable layer only. Evidence status is registered per clause in §8/§11 — most are `scoped` by design: the clause exists so hosts have one authoritative target to implement and to falsify.
+>
 > **v0.21 (2026-09-15):** DSH host-adaptation capability parity + fail-closed preset gate — the `anchorlaw` agent preset now tracks the upstream standard preset's row surface (`command-goal`, `tool-subagent-codex`, `tool-subagent-claude-code`, `tool-ralph`, `present`; the three optional external-agent/workflow rows stay `disabled: true` exactly as upstream ships them — enabling requires installing the matching Bundle). A composition `name:` that no longer resolves makes the whole preset fail to mount (sessions cannot be created/resumed), so preset-row resolvability is now a fail-closed self-check item (`dsh/tests/audit_preset_rows.mjs`, item 6) catching upstream renames/removals at maintenance time instead of at resume time; the outstanding rename (`dsh-workflow-worker-thread` → `dsh-workflow-ptc`) is closed. The protocol core is unchanged — this is §16 host-adaptation scope.
 >
 > **v0.20 (2026-09-01):** Evidence/conclusion continuity (from CoreSwap M11/M14/M16 practice) — three new clauses: ① **conclusion supersession chain** (§15.4): an overturned candidate+ conclusion is expressed as a supersession record (bidirectional links + reason; original text never rewritten), mechanically answering "what is the currently valid conclusion + its history"; ② **verification comparability statement** (§9.7): quantitative metrics MUST declare the comparison basis (carrier / coverage / comparability with prior metrics); ③ **host handover validation** (§16.3 checklist): handover items distinguish verified conclusions from unverified hypotheses, and the inheritor MUST run one cheap independent verification before using a direction-level conclusion as a premise. Evidence persistence and compaction process stay host/framework scope.
@@ -133,7 +135,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH maintenance entry
 ├── spec/
-│   └── protocol-v0.21.md          # Language-neutral protocol (current)
+│   └── protocol-v0.22.md          # Language-neutral protocol (current)
 ├── python/                        # Protocol implementation (DSH tool backend)
 │   ├── anchorlaw-scanner/         # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/                 # Anchors / noise / CLI (Level 2-4, EXPERIMENTAL)
@@ -160,8 +162,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.18](spec/protocol-v0.21.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.21.md#9-degraded-verification-v03-draft)
+- [Protocol Specification v0.18](spec/protocol-v0.22.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.22.md#9-degraded-verification-v03-draft)
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

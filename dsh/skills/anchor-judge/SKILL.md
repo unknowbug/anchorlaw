@@ -6,7 +6,7 @@ whenToUse: 五触发点（输入契约接受/规范审查/计划批准/模块并
 
 # anchor.judge — 审查角色（subprocess）
 
-> Protocol: spec/protocol-v0.21.md §15.4 (Consistency Contract), §16 (Host Integration)
+> Protocol: spec/protocol-v0.22.md §15.4 (Consistency Contract), §16 (Host Integration)
 > Layer: 执行角色（非 §14 动作 skill，不占 manifest 名额）
 > Execution: subprocess（隔离）
 
@@ -35,7 +35,7 @@ judge 不是只在任务收尾跑——以下决策点 MUST 触发审查（工�
 2. **重大转向前** — 结案重开（推翻已确认结论）/ 根因定论（如「无 bug」断言）/ 范围决策（增减验证范围），行动前 MUST 先审查被推翻/被断言的结论。
 3. **阶段结论授予 `candidate`** — SHOULD 触发审查；未审查即授予时，缺失审查意见 MUST 在产物中标注。
 
-（v0.11 输入契约 + 四段流水线触发点，见 [协议 §15.4](spec/protocol-v0.21.md#154-consistency-contract)）：
+（v0.11 输入契约 + 四段流水线触发点，见 [协议 §15.4](spec/protocol-v0.22.md#154-consistency-contract)）：
 4. **输入契约接受** — Judge 接受外部需求文档 + 技术约束规范输入并推导验收判据（stage 0，无输入不得开工）；
 5. **规范审查** — Judge 审过实施规范才进规划（stage 1 终）；
 6. **计划批准** — Judge 批准模块划分（stage 2 终）；
@@ -72,6 +72,10 @@ judge 不是只在任务收尾跑——以下决策点 MUST 触发审查（工�
 5. **噪声卡历史**：该函数有无未解决噪声卡（§3）？有 → 意见中标注
 6. **retry cap**：假设的验证循环是否 ≤3（§9.4，工程修复不计）？超限 → 意见中标注「回推进段取新证据」
 7. **判据核对（v0.11）**：交付验收 MUST 对照 `.artifacts/` 下的 acceptance-criteria artifact 核对验收判据（§15.1 输入契约）？缺失 → 意见中标注
+8. **判据前置集（v0.22 §15.4）**：判据声明的 `preconditions`（key/expected/check）当前是否仍被核？有前置失效 → 标注「该判据 suspended、引用它的结论前提已失效待复核」，并**只出意见**：不得改任何 status、不得撤销 `confirmed`（§15.4 单向递进 + §16.1 confirm hook 是硬边界）。
+9. **验证副作用与逆（v0.22 §9.8）**：本轮验证动作的 in-place 副作用（覆盖日志/重建 index/改门控默认值/污染执行体）是否登记了**可寻址的逆**，或给出显式不可逆声明及原因？未登记 → 意见中标注；**不得要求自动回退**（失败轮证据价值更高）。
+10. **等价档位与 `S`（v0.22 §9.7.1）**：跨载体/跨形态的量化结论是否声明了等价档位（E1/E2/E3）与共同 key 集 `S`，并说明 `S` 之外无分支？未声明或用了 §9.7 无效声明清单中的形态（计数恒等当集合恒等 / 同口径当无伪差 / 合理解释当验证 / 存在前提当满足）→ 意见中标注。
+11. **halt 终态性（v0.22 §15.4 PI-1）**：若本轮是 gate C 触发的 halt，是否以机械信号终止且**未被静默继承**为下一轮基底？被继承 → 判为流程不变量破裂并驳回。
 
 ## 产出
 

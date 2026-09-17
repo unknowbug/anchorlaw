@@ -6,7 +6,7 @@ whenToUse: 代码无法独立编译、anchorlaw test 无法执行时（L2；DSH 
 
 # anchor.degrade — 降级验证
 
-> Protocol: spec/protocol-v0.21.md §9 (Degraded Verification)
+> Protocol: spec/protocol-v0.22.md §9 (Degraded Verification)
 > Layer: L2 (Anchors) — 与 anchor.test 同域（CLI 入口同为 anchorlaw test）
 > Execution: subprocess
 
@@ -24,6 +24,8 @@ whenToUse: 代码无法独立编译、anchorlaw test 无法执行时（L2；DSH 
 3. **登记**：Partial/Degraded 的函数写入 `uncompilable_functions.yaml`（函数名、源位置、未解析依赖清单、建议路径——§9.3 字段）。
 4. **retry cap**（§9.4，v0.13 证据饱和）：实现→验证循环受**证据饱和**约束——连续 **3 轮假设验证无新数据层证据**（trace/probe）必须回到数据层采集（动态 trace），禁止无新数据反复改假设（过程熵增）；**产生新证据的轮次重置计数不消耗 cap**（不切断持续获证的探索）；工程修复不计数。
 5. **诚实声明**（§9.5）：Partial/Degraded 下所有导出/报告前缀标注降级模式，置信度不自动提升。
+6. **登记副作用的逆**（v0.22 §9.8）：降级路径下的验证动作常就地改写（重建 `index.yaml`、覆盖日志、改门控默认值、污染执行体）——每个 in-place 副作用 MUST 登记**可寻址的逆**（归档件路径 / 换标签后的新名 / env 还原记录）或给出**显式不可逆声明及原因**；derived 类（新命名产物/新临时目录）自动合规。**只登记不执行**：禁止自动回退（会删掉失败轮证据，与 #146 相反）；也不得为凑条款伪造逆。
+7. **核对判据前置集**（v0.22 §15.4）：引用某条判据的结论前，核其 `preconditions`（key/expected/check）当前是否仍满足；失效 → 判据 suspended、结论标注「前提已失效，待复核」，**不得自动改任何 status**。
 
 ## 输出
 
