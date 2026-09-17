@@ -10,10 +10,11 @@
  *   node dsh/tests/audit_preset_rows.mjs                          # 默认：源码 composition + 已安装副本（若存在）
  *   node dsh/tests/audit_preset_rows.mjs <composition.yml ...>    # 指定源码 composition（跳过 ./ 本地行）
  *   node dsh/tests/audit_preset_rows.mjs --installed <preset ...> # 校验 ~/.dsh/.agent-presets/<名>/agent.cordis.yml
+ *   node dsh/tests/audit_preset_rows.mjs --harness-base <dir>     # 显式指定包名解析基准
  *
  * 环境：
  *   DSH_CHECKOUT     harness 源码 checkout（默认 D:\git\deepseek-harness）
- *   DSH_HARNESS_BASE 已安装 harness 所在目录（包名解析基准；默认 <DSH_CHECKOUT>\apps\cli）
+ *   DSH_HARNESS_BASE 已安装 harness 所在目录（包名解析基准；通常无需设置，见下）
  *   DSH_HOME         默认 %USERPROFILE%\.dsh
  *
  * 判据（镜像上游 `classifyRowSpecifier()` + `packageInstalled()` 的最新语义）：
@@ -26,10 +27,19 @@
  *                        校验子路径是否在 exports 内（比上游健康检查更严，因 exports
  *                        外的子路径在挂载时会真的 import 失败）
  *
- * 说明：包名解析基准是 harness base 而非 preset 目录——上游明确规定，
- *       本地 preset 位于用户 home 下，Node 向上查找永远走不到 harness 依赖。
+ * 包名解析基准（harness base）——上游语义 + 本脚本的探测与守卫：
+ *   上游 `mount.ts` 明确规定：本地 preset 位于用户 home 下，Node 向上 node_modules
+ *   查找永远走不到 harness 依赖，故包名从"已安装 harness 所在目录"解析而非 preset 目录。
+ *   该目录随部署形态而变，所以本脚本**自动探测**：按 `--harness-base` / `DSH_HARNESS_BASE`
+ *   / `<checkout>/apps/cli` / `<checkout>` / `<checkout>/packages/bundle/base` 顺序取第一个
+ *   能解析探针包（`@deepseek-ai/dsh-persona`）的候选。
  *
- * 退出码：0 = 全部可解析；1 = 存在不可解析行；2 = 无法执行（缺 harness checkout / 解析器）
+ *   **错基准守卫**：基准一旦选错（例如误传 checkout 根），会表现为"所有包行一起失败"，
+ *   而真实的上游改名只失败个别行。因此包行**全数失败且数量 ≥ 2** 时本脚本判定基准可疑，
+ *   输出 SKIP（exit 2）+ 诊断，而不是把 BAD 刷满屏——门禁误报会教人不信任门禁，
+ *   比漏报更伤（2026-09-15 实测：传 checkout 根会让 shipped 与用户 preset 全量误报 BROKEN）。
+ *
+ * 退出码：0 = 全部可解析；1 = 存在不可解析行（真实漂移）；2 = 无法判定（缺解析器 / 基准可疑）
  *
  * 注：composition 使用 `!!js` 标签，必须用 harness 的 entryListSchema 解析，
  *     普通 js-yaml 会报 unknown tag（属正常，非缺陷）。
@@ -42,16 +52,30 @@ const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(HERE, '..', '..')
 
 const HARNESS = process.env.DSH_CHECKOUT ?? 'D:\\git\\deepseek-harness'
-// Where the INSTALLED harness lives: upstream resolves bare package names from
-// this base (agent-presets `mount.ts`: a locally authored preset sits under the
-// user's home, where Node's upward node_modules walk never reaches the harness's
-// own dependencies). In a checkout that is apps/cli.
-const HARNESS_BASE = process.env.DSH_HARNESS_BASE ?? join(HARNESS, 'apps', 'cli')
 const HOME = process.env.DSH_HOME ?? join(process.env.USERPROFILE ?? '', '.dsh')
 
 const args = process.argv.slice(2)
 const installedMode = args.includes('--installed')
-const positional = args.filter(a => !a.startsWith('--'))
+
+/** `--harness-base <dir>`（也接受 `--harness-base=<dir>`）。 */
+function argValue(flag) {
+  const eq = args.find(a => a.startsWith(`${flag}=`))
+  if (eq !== undefined) return eq.slice(flag.length + 1)
+  const at = args.indexOf(flag)
+  return at >= 0 && at + 1 < args.length ? args[at + 1] : undefined
+}
+
+const harnessBaseArg = argValue('--harness-base')
+
+/** Positional composition paths — every flag AND a flag's separate value removed. */
+const positional = []
+for (let i = 0; i < args.length; i++) {
+  const a = args[i]
+  if (a === '--installed') continue
+  if (a === '--harness-base') { i++; continue }        // skip the flag and its value
+  if (a.startsWith('--')) continue
+  positional.push(a)
+}
 
 /** 目标文件：[{ file, sourceTree }] */
 let files
@@ -89,7 +113,50 @@ if (!yamlPath) {
 const include = await import(pathToFileURL(schemaEntry).href)
 const yaml = await import(pathToFileURL(yamlPath).href)
 
-/** 收集 harness workspace 里所有包：name -> { dir, exports } */
+/**
+ * Mirror of upstream `packageInstalled()` (agent-presets `src/discovery.ts`):
+ * walk up from a base looking for `node_modules/<pkg>/package.json`.
+ * Deliberately tolerant of unexported subpaths, exactly like upstream's health
+ * check — the stricter `exports` probe is applied separately, below.
+ */
+function packageInstalled(name, base) {
+  const pkg = name.split('/').slice(0, name.startsWith('@') ? 2 : 1).join('/')
+  let dir = base
+  for (;;) {
+    if (existsSync(join(dir, 'node_modules', pkg, 'package.json'))) return true
+    const parent = dirname(dir)
+    if (parent === dir) return false
+    dir = parent
+  }
+}
+
+// ── 包名解析基准：自动探测（上游语义：包名从"已安装 harness 所在处"解析）──────
+// 探针包取每个 host preset 都必然含有的 @deepseek-ai/dsh-persona：能解析它，
+// 说明该候选确实是 harness 的依赖根。
+const PROBE_PACKAGE = '@deepseek-ai/dsh-persona'
+const baseCandidates = [
+  harnessBaseArg,
+  process.env.DSH_HARNESS_BASE,
+  join(HARNESS, 'apps', 'cli'),
+  HARNESS,
+  join(HARNESS, 'packages', 'bundle', 'base'),
+].filter(c => typeof c === 'string' && c !== '')
+
+const triedBases = []
+let HARNESS_BASE = null
+for (const candidate of baseCandidates) {
+  triedBases.push(candidate)
+  if (packageInstalled(PROBE_PACKAGE, candidate)) { HARNESS_BASE = candidate; break }
+}
+
+if (HARNESS_BASE === null) {
+  console.log(`SKIP: no harness base resolves ${PROBE_PACKAGE} — cannot judge package rows`)
+  for (const c of triedBases) console.log(`   tried: ${c}`)
+  console.log('   hint: pass --harness-base <installed harness dir>, or set DSH_HARNESS_BASE')
+  process.exit(2)
+}
+
+/** 收集 harness workspace 里所有包：name -> { dir, exports }（用于 exports 子路径严格校验） */
 function collectPackages() {
   const map = new Map()
   const roots = []
@@ -150,43 +217,42 @@ function classifyRowSpecifier(name) {
   return { kind: 'package', specifier: name }
 }
 
-/**
- * Mirror of upstream `packageInstalled()` (agent-presets `src/discovery.ts`):
- * walk up from the harness base looking for `node_modules/<pkg>/package.json`.
- * Deliberately tolerant of unexported subpaths, exactly like upstream's health
- * check — the stricter `exports` probe is applied separately, below.
- */
-function packageInstalled(name, base) {
-  const pkg = name.split('/').slice(0, name.startsWith('@') ? 2 : 1).join('/')
-  let dir = base
-  for (;;) {
-    if (existsSync(join(dir, 'node_modules', pkg, 'package.json'))) return true
-    const parent = dirname(dir)
-    if (parent === dir) return false
-    dir = parent
-  }
-}
+/** 该结论是否属于"包在基准下找不到"（错基准与上游改名都表现为此） */
+const PACKAGE_MISSING = 'package not installed above harness base'
 
 /** 单个 name 的解析结论 */
 function classify(name, presetDir, sourceTree) {
   const row = classifyRowSpecifier(name)
-  if (row.kind === 'builtin') return { ok: true, why: 'cordis builtin' }
+  if (row.kind === 'builtin') return { kind: 'builtin', ok: true, why: 'cordis builtin' }
   if (row.kind === 'preset') {
     // A preset's own files travel with it: after install.ps1 copies preset/ into
     // ~/.dsh/.agent-presets/<id>/, the relative path resolves inside the preset
     // directory. In the source tree the copy has not happened yet.
-    if (sourceTree) return { ok: true, why: 'preset-relative path (source tree — travels on install)' }
+    if (sourceTree) return { kind: 'preset', ok: true, why: 'preset-relative path (source tree — travels on install)' }
     const target = resolve(presetDir, row.specifier)
-    return existsSync(target) ? { ok: true, why: 'preset-relative file' } : { ok: false, why: `preset file missing: ${target}` }
+    return {
+      kind: 'preset',
+      ok: existsSync(target),
+      why: existsSync(target) ? 'preset-relative file' : `preset file missing: ${target}`,
+    }
   }
   if (row.kind === 'file') {
     const target = fileURLToPath(new URL(row.specifier))
-    return existsSync(target) ? { ok: true, why: 'file row' } : { ok: false, why: `file row missing: ${target}` }
+    return {
+      kind: 'file',
+      ok: existsSync(target),
+      why: existsSync(target) ? 'file row' : `file row missing: ${target}`,
+    }
   }
   // Package row — upstream's rule is the upward node_modules walk from the
   // harness base. A package absent there cannot be imported at mount time.
   if (!packageInstalled(row.specifier, HARNESS_BASE)) {
-    return { ok: false, why: `package not installed above harness base ${HARNESS_BASE} (renamed / removed upstream)` }
+    return {
+      kind: 'package',
+      ok: false,
+      missing: true,
+      why: `${PACKAGE_MISSING} ${HARNESS_BASE} (renamed / removed upstream)`,
+    }
   }
   // Extra strictness beyond upstream's health check (which accepts unexported
   // subpaths): a subpath outside the package's `exports` map still fails the
@@ -198,12 +264,16 @@ function classify(name, presetDir, sourceTree) {
   const manifest = packages.get(base)
   if (sub !== '' && manifest && (!manifest.exports || !Object.keys(manifest.exports).includes(`./${sub}`))) {
     const keys = manifest.exports ? Object.keys(manifest.exports).join(', ') : 'none'
-    return { ok: false, why: `subpath ./${sub} not in ${base} exports (have: ${keys})` }
+    return { kind: 'package', ok: false, why: `subpath ./${sub} not in ${base} exports (have: ${keys})` }
   }
-  return { ok: true, why: `package (harness base: ${HARNESS_BASE})` }
+  return { kind: 'package', ok: true, why: `package (harness base: ${HARNESS_BASE})` }
 }
 
+const results = []
 let bad = 0
+let packageRows = 0
+let packageMissing = 0
+
 for (const { file, sourceTree } of files) {
   console.log(`\n== ${file}${sourceTree ? '  (source tree)' : '  (installed)'}`)
   if (!existsSync(file)) {
@@ -221,10 +291,23 @@ for (const { file, sourceTree } of files) {
   let fileBad = 0
   for (const name of names.sort()) {
     const r = classify(name, dirname(file), sourceTree)
+    if (r.kind === 'package') { packageRows++; if (r.missing) packageMissing++ }
     if (!r.ok) { fileBad++; bad++ }
     console.log(`   ${r.ok ? 'OK  ' : 'BAD '} ${name}${r.ok ? '' : `  <- ${r.why}`}`)
+    results.push({ name, r })
   }
   console.log(`   -> ${names.length} reference(s), ${fileBad} unresolvable`)
+}
+
+// ── 错基准守卫：包行"全数"失败 = 基准可疑，而非上游改名（改名只影响个别行）──
+// 误报会让维护者去"修"本来正确的 preset，比漏报更伤，故此处降级为 SKIP + 诊断。
+if (packageRows >= 2 && packageMissing === packageRows) {
+  console.log(`\nSKIP: all ${packageRows} package row(s) failed to resolve — the harness base looks wrong,`)
+  console.log(`      not a rename (a real rename fails one or a few rows).`)
+  console.log(`      base in use: ${HARNESS_BASE}`)
+  for (const c of triedBases) console.log(`      tried: ${c}`)
+  console.log('      hint: pass --harness-base <installed harness dir>, or set DSH_HARNESS_BASE')
+  process.exit(2)
 }
 
 console.log(bad === 0 ? '\nAll preset rows resolvable ✅' : `\n${bad} unresolvable preset row(s) ❌`)
