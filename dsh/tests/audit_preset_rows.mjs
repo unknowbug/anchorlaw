@@ -12,14 +12,22 @@
  *   node dsh/tests/audit_preset_rows.mjs --installed <preset ...> # 校验 ~/.dsh/.agent-presets/<名>/agent.cordis.yml
  *
  * 环境：
- *   DSH_CHECKOUT   harness 源码 checkout（默认 D:\git\deepseek-harness）
- *   DSH_HOME       默认 %USERPROFILE%\.dsh
+ *   DSH_CHECKOUT     harness 源码 checkout（默认 D:\git\deepseek-harness）
+ *   DSH_HARNESS_BASE 已安装 harness 所在目录（包名解析基准；默认 <DSH_CHECKOUT>\apps\cli）
+ *   DSH_HOME         默认 %USERPROFILE%\.dsh
  *
- * 判据：
+ * 判据（镜像上游 `classifyRowSpecifier()` + `packageInstalled()` 的最新语义）：
  *   - `cordis:` 前缀   → 内置行，放行
- *   - `./` / `../` 开头 → 源码树内该相对路径要 install 后才成立；源码 composition 跳过，
- *                        已安装副本则要求本地文件存在
- *   - 其余             → 包名必须存在于 harness workspace 包集合；带子路径者子路径须在其 exports 内
+ *   - 以 `.` 开头       → preset 自带文件，相对 composition 所在目录解析；
+ *                        源码树跳过（install.ps1 拷贝后才成立），已安装副本要求文件存在
+ *   - `file:` / 绝对路径 → 文件 URL，要求文件存在（Windows 盘符路径必须走 file URL）
+ *   - 其余             → 包名，从 **已安装 harness 基准**（harness base）向上走
+ *                        node_modules 查找（上游同款）；命中后再用 workspace manifest
+ *                        校验子路径是否在 exports 内（比上游健康检查更严，因 exports
+ *                        外的子路径在挂载时会真的 import 失败）
+ *
+ * 说明：包名解析基准是 harness base 而非 preset 目录——上游明确规定，
+ *       本地 preset 位于用户 home 下，Node 向上查找永远走不到 harness 依赖。
  *
  * 退出码：0 = 全部可解析；1 = 存在不可解析行；2 = 无法执行（缺 harness checkout / 解析器）
  *
@@ -27,13 +35,18 @@
  *     普通 js-yaml 会报 unknown tag（属正常，非缺陷）。
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
-import { join, dirname, resolve } from 'node:path'
+import { join, dirname, resolve, isAbsolute } from 'node:path'
 import { pathToFileURL, fileURLToPath } from 'node:url'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(HERE, '..', '..')
 
 const HARNESS = process.env.DSH_CHECKOUT ?? 'D:\\git\\deepseek-harness'
+// Where the INSTALLED harness lives: upstream resolves bare package names from
+// this base (agent-presets `mount.ts`: a locally authored preset sits under the
+// user's home, where Node's upward node_modules walk never reaches the harness's
+// own dependencies). In a checkout that is apps/cli.
+const HARNESS_BASE = process.env.DSH_HARNESS_BASE ?? join(HARNESS, 'apps', 'cli')
 const HOME = process.env.DSH_HOME ?? join(process.env.USERPROFILE ?? '', '.dsh')
 
 const args = process.argv.slice(2)
@@ -120,27 +133,74 @@ function rowNames(file) {
   return out
 }
 
+/**
+ * Mirror of upstream `classifyRowSpecifier()` (agent-presets `src/specifier.ts`).
+ *
+ * The Loader splits every row specifier four ways, and only `kind` decides which
+ * base it resolves against: `cordis:` builtins resolve nothing; a leading `.`
+ * row ships its file with the preset (preset-relative); `file:` and absolute
+ * paths become file URLs (needed for drive-letter paths on Windows); everything
+ * else is a package name resolved from the harness base.
+ */
+function classifyRowSpecifier(name) {
+  if (name.startsWith('cordis:')) return { kind: 'builtin', specifier: name }
+  if (name.startsWith('.')) return { kind: 'preset', specifier: name }
+  if (name.startsWith('file:')) return { kind: 'file', specifier: name }
+  if (isAbsolute(name)) return { kind: 'file', specifier: pathToFileURL(name).href }
+  return { kind: 'package', specifier: name }
+}
+
+/**
+ * Mirror of upstream `packageInstalled()` (agent-presets `src/discovery.ts`):
+ * walk up from the harness base looking for `node_modules/<pkg>/package.json`.
+ * Deliberately tolerant of unexported subpaths, exactly like upstream's health
+ * check — the stricter `exports` probe is applied separately, below.
+ */
+function packageInstalled(name, base) {
+  const pkg = name.split('/').slice(0, name.startsWith('@') ? 2 : 1).join('/')
+  let dir = base
+  for (;;) {
+    if (existsSync(join(dir, 'node_modules', pkg, 'package.json'))) return true
+    const parent = dirname(dir)
+    if (parent === dir) return false
+    dir = parent
+  }
+}
+
 /** 单个 name 的解析结论 */
 function classify(name, presetDir, sourceTree) {
-  if (name.startsWith('cordis:')) return { ok: true, why: 'cordis builtin' }
-  if (name.startsWith('./') || name.startsWith('../')) {
-    if (sourceTree) return { ok: true, why: 'source-tree relative path (skipped)' }
-    const target = resolve(presetDir, name)
-    return existsSync(target) ? { ok: true, why: 'local file' } : { ok: false, why: `local file missing: ${target}` }
+  const row = classifyRowSpecifier(name)
+  if (row.kind === 'builtin') return { ok: true, why: 'cordis builtin' }
+  if (row.kind === 'preset') {
+    // A preset's own files travel with it: after install.ps1 copies preset/ into
+    // ~/.dsh/.agent-presets/<id>/, the relative path resolves inside the preset
+    // directory. In the source tree the copy has not happened yet.
+    if (sourceTree) return { ok: true, why: 'preset-relative path (source tree — travels on install)' }
+    const target = resolve(presetDir, row.specifier)
+    return existsSync(target) ? { ok: true, why: 'preset-relative file' } : { ok: false, why: `preset file missing: ${target}` }
   }
-  const isScoped = name.startsWith('@')
-  const seg = name.split('/')
+  if (row.kind === 'file') {
+    const target = fileURLToPath(new URL(row.specifier))
+    return existsSync(target) ? { ok: true, why: 'file row' } : { ok: false, why: `file row missing: ${target}` }
+  }
+  // Package row — upstream's rule is the upward node_modules walk from the
+  // harness base. A package absent there cannot be imported at mount time.
+  if (!packageInstalled(row.specifier, HARNESS_BASE)) {
+    return { ok: false, why: `package not installed above harness base ${HARNESS_BASE} (renamed / removed upstream)` }
+  }
+  // Extra strictness beyond upstream's health check (which accepts unexported
+  // subpaths): a subpath outside the package's `exports` map still fails the
+  // ESM import at mount time, so flag it when the workspace manifest is known.
+  const isScoped = row.specifier.startsWith('@')
+  const seg = row.specifier.split('/')
   const base = isScoped ? seg.slice(0, 2).join('/') : seg[0]
   const sub = isScoped ? seg.slice(2).join('/') : seg.slice(1).join('/')
-  const found = packages.get(base)
-  if (!found) return { ok: false, why: 'package not in harness workspace (renamed / removed upstream)' }
-  if (sub !== '') {
-    const keys = typeof found.exports === 'object' && found.exports !== null ? Object.keys(found.exports) : []
-    if (!keys.includes(`./${sub}`)) {
-      return { ok: false, why: `subpath ./${sub} not in exports (have: ${keys.join(', ') || 'none'})` }
-    }
+  const manifest = packages.get(base)
+  if (sub !== '' && manifest && (!manifest.exports || !Object.keys(manifest.exports).includes(`./${sub}`))) {
+    const keys = manifest.exports ? Object.keys(manifest.exports).join(', ') : 'none'
+    return { ok: false, why: `subpath ./${sub} not in ${base} exports (have: ${keys})` }
   }
-  return { ok: true, why: found.dir.replace(HARNESS, '<harness>') }
+  return { ok: true, why: `package (harness base: ${HARNESS_BASE})` }
 }
 
 let bad = 0
