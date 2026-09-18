@@ -13,8 +13,16 @@
 #   deepseek-ai/deepseek-harness discussion #306).
 #   Host-level install additionally mounts the 4 anchorlaw_* tools globally:
 #   it appends an `insert` row to <dshHome>/profiles/<profile>/cordis.patch.yml
-#   (the ONLY user patch layer DSH reads; ~/.dsh/cordis.patch.yml is ignored by
-#   the host) and copies the plugin to <profile>/plugins/anchorlaw/.
+#   (the per-profile user patch layer) and copies the plugin to
+#   <profile>/plugins/anchorlaw/.
+#
+#   NOTE (2026-09-18 correction): DSH reads TWO user patch layers, not one. The
+#   home-level <dshHome>/cordis.patch.yml is applied after the per-profile layer
+#   and therefore outranks it (@deepseek-ai/dsh-app-boot README: "applied after
+#   every bundle layer (per-profile first, then the home-level file, which
+#   therefore outranks it)"; homePatchPath() in lib/profile-boot-*.js). This
+#   installer deliberately writes only the per-profile layer — the home-level
+#   file is shared with other frameworks and with machine-local settings.
 #
 # Idempotent: safe to re-run after editing any source file. Requires full file
 # access to the DSH home (outside the session workspace).
@@ -95,11 +103,19 @@ if (Test-Path (Join-Path $srcRoot 'skills')) {
   Copy-Item -Path (Join-Path $srcRoot 'skills\*') -Destination $userSkills -Recurse -Force
 }
 
-# 4. Global tool mount — DSH reads ONLY a profile's own patch layer
+# 4. Global tool mount — DSH reads the per-profile user layer
 #    (<dshHome>/profiles/<profile>/cordis.patch.yml; baseUrl = profile dir,
-#    hot-reloaded). ~/.dsh/cordis.patch.yml is NOT read by the host. The
-#    anchorlaw plugin row is appended as an `insert` patch so the four
+#    hot-reloaded) AND a home-level user layer (<dshHome>/cordis.patch.yml),
+#    which is applied after the per-profile layer and therefore outranks it
+#    (@deepseek-ai/dsh-app-boot README). This installer writes only the
+#    per-profile layer: the home-level file is shared with other frameworks and
+#    with machine-local settings, so it is not this script's to rewrite.
+#
+#    The anchorlaw plugin row is appended as an `insert` patch so the four
 #    anchorlaw_* tools are available in every session (global layer).
+#    Caveat (pre-existing, not changed here): the merge below round-trips the
+#    file through yaml.safe_dump, so comments inside the patch file are not
+#    preserved.
 #
 #    Profiles: -Profile <name> mounts one profile explicitly; otherwise EVERY
 #    profile directory under <dshHome>/profiles holding a package.json is
