@@ -144,14 +144,12 @@
                 config:
                   provider: spawn
                   toolName: subagent
-                  backgroundMode: continuable
 
               - id: tool-subagent-fork
                 name: '@deepseek-ai/dsh-tool-subagent'
                 config:
                   provider: fork
                   toolName: subagent_fork
-                  backgroundMode: continuable
 
               # Optional external-agent providers. Production dsh does NOT install these
               # bundles: install the matching Bundle in this Profile and restart the Host,
@@ -163,7 +161,6 @@
                 config:
                   provider: codex
                   toolName: subagent_codex
-                  backgroundMode: one-shot
                   maxDepth: provider-managed
 
               - id: tool-subagent-claude-code
@@ -172,7 +169,6 @@
                 config:
                   provider: claude-code
                   toolName: subagent_claude_code
-                  backgroundMode: one-shot
                   maxDepth: provider-managed
 
               - id: workflow-ptc
