@@ -6,7 +6,7 @@
 ## 〇、开始工作前（每个 session 必做）
 
 1. 确认仓库状态：本仓库根即协议事实源，本目录（`dsh/`）即 DSH 适配事实源——**单一仓库，无第二份协议副本**。
-2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema / preset 行解析 六项）。
+2. 跑自检确认基线全绿：`pwsh scripts/selfcheck.ps1`（工具链 / 技能 manifest / 自扫 / 安装产物 / 插件工具 schema / preset 行解析 / 提示词变量 七项）。
 3. 若改动涉及协议语义：协议正文在上层 `../spec/protocol-v0.23.md`（§8 Maturity / §11 全称声称审计 / §14 Skill Manifest），证据必须跟着走；技能正文直接改本目录 `skills/`（DSH 技能唯一事实源，协议 §14 是宿主无关的技能规范）。
 
 ## 一、本目录定位（一句话）
@@ -22,11 +22,12 @@
 | `package.json` | **bundle 清单**——DSH ≥ 0.1.7 的 preset 载体：`dsh.bundle.patch` + `exports["./plugin"]` | **事实源**（改这里） |
 | `cordis.patch.yml` | **bundle patch**：声明 `anchorlaw` agent preset（`@deepseek-ai/dsh-agent-preset` 行，内含全部 preset 子行） | **事实源**（改这里） |
 | `scripts/install.ps1` | 安装/同步到 DSH 运行时（宿主级：bundle 装进 profile 的 `dsh.profile.bundles` + 用户技能 + **全局工具挂载**到 profiles/ 下所有 profile 的 `cordis.patch.yml`（自动检测；`-Profile <name>` 指定单个）。**无项目级模式**——DSH 没有项目级插件/preset 机制） | 维护工具 |
-| `scripts/selfcheck.ps1` | 六项自检（含插件工具 schema 校验，2026-08-13 事故门禁；含 preset 行解析门禁，2026-09-09 上游改名事故门禁；第 4 项检 bundle 是否被 profile 选中，2026-09-23 事故门禁） | 维护工具 |
+| `scripts/selfcheck.ps1` | 七项自检（含插件工具 schema 校验，2026-08-13 事故门禁；含 preset 行解析门禁，2026-09-09 上游改名事故门禁；第 4 项检 bundle 是否被 profile 选中，2026-09-23 事故门禁；第 7 项检提示词变量，2026-10-10 上游删除 `cwd` 事故门禁） | 维护工具 |
 | `scripts/run_tests_sandbox.py` | 沙箱感知 pytest 包装——DSH Windows 沙箱封存 0o700 目录导致 pytest tmp 机制失效，本脚本改 0o755 后跑基线测试（`python -m pytest --rootdir=python python/tests -q` 的沙箱替代入口） | 维护工具 |
 | `tests/check_plugin_schema.mjs` | 插件工具 schema 形态校验（编译后 JSON-Schema parameters） | 维护测试 |
 | `tests/audit_preset_rows.mjs` | preset 行解析性门禁（fail-closed）——bundle patch 的 `insert[]`、group 子行、以及 **`config.plugins[]`（preset 的全部行）** 里每个 `name:` 都必须可解析，上游改名/移除即非零退出（2026-09-09 `dsh-workflow-worker-thread` → `dsh-workflow-ptc` 漂移；2026-09-23 preset 载体换成 bundle patch 后旧实现漏检 27/28 行） | 维护测试 |
 | `tests/test_manifest.py` | 技能 manifest 校验（DSH 命名 + frontmatter 形态 + 技能集） | 维护测试 |
+| `tests/audit_prompt_variables.mjs` | 提示词变量门禁（fail-closed）——preset 模板里每个 `{{变量}}` 必须是 harness **当前注册**的提示词变量（扫描生产代码里的 `systemPrompt.variable(...)`，跳过 tests，避免测试假变量污染白名单）。persona 模板是**渲染期严格解析**的，上游删变量即会话组装失败而**行解析门禁看不见**（2026-10-10 事故：DSH 0.2.x 删除 `cwd` → `unknown prompt variable "{{cwd}}" in section "deployment:persona-prefix"`） | 维护测试 |
 | `SYNC.md` | 溯源戳（上次同步的上游 commit + 时间 + 差异） | 溯源记录 |
 | `demo/` | 演示代码（防御模式 + 锚定函数） | 演示 |
 | `PORT-ASSESSMENT.md` | 移植评估（历史存档） | 历史 |

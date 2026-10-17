@@ -37,8 +37,8 @@ skills/                # 11 个技能事实源（唯一事实源，正文遵守�
 plugins/               # 工具插件事实源（anchorlaw-tools.js）
 package.json           # bundle 清单（dsh.bundle.patch + exports["./plugin"]）
 cordis.patch.yml       # bundle patch：anchorlaw agent preset 声明
-scripts/               # install.ps1（安装/同步，含全局工具挂载）、selfcheck.ps1（六项自检）
-tests/                 # test_manifest.py（manifest 校验）+ check_plugin_schema.mjs（工具 schema 校验）+ audit_preset_rows.mjs（preset 行解析门禁）
+scripts/               # install.ps1（安装/同步，含全局工具挂载）、selfcheck.ps1（七项自检）
+tests/                 # test_manifest.py（manifest 校验）+ check_plugin_schema.mjs（工具 schema 校验）+ audit_preset_rows.mjs（preset 行解析门禁）+ audit_prompt_variables.mjs（提示词变量门禁）
 SYNC.md                # 与协议核心的同步溯源戳
 demo/                  # 演示代码
 AGENTS.md              # DSH 维护入口（agent 每会话加载）

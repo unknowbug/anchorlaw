@@ -13,6 +13,12 @@
 #      the composition must resolve against the harness package set; an upstream
 #      rename/removal otherwise surfaces only when a session resume fails to mount
 #      (2026-09-09 drift: dsh-workflow-worker-thread → dsh-workflow-ptc).
+#   7. prompt variable resolvability via tests/audit_prompt_variables.mjs — every
+#      `{{var}}` in the preset's persona template must be a variable the harness
+#      still registers; persona templates interpolate STRICTLY at assembly, so an
+#      upstream variable removal surfaces only when a session starts
+#      (2026-10-10: DSH 0.2.x dropped `cwd` → `unknown prompt variable "{{cwd}}"`
+#      in section "deployment:persona-prefix").
 
 $ErrorActionPreference = 'Continue'
 
@@ -84,6 +90,21 @@ if ($presetAudit -eq 2) {
   Write-Host "  WARN: preset audit skipped (harness checkout unavailable — set DSH_CHECKOUT)"
 } elseif ($presetAudit -ne 0) {
   Write-Host "  FAIL: unresolvable preset row(s) — upstream renamed/removed a plugin"; $fail = 1
+}
+
+# 7. prompt variable resolvability (fail-closed; see audit_prompt_variables.mjs)
+Write-Host ""
+Write-Host "[7] prompt variable resolvability"
+node (Join-Path $srcRoot 'tests\audit_prompt_variables.mjs') 2>&1
+$promptVarAudit = $LASTEXITCODE
+if ($promptVarAudit -eq 2) {
+  if ($env:DSH_SKIP_PROMPT_VAR_AUDIT -eq '1') {
+    Write-Host "  WARN: prompt-variable audit skipped (DSH_SKIP_PROMPT_VAR_AUDIT=1 — gap explicitly accepted)"
+  } else {
+    Write-Host "  FAIL: prompt-variable audit could not run (set DSH_CHECKOUT, or DSH_SKIP_PROMPT_VAR_AUDIT=1 to accept the gap)"; $fail = 1
+  }
+} elseif ($promptVarAudit -ne 0) {
+  Write-Host "  FAIL: unregistered prompt variable in the preset template — a session would fail to assemble"; $fail = 1
 }
 
 Write-Host ""
