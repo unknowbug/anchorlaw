@@ -24,6 +24,10 @@
 # installer: any preset whose `skill-filesystem` keeps `includeDefaultRoots`
 # (the default) discovers it.
 #
+# Two user patch layers exist and the home-level one outranks the per-profile one;
+# this installer writes only the per-profile layer (see the 2026-09-18 note in
+# step 3c below).
+
 # Idempotent: safe to re-run after editing any source file. Requires full file
 # access to the DSH home (outside the session workspace).
 
@@ -130,8 +134,22 @@ if ($mountProfiles.Count -eq 0) {
     } | ConvertTo-Json -Depth 4 | Set-Content -Path (Join-Path $profilePluginDir 'package.json') -Encoding UTF8
 
     # 3c. Idempotent YAML merge: drop any prior anchorlaw-tools-global insert row,
-    #     then append ours. DSH reads ONLY a profile's own patch layer
-    #     (<dshHome>/profiles/<profile>/cordis.patch.yml; baseUrl = profile dir).
+    #     then append ours.
+    #
+    #     NOTE (2026-09-18 correction, carried from PR #2): DSH reads TWO user
+    #     patch layers, not one. The per-profile file
+    #     (<dshHome>/profiles/<profile>/cordis.patch.yml; baseUrl = profile dir)
+    #     is applied first; the home-level <dshHome>/cordis.patch.yml is applied
+    #     AFTER it and therefore OUTRANKS it (@deepseek-ai/dsh-app-boot README:
+    #     "applied after every bundle layer (per-profile first, then the
+    #     home-level file, which therefore outranks it)"; homePatchPath() in
+    #     lib/profile-boot-*.js). This installer deliberately writes only the
+    #     per-profile layer: the home-level file is shared with other frameworks
+    #     and with machine-local settings, so it is not this script's to rewrite.
+    #
+    #     Caveat (pre-existing, not changed here): the merge below round-trips the
+    #     file through yaml.safe_dump, so comments inside the patch file are not
+    #     preserved.
     $profilePatchPath = Join-Path $profileDir 'cordis.patch.yml'
     $py = @'
 import io, os, yaml
