@@ -1,6 +1,6 @@
 {
   "name": "@dsh-external/dsh-anchorlaw",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "private": true,
   "description": "Anchorlaw 协议的 DSH 宿主适配 bundle：anchorlaw agent preset（Judge 驱动四段流水线）+ 4 个 anchorlaw_* 模型工具",
   "type": "module",
@@ -13,6 +13,9 @@
     "cordis.patch.yml"
   ],
   "license": "MIT",
+  "engines": {
+    "dsh": "^0.2.0"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"

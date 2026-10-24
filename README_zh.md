@@ -51,7 +51,7 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 | 组件 | 位置 | 状态 |
 |------|------|------|
-| **协议正文** | `spec/protocol-v0.24.md` | 语言无关代码验证协议（当前版） |
+| **协议正文** | `spec/protocol-v0.25.md` | 语言无关代码验证协议（当前版） |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | 扫描器（已验证）+ 锚点/噪声/CLI（实验性）——DSH 工具后端 |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS 扫描器（开发中） |
 
@@ -70,6 +70,8 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 ### 更新日志
 
+> **v0.25 (2026-10-24):** DSH 0.2.1 宿主适配收尾——① 上游移除了 `@deepseek-ai/dsh-tool-subagent-control` 的 `./list-agents` 子路径导出（它把共享控制工具合并进了包主入口），我们 preset 里的 `tool-subagent-list-agents` 行因此解析不到任何东西（`ERR_PACKAGE_PATH_NOT_EXPORTED`）。该行已删除；`list_agents` 工具仍由 `tool-subagent-control` 那行提供，与上游自己的 preset 一致。fail-closed 行门禁在**维护期**就抓住了它，而不是等会话挂载时才炸——这正是它存在的理由。② DSH bundle 现在声明 `engines.dsh`（`^0.2.0`）：运行时优先采用自声明的 `engines.dsh` 而非 `peerDependencies`，因此不兼容的 harness 会 fail-closed 明确拒绝，而不是在错误的宿主 API 上静默加载本 bundle——这正是 0.1.7 与 0.2.x 两次事故的共同失效形态。（`^0.2.1` 不可用：`0.2.1-rc.N` 预发布版排序在正式版之前，匹配不上。）协议核心不变——本次属 §16 宿主适配范围。
+>
 > **v0.24 (2026-10-17):** DSH 0.2.x 宿主适配收尾——两处陈旧宿主配置，且既有门禁都报绿。① 上游 DSH 0.2.x 删除了 `cwd` 提示词变量，而 persona 模板在**组装期严格解析**，于是 `anchorlaw` preset 每次请求都失败：`unknown prompt variable "{{cwd}}" in section "deployment:persona-prefix"`；工作目录现由 `working-directory:current` 运行时上下文提供，并新增 fail-closed 门禁（`dsh/tests/audit_prompt_variables.mjs`，自检第 7 项）要求 preset 模板里的每个 `{{变量}}` 都必须是运行中 harness 注册过的——preset 行门禁看不见这一类：行能解析、包能挂载，模板变量却已死。② 子代理行上的 `backgroundMode` 键在 `@deepseek-ai/dsh-tool-subagent` 中已不存在；Schemastery 忽略未知键，所以它一直被静默丢弃、从未生效——已删除。协议核心不变——本次属 §16 宿主适配范围。
 >
 > **v0.23 (2026-09-23):** DSH 宿主适配载体迁移——上游 DeepSeek Harness 0.1.7 换掉了 agent preset 的载体：preset 不再是 `$DSH_HOME/.agent-presets/<id>/` 目录，而是 bundle patch 里的一条 `@deepseek-ai/dsh-agent-preset` 声明行，旧目录**已无人读取**（会话头记录了这类 preset 的会话因此无法 resume）。DSH 适配层（`dsh/`）随之成为**一等 bundle 包**；其 preset 内的插件行改用**裸包名子路径**寻址（`config.plugins[]` 内的相对路径不会被锚定，且 preset 子树的 `baseUrl` 是 profile 目录而非 bundle）；11 个 anchor-* 技能改为装到用户级全局根，不再内嵌于 preset。**项目级（Reasonix 式）安装模式撤回**——DSH 没有项目级插件/preset 机制，项目级只能给技能、给不了 preset 人格与 4 个工具；项目级技能仍可通过 DSH 原生的 `<项目>/.dsh/skills` 根获得。preset 行门禁现在会走 bundle patch 载体与 `config.plugins[]`（旧实现漏检 28 行中的 27 行——这正是"自检全绿却 resume 报错"的确切原因）。协议核心不变——本次属 §16 宿主适配范围。
@@ -139,7 +141,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH 维护入口
 ├── spec/
-│   └── protocol-v0.24.md          # 语言无关协议（当前版）
+│   └── protocol-v0.25.md          # 语言无关协议（当前版）
 ├── python/                        # 协议实现（DSH 工具后端）
 │   ├── anchorlaw-scanner/         # 独立扫描器（Level 1, 已验证）
 │   └── anchorlaw/                 # 锚点 / 噪声 / CLI（Level 2-4, 实验性）
@@ -166,8 +168,8 @@ anchorlaw/
 
 ## 参考
 
-- [协议规范 v0.18](spec/protocol-v0.24.md)
-- 降级验证：[协议 §9](spec/protocol-v0.24.md#9-degraded-verification-v03-draft)
+- [协议规范 v0.18](spec/protocol-v0.25.md)
+- 降级验证：[协议 §9](spec/protocol-v0.25.md#9-degraded-verification-v03-draft)
 - 唯物实践论方法论——本协议的哲学基础
 
 ---
