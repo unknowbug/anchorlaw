@@ -14,13 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-    # `ubuntu-latest` is now ubuntu-26.04, whose image no longer publishes
-    # Python 3.9 ("The version '3.9' with architecture 'x64' was not found for
-    # Ubuntu 26.04"). 3.9 keeps being verified on the last image that still
-    # ships it, so `requires-python = ">=3.9"` in both pyproject.toml files
-    # stays a tested claim rather than a stale one. Drop the 3.9 row (and the
-    # floor in both pyproject.toml files) once 3.9 support is retired.
-    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-22.04' || 'ubuntu-latest' }}
+    # `ubuntu-latest` is now ubuntu-26.04. Upstream's interpreter manifest ships
+    # `linux-26.04` builds only from CPython 3.10.20 upward — every 3.9.x has
+    # 22.04 and 24.04 assets but no 26.04 one — so `setup-python` reports
+    # "The version '3.9' with architecture 'x64' was not found for Ubuntu 26.04".
+    # 3.9 therefore runs on ubuntu-24.04 (3.9.25 has a linux-24.04-x64 build; it
+    # is newer than 22.04, so it has the longer runway), keeping
+    # `requires-python = ">=3.9"` in both pyproject.toml files a tested claim.
+    # Drop the 3.9 row and the floor in both pyproject.toml files together when
+    # 3.9 support is retired.
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-24.04' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
 
