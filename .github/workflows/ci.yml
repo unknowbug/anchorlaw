@@ -7,10 +7,20 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     strategy:
+      # One version failing must not cancel the others: on 2026-11-13 an
+      # image-level 3.9 failure cancelled 3.10/3.11/3.12 before they ran, which
+      # reads like a code regression instead of a runner problem.
+      fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
+    # `ubuntu-latest` is now ubuntu-26.04, whose image no longer publishes
+    # Python 3.9 ("The version '3.9' with architecture 'x64' was not found for
+    # Ubuntu 26.04"). 3.9 keeps being verified on the last image that still
+    # ships it, so `requires-python = ">=3.9"` in both pyproject.toml files
+    # stays a tested claim rather than a stale one. Drop the 3.9 row (and the
+    # floor in both pyproject.toml files) once 3.9 support is retired.
+    runs-on: ${{ matrix.python-version == '3.9' && 'ubuntu-22.04' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
 
