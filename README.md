@@ -51,7 +51,7 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 | Component | Where | State |
 |-----------|-------|-------|
-| **Spec** | `spec/protocol-v0.25.md` | Language-agnostic code-verification protocol (current) |
+| **Spec** | `spec/protocol-v0.26.md` | Language-agnostic code-verification protocol (current) |
 | **Python** | `python/anchorlaw-scanner` + `python/anchorlaw` | Scanner (verified) + anchors/noise/CLI (experimental) — the DSH tool backend |
 | **TypeScript** | `typescript/anchorlaw-scanner` | TS/JS scanner (in development) |
 
@@ -70,6 +70,8 @@ The protocol itself lives at the repo root and is host-neutral — the DSH tools
 
 ### Changelog
 
+> **v0.26 (2026-11-13):** DSH Desktop support — the DSH adaptation now maintains **two host surfaces at once** instead of trading one for the other. ① `install.ps1` installs into every profile in one run; the Electron-owned `desktop` profile is written directly (link dependency + `dsh.profile.bundles` entry + `node_modules` link) because the CLI refuses that profile name, so `web` and `desktop` stay in sync from the same command. ② Both fail-closed gates and the self-check now detect the harness layout: a source checkout keeps using `node`, while an asar install runs the **same** scripts under `ELECTRON_RUN_AS_NODE=1 "<app>.exe"` — plain Node's `fs` cannot read `app.asar`, so on a Desktop-only machine both gates would otherwise have reported themselves unrunnable. The row gate then resolves packages from `node_modules/@deepseek-ai/*` and the prompt-variable gate scans their compiled `lib/`. Verified the same day in **both** layouts: 27 preset rows, 0 unresolvable; registered variables `model`, `provider`; 102 baseline tests; both profiles selected with the bundle, the global tool row and the 11 user-global skills intact; `web` boots with zero warnings. The protocol core is unchanged — this is §16 host-adaptation scope.
+>
 > **v0.25 (2026-10-24):** DSH host-adaptation follow-ups for 0.2.1 — ① Upstream removed the `./list-agents` subpath export from `@deepseek-ai/dsh-tool-subagent-control` (it registered the shared control tools together in the package's main entry), so the preset's `tool-subagent-list-agents` row resolved to nothing (`ERR_PACKAGE_PATH_NOT_EXPORTED`). The row is gone; the `list_agents` tool stays available through the `tool-subagent-control` row, matching upstream's own preset. The fail-closed row gate caught this at maintenance time rather than at session mount — exactly why it exists. ② The DSH bundle now declares `engines.dsh` (`^0.2.0`): the runtime prefers an own `engines.dsh` over `peerDependencies`, so an incompatible harness fails closed instead of loading the bundle against silently wrong host APIs — the failure mode behind both the 0.1.7 and the 0.2.x incidents. (`^0.2.1` was rejected as a range: a `0.2.1-rc.N` prerelease sorts before its release and would not match.) The protocol core is unchanged — this is §16 host-adaptation scope.
 >
 > **v0.24 (2026-10-17):** DSH host-adaptation follow-ups for 0.2.x — two pieces of stale host configuration, both of which the existing gates reported as green. ① Upstream DSH 0.2.x deleted the `cwd` prompt variable, while persona templates interpolate **strictly at assembly**, so the `anchorlaw` preset failed on every request with `unknown prompt variable "{{cwd}}" in section "deployment:persona-prefix"`; the working directory now arrives as the `working-directory:current` runtime context, and a new fail-closed gate (`dsh/tests/audit_prompt_variables.mjs`, self-check item 7) requires every `{{variable}}` in a preset template to be registered by the running harness — the preset-row gate could not see this class, because rows resolved and packages mounted while the template variable was already dead. ② The `backgroundMode` key on the subagent rows no longer exists in `@deepseek-ai/dsh-tool-subagent`; Schemastery ignores unknown keys, so it was silently dropped and never had any effect — removed. The protocol core is unchanged — this is §16 host-adaptation scope.
@@ -141,7 +143,7 @@ anchorlaw/
 │   ├── scripts/                   # install.ps1 / selfcheck.ps1
 │   └── AGENTS.md                  # DSH maintenance entry
 ├── spec/
-│   └── protocol-v0.25.md          # Language-neutral protocol (current)
+│   └── protocol-v0.26.md          # Language-neutral protocol (current)
 ├── python/                        # Protocol implementation (DSH tool backend)
 │   ├── anchorlaw-scanner/         # Standalone scanner (Level 1, VERIFIED)
 │   └── anchorlaw/                 # Anchors / noise / CLI (Level 2-4, EXPERIMENTAL)
@@ -168,8 +170,8 @@ Start a discussion on [GitHub Discussions]() or open an issue with your findings
 
 ## References
 
-- [Protocol Specification v0.18](spec/protocol-v0.25.md)
-- Degraded Verification: [§9 of the spec](spec/protocol-v0.25.md#9-degraded-verification-v03-draft)
+- [Protocol Specification v0.18](spec/protocol-v0.26.md)
+- Degraded Verification: [§9 of the spec](spec/protocol-v0.26.md#9-degraded-verification-v03-draft)
 - [Materialist Practice Theory](https://github.com/unknowbug/anchorlaw/wiki) — the philosophical foundation
 
 ---

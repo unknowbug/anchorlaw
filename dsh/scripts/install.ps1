@@ -100,10 +100,41 @@ if ($mountProfiles.Count -eq 0) {
     Write-Host ""
     Write-Host "  -- profile: $profileName"
 
-    # 3a. Bundle → profile (pnpm dependency + dsh.profile.bundles entry)
-    dsh plugin --profile $profileName add $bundleDir
-    if ($LASTEXITCODE -ne 0) { throw "failed to install the bundle into profile '$profileName'" }
-    Write-Host "     OK bundle installed + selected in dsh.profile.bundles"
+    # 3a. Bundle → profile (pnpm dependency + dsh.profile.bundles entry).
+    #     The CLI refuses the Electron-owned `desktop` profile by name
+    #     (apps/cli/src/args.ts rejectElectronProfile), so that one is installed
+    #     by writing exactly what the CLI would write: the link dependency, the
+    #     bundles entry, and the node_modules link. One run maintains both the
+    #     web profile and the Desktop profile.
+    if ($profileName -ieq 'desktop') {
+      $desktopDir = Join-Path $profilesDir $profileName
+      $manifestPath = Join-Path $desktopDir 'package.json'
+      if (-not (Test-Path $manifestPath)) { throw "desktop profile has no package.json at $desktopDir" }
+      $bundleName = (Get-Content (Join-Path $bundleDir 'package.json') -Raw | ConvertFrom-Json).name
+      $bundleSpec = 'link:' + ($bundleDir -replace '\\', '/')
+
+      $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+      if (-not ($manifest.dsh.profile.bundles -contains $bundleName)) {
+        $manifest.dsh.profile.bundles += $bundleName
+      }
+      if (-not ($manifest.PSObject.Properties.Name -contains 'dependencies')) {
+        $manifest | Add-Member -NotePropertyName dependencies -NotePropertyValue ([pscustomobject]@{})
+      }
+      $manifest.dependencies | Add-Member -NotePropertyName $bundleName -NotePropertyValue $bundleSpec -Force
+      [IO.File]::WriteAllText($manifestPath, ($manifest | ConvertTo-Json -Depth 8), (New-Object System.Text.UTF8Encoding($false)))
+
+      $scopeDir = Join-Path $desktopDir ('node_modules\' + (Split-Path $bundleName -Parent))
+      New-Item -ItemType Directory -Path $scopeDir -Force | Out-Null
+      $linkPath = Join-Path $scopeDir (Split-Path $bundleName -Leaf)
+      if (-not (Test-Path $linkPath)) {
+        New-Item -ItemType Junction -Path $linkPath -Target $bundleDir | Out-Null
+      }
+      Write-Host "     OK bundle installed + selected directly (Electron-owned profile: the CLI refuses 'desktop')"
+    } else {
+      dsh plugin --profile $profileName add $bundleDir
+      if ($LASTEXITCODE -ne 0) { throw "failed to install the bundle into profile '$profileName'" }
+      Write-Host "     OK bundle installed + selected in dsh.profile.bundles"
+    }
 
     # 3b. Global tool mount — the plugin file travels with the profile (resolved
     #     relative to baseUrl = profile dir). A sibling package.json is REQUIRED:

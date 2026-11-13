@@ -50,7 +50,35 @@ import { pathToFileURL, fileURLToPath } from 'node:url'
 const HERE = dirname(fileURLToPath(import.meta.url))
 const REPO = resolve(HERE, '..', '..')
 
-const HARNESS = process.env.DSH_CHECKOUT ?? 'D:\\git\\deepseek-harness'
+/**
+ * harness 布局：源码 checkout（有 `packages/`）或已安装的 asar 运行时。
+ *
+ * Desktop 把整个运行时打进 `resources/app.asar`，**普通 Node 的 fs 读不到 asar**——
+ * 这种布局必须用 `ELECTRON_RUN_AS_NODE=1 "<app>.exe"` 来跑本脚本（Electron 的 fs
+ * 透明读 asar）。两种布局的包都落在 `<HARNESS>/node_modules`，所以包名解析与
+ * exports 校验的代码不变。
+ */
+const CHECKOUT = process.env.DSH_CHECKOUT ?? 'D:\\git\\deepseek-harness'
+
+/** 已安装 harness 的 `resources` 目录（含 `app.asar`）；找不到返回 undefined。 */
+function detectInstallDir() {
+  const roots = [
+    process.env.DSH_INSTALL_DIR,
+    process.env.ProgramFiles ? join(process.env.ProgramFiles, 'DeepSeek Harness', 'resources') : undefined,
+    process.env.LOCALAPPDATA ? join(process.env.LOCALAPPDATA, 'Programs', 'DeepSeek Harness', 'resources') : undefined,
+  ].filter(root => typeof root === 'string' && root !== '')
+  return roots.find(root => existsSync(join(root, 'app.asar')))
+}
+
+const INSTALL_DIR = detectInstallDir()
+const ASAR_DSH = INSTALL_DIR === undefined ? undefined : join(INSTALL_DIR, 'app.asar', 'dsh')
+
+/** 选布局：源码 checkout 优先（开发机），否则已安装的 asar 运行时。 */
+const LAYOUT = existsSync(join(CHECKOUT, 'packages')) ? 'checkout'
+  : ASAR_DSH !== undefined && existsSync(join(ASAR_DSH, 'node_modules')) ? 'asar'
+    : 'checkout'
+
+const HARNESS = LAYOUT === 'asar' ? ASAR_DSH : CHECKOUT
 const args = process.argv.slice(2)
 
 /** `--harness-base <dir>`（也接受 `--harness-base=<dir>`）。 */
@@ -89,14 +117,24 @@ if (positional.length > 0) {
 }
 
 // ── 解析器（harness 的 entryListSchema + 其 js-yaml）；缺失则跳过并显式说明 ──
-const schemaEntry = join(HARNESS, 'vendor', 'include', 'lib', 'index.js')
+// checkout：include 构建产物在 vendor/；已安装布局：它就是一个普通依赖包。
+const schemaEntry = (LAYOUT === 'asar'
+  ? [join(HARNESS, 'node_modules', '@deepseek-ai', 'cordis-plugin-include', 'lib', 'index.js')]
+  : [join(HARNESS, 'vendor', 'include', 'lib', 'index.js')]
+).find(existsSync)
 const yamlCandidates = [
   join(HARNESS, 'node_modules', '.pnpm', 'js-yaml@4.2.0', 'node_modules', 'js-yaml', 'dist', 'js-yaml.mjs'),
   join(HARNESS, 'node_modules', 'js-yaml', 'dist', 'js-yaml.mjs'),
 ]
 
-if (!existsSync(schemaEntry)) {
-  console.log(`SKIP: harness checkout not found at ${HARNESS} (set DSH_CHECKOUT) — cannot resolve packages`)
+if (schemaEntry === undefined) {
+  console.log(`SKIP: cannot read the harness at ${HARNESS} (layout: ${LAYOUT}) — cannot resolve packages`)
+  if (LAYOUT === 'checkout' && INSTALL_DIR !== undefined) {
+    console.log('      this install is packed in app.asar, which plain Node cannot read:')
+    console.log(`      run this gate with ELECTRON_RUN_AS_NODE=1 "${join(INSTALL_DIR, '..', 'DeepSeek Harness.exe')}"`)
+  } else if (LAYOUT === 'checkout') {
+    console.log('      set DSH_CHECKOUT to a harness source checkout')
+  }
   process.exit(2)
 }
 const yamlPath = yamlCandidates.find(existsSync)
@@ -155,13 +193,19 @@ if (HARNESS_BASE === null) {
 function collectPackages() {
   const map = new Map()
   const roots = []
-  const pkgs = join(HARNESS, 'packages')
-  if (existsSync(pkgs)) {
-    for (const g of readdirSync(pkgs, { withFileTypes: true })) {
-      if (g.isDirectory()) roots.push(join(pkgs, g.name))
+  if (LAYOUT === 'asar') {
+    // 已安装布局：@deepseek-ai/<pkg> 直接挂在 node_modules 下（没有 workspace 的 packages/）。
+    const scope = join(HARNESS, 'node_modules', '@deepseek-ai')
+    if (existsSync(scope)) roots.push(scope)
+  } else {
+    const pkgs = join(HARNESS, 'packages')
+    if (existsSync(pkgs)) {
+      for (const g of readdirSync(pkgs, { withFileTypes: true })) {
+        if (g.isDirectory()) roots.push(join(pkgs, g.name))
+      }
     }
+    roots.push(join(HARNESS, 'vendor'), join(HARNESS, 'apps'))
   }
-  roots.push(join(HARNESS, 'vendor'), join(HARNESS, 'apps'))
   for (const root of roots) {
     if (!existsSync(root)) continue
     for (const entry of readdirSync(root, { withFileTypes: true })) {

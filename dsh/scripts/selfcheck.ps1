@@ -25,6 +25,44 @@ $ErrorActionPreference = 'Continue'
 $srcRoot = Split-Path -Parent $PSScriptRoot
 $fail = 0
 
+# ── harness 运行时选择 ──────────────────────────────────────────────────────
+# 第 6/7 项要读 harness 的包与源码。源码 checkout 用 node 即可；Desktop 把运行时
+# 打进 resources\app.asar，**普通 Node 的 fs 读不到 asar**，必须用
+# ELECTRON_RUN_AS_NODE=1 让 Electron 的可执行文件当 Node 跑同一个脚本。
+$checkout = if ($env:DSH_CHECKOUT) { $env:DSH_CHECKOUT } else { 'D:\git\deepseek-harness' }
+$installDir = $env:DSH_INSTALL_DIR
+if (-not $installDir) {
+  foreach ($candidate in @(
+      (Join-Path $env:ProgramFiles 'DeepSeek Harness\resources'),
+      (Join-Path $env:LOCALAPPDATA 'Programs\DeepSeek Harness\resources'))) {
+    if ($candidate -and (Test-Path (Join-Path $candidate 'app.asar'))) { $installDir = $candidate; break }
+  }
+}
+$harnessLayout = 'unknown'
+$harnessExe = $null
+if (Test-Path (Join-Path $checkout 'packages')) {
+  $harnessLayout = 'checkout'
+} elseif ($installDir) {
+  $candidateExe = Join-Path (Split-Path $installDir -Parent) 'DeepSeek Harness.exe'
+  if (Test-Path $candidateExe) { $harnessLayout = 'asar'; $harnessExe = $candidateExe }
+}
+Write-Host "harness layout: $harnessLayout$(if ($harnessExe) { " ($harnessExe)" })"
+
+# 用当前布局跑一个 harness 门禁脚本（返回退出码）
+function Invoke-HarnessGate([string]$scriptPath) {
+  if ($harnessLayout -eq 'asar') {
+    $previous = $env:ELECTRON_RUN_AS_NODE
+    $env:ELECTRON_RUN_AS_NODE = '1'
+    try { & $harnessExe $scriptPath 2>&1 | Out-Host; return $LASTEXITCODE }
+    finally {
+      if ($null -eq $previous) { Remove-Item Env:ELECTRON_RUN_AS_NODE -ErrorAction SilentlyContinue }
+      else { $env:ELECTRON_RUN_AS_NODE = $previous }
+    }
+  }
+  & node $scriptPath 2>&1 | Out-Host
+  return $LASTEXITCODE
+}
+
 Write-Host "== Anchorlaw DSH self-check =="
 
 # 1. toolchain
@@ -84,10 +122,9 @@ if ($LASTEXITCODE -ne 0) { Write-Host "  FAIL: plugin tool schemas not compiled 
 # 6. preset row resolvability (fail-closed; see audit_preset_rows.mjs)
 Write-Host ""
 Write-Host "[6] preset row resolvability"
-node (Join-Path $srcRoot 'tests\audit_preset_rows.mjs') 2>&1
-$presetAudit = $LASTEXITCODE
+$presetAudit = Invoke-HarnessGate (Join-Path $srcRoot 'tests\audit_preset_rows.mjs')
 if ($presetAudit -eq 2) {
-  Write-Host "  WARN: preset audit skipped (harness checkout unavailable — set DSH_CHECKOUT)"
+  Write-Host "  WARN: preset audit skipped (harness unreadable — set DSH_CHECKOUT, or run under Electron for an asar install)"
 } elseif ($presetAudit -ne 0) {
   Write-Host "  FAIL: unresolvable preset row(s) — upstream renamed/removed a plugin"; $fail = 1
 }
@@ -95,13 +132,12 @@ if ($presetAudit -eq 2) {
 # 7. prompt variable resolvability (fail-closed; see audit_prompt_variables.mjs)
 Write-Host ""
 Write-Host "[7] prompt variable resolvability"
-node (Join-Path $srcRoot 'tests\audit_prompt_variables.mjs') 2>&1
-$promptVarAudit = $LASTEXITCODE
+$promptVarAudit = Invoke-HarnessGate (Join-Path $srcRoot 'tests\audit_prompt_variables.mjs')
 if ($promptVarAudit -eq 2) {
   if ($env:DSH_SKIP_PROMPT_VAR_AUDIT -eq '1') {
     Write-Host "  WARN: prompt-variable audit skipped (DSH_SKIP_PROMPT_VAR_AUDIT=1 — gap explicitly accepted)"
   } else {
-    Write-Host "  FAIL: prompt-variable audit could not run (set DSH_CHECKOUT, or DSH_SKIP_PROMPT_VAR_AUDIT=1 to accept the gap)"; $fail = 1
+    Write-Host "  FAIL: prompt-variable audit could not run (set DSH_CHECKOUT, or run under Electron for an asar install, or DSH_SKIP_PROMPT_VAR_AUDIT=1 to accept the gap)"; $fail = 1
   }
 } elseif ($promptVarAudit -ne 0) {
   Write-Host "  FAIL: unregistered prompt variable in the preset template — a session would fail to assemble"; $fail = 1
