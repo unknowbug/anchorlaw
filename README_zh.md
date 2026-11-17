@@ -70,6 +70,10 @@ Judge 驱动四段流水线人格（协议 §15.4）：输入契约 → 实施�
 
 ### 更新日志
 
+> **版本号约定**：`X.Y` 是**协议规范版本**——`spec/` 下一版一文件、只有正文实质改动才变；第三位 `Z` 是 **FIX 发布版**——只发实现或宿主适配的修复，**绝不新建规范文件**。所以 `0.26.1` 是叠在 `0.26` 上的修复，而协议升级是 `0.26` → `0.27`。
+
+> **v0.26.1 (2026-11-17):** FIX 发布——安装器与插件健壮性，协议正文未改。落地了两个已关闭外部 PR 的实质内容：插件 `inject` 补上 `subprocess`（缺该服务时 `apply()` 直接 return，而 cordis 不保证服务就绪顺序，4 个工具可能静默不注册）；解释器查找回退到 `python3`；生成的身份清单改为无 BOM 写入（PowerShell 5.1 的 `Set-Content -Encoding UTF8` 会写 BOM，DSH 用裸 `JSON.parse` 读它，导致每个请求报 REQUEST_EXTENSION）；补丁合并先 stash 再恢复 `!!js` 表达式，而不是直接失败；schema 门禁不再因 Node 向 stderr 写警告而中止安装；`Join-Path` 参数改用正斜杠，避免 Linux/macOS 的 pwsh 把它们当字面名；`.gitattributes` 固定 `*.sh` 为 LF；两个 fail-closed 门禁优先用 harness 的 `parseEntryYaml`、缺失时回退 `entryListSchema`，从而同时适配已安装的 0.2.2-rc.2 与更新的 checkout。那句"DSH 只读一层补丁"的注释已更正：它先读 per-profile 层、再读 home 级层，后者优先级更高。安装后的插件身份版本改为跟随本 bundle 的发布版本，而不再取最新规范文件，因此 FIX 位能落到 profile。
+>
 > **v0.26 (2026-11-13):** 支持 DSH Desktop——DSH 适配层现在**同时维护两种宿主形态**，而不是用一个换掉另一个。① `install.ps1` 一条命令装进所有 profile；Electron 独占的 `desktop` profile 直接写入（link 依赖 + `dsh.profile.bundles` 条目 + `node_modules` 链接），因为 CLI 按名字拒绝它，这样 `web` 与 `desktop` 由同一条命令保持一致。② 两个 fail-closed 门禁与自检都会探测 harness 布局：源码 checkout 继续用 `node`，asar 安装则用 `ELECTRON_RUN_AS_NODE=1 "<app>.exe"` 跑**同一批脚本**——普通 Node 的 `fs` 读不到 `app.asar`，否则在只装了 Desktop 的机器上两个门禁都会自报无法运行。行门禁改为从 `node_modules/@deepseek-ai/*` 解析包，提示词变量门禁改为扫其编译产物 `lib/`。当天在**两种布局**下均验证：27 条 preset 行 0 不可解析；注册变量仍只有 `model`、`provider`；基线 102 测试通过；两个 profile 都选中 bundle、带全局工具行、11 个用户级技能完好；`web` 启动零告警。协议核心不变——本次属 §16 宿主适配范围。
 >
 > **v0.25 (2026-10-24):** DSH 0.2.1 宿主适配收尾——① 上游移除了 `@deepseek-ai/dsh-tool-subagent-control` 的 `./list-agents` 子路径导出（它把共享控制工具合并进了包主入口），我们 preset 里的 `tool-subagent-list-agents` 行因此解析不到任何东西（`ERR_PACKAGE_PATH_NOT_EXPORTED`）。该行已删除；`list_agents` 工具仍由 `tool-subagent-control` 那行提供，与上游自己的 preset 一致。fail-closed 行门禁在**维护期**就抓住了它，而不是等会话挂载时才炸——这正是它存在的理由。② DSH bundle 现在声明 `engines.dsh`（`^0.2.0`）：运行时优先采用自声明的 `engines.dsh` 而非 `peerDependencies`，因此不兼容的 harness 会 fail-closed 明确拒绝，而不是在错误的宿主 API 上静默加载本 bundle——这正是 0.1.7 与 0.2.x 两次事故的共同失效形态。（`^0.2.1` 不可用：`0.2.1-rc.N` 预发布版排序在正式版之前，匹配不上。）协议核心不变——本次属 §16 宿主适配范围。

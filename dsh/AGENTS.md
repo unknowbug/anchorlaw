@@ -38,6 +38,18 @@
 
 **同步纪律（核心铁律）**：所有修改只改本目录事实源，然后跑 `scripts/install.ps1` 重装——安装产物一律视为可再生，禁止手改。装完跑 `scripts/selfcheck.ps1` 验证。技能**正文**直接在本目录 `skills/` 修改；`tests/test_manifest.py` 守护 DSH manifest 合法性（kebab-case、frontmatter、技能集）。
 
+**版本号约定（2026-11-17 起）**：两个版本概念分开，别混用。
+
+| 名称 | 形式 | 何时变 | 载体 |
+|---|---|---|---|
+| 协议规范版本 | `vX.Y` | 协议正文有实质改动 | `../spec/protocol-vX.Y.md`（一版一文件） |
+| 发布版本 | `X.Y.Z` | 任何交付 | `package.json` 的 `version`（单一事实源）+ 两个 README 更新日志 + 本目录 `SYNC.md` |
+
+- **`Z`（FIX）**：只修实现或宿主适配，**协议正文不动、`spec/` 不新建文件**（`spec/protocol-v0.26.md` 继续是当前规范）。
+- **`X.Y`（升级）**：协议正文变化 → 新建 `protocol-vX.Y.md` + 指针类引用同步 + §8/§10/§11 证据行 + README 换主版本条。
+- **不要用 `0.26-FIX` 这种写法**：`-` 在 semver 里是预发布标记，`0.26-FIX` 会被解析成**比 0.26 更旧**。
+- `install.ps1` 生成的插件身份版本读 `package.json` 的 `version`（X.Y.Z），因此 FIX 位会落到 profile；它不再从 spec 目录推导。
+
 ## 三、维护铁律（对应上游 anchor.maintain，DSH 版）
 
 1. **自检全绿**：任何改动必须 `scripts/selfcheck.ps1` 全绿。第 3 项自扫=第一律反身应用；第 5 项插件工具 schema 校验=挂载门禁（2026-08-13 事故：扁平 schema 让所有会话报 `Invalid schema ... type: null`；install.ps1 挂载前也先跑这道校验）；第 6 项 preset 行解析门禁=fail-closed（2026-09-09 事故：上游把 `dsh-workflow-worker-thread` 改名为 `dsh-workflow-ptc`，源码引用未跟，preset 挂载失败导致会话无法创建/恢复。2026-09-23 二次事故：上游把 preset 载体换成 bundle patch，门禁只审旧文件、漏检 preset 全部行，于是**自检全绿而 resume 报 `Unknown agent preset`**——同类漂移必须在自检被拦下，而不是等 resume 报错）。
