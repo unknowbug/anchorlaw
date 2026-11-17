@@ -14,7 +14,13 @@
 // (github.com/unknowbug/anchorlaw, dsh/plugins/), per dsh/AGENTS.md §六.
 
 export const name = 'anchorlaw-tools'
-export const inject = ['tools']
+// `subprocess` MUST be declared here, not merely read with ctx.get(): apply()
+// below returns early when the service is absent, and cordis does not guarantee
+// service readiness by tree order (mounts are async). Declaring it makes the
+// loader wait, so the four tools always register. The `skills`/`fs`/
+// `sandboxPolicy` reads are different — they are consumed per call, so they stay
+// optional lookups.
+export const inject = ['tools', 'subprocess']
 
 export function apply(ctx, config) {
   // Optional capabilities, read with ctx.get and handled when absent.
@@ -24,9 +30,26 @@ export function apply(ctx, config) {
   const sandboxPolicy = ctx.get('sandboxPolicy')
   if (subprocess === undefined) return
 
+  // Resolve the interpreter once, trying `python` first (Windows and most
+  // distros) then `python3` — several Linux distributions (Kylin included)
+  // ship no bare `python`, where a hard-coded 'python' would break every
+  // anchorlaw_* tool.
   let pythonPathPromise
   function pythonPath() {
-    if (!pythonPathPromise) pythonPathPromise = subprocess.resolveExecutable('python')
+    if (!pythonPathPromise) {
+      pythonPathPromise = (async () => {
+        const failures = []
+        for (const candidate of ['python', 'python3']) {
+          try {
+            const resolved = await subprocess.resolveExecutable(candidate)
+            if (resolved) return resolved
+          } catch (error) {
+            failures.push(`${candidate}: ${error.message}`)
+          }
+        }
+        throw new Error(`python interpreter not found (tried python, python3): ${failures.join('; ')}`)
+      })()
+    }
     return pythonPathPromise
   }
 
